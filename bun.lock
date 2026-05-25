@@ -4,6 +4,10 @@
   "workspaces": {
     "": {
       "name": "icpfinder",
+      "dependencies": {
+        "@icpfinder/core": "workspace:*",
+        "@icpfinder/providers": "workspace:*",
+      },
       "devDependencies": {
         "@biomejs/biome": "^2.0.0",
         "@types/node": "^22.10.0",

@@ -1,77 +1,119 @@
 # icpfinder
 
-> Free, open-source first-customer-discovery tool for indie AI builders. Paste your idea, get 15 verified prospects with outreach hooks. In 30 seconds. MIT.
+> Free, open-source first-customer-discovery tool for indie AI builders. Paste your idea, stream three ICP archetypes + lookalike companies with verified contact emails. MIT.
 
-**Status: pre-release. v0.1.0 ships [target: end of week 2026-05-29].** Building in public.
+[![tests](https://img.shields.io/badge/tests-80%2F80-brightgreen)](https://github.com/clickspider/icpfinder)
+[![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![status](https://img.shields.io/badge/status-v0.1%20alpha-orange)](#)
 
----
+```
+$ bun run demo
 
-## Why this exists
+icpfinder demo
+seed: AI invoicing tool for indie SaaS founders ...
 
-You built something. You don't know who'll pay for it. You hate cold outreach.
+# 1. Principal Designer
+   Boutique Brand Identity Studios · 1-5 employees
+   Losing hours weekly on subjective client feedback ...
+   signals: Recent posts on X complaining about revision creep ...
+   → sarah.chen@…
+   → marcus.reed@…
 
-This finds the people who already have your problem **and** tells you what to say to them. Free. MIT. No signup for the hosted demo. Bring your own keys to self-host.
+done · 3 archetypes · 9 candidates · 0.00 ¢
+```
 
-## Try it
+## What it does
 
-Coming this week. Hosted demo at [icpfinder.dev](https://icpfinder.dev) — free, capped at 10 generations per IP per day. Self-host has no cap.
+1. **Archetype detection.** Your product description → 3 ICP archetypes (industry, role, pain, buying signals) via Gemini 2.5 Flash with optional Google grounding.
+2. **Candidate enrichment.** Each archetype → N lookalike companies + verified decision-maker emails via Hunter.io.
+3. **Streaming + cost-capped.** Async-generator API. Every provider call reports cents consumed. Per-run + per-IP caps enforced server-side.
 
-## How it works
+Everything is swappable. The core engine depends only on `LlmProvider` and `EmailProvider` interfaces — drop in Apollo, Clearbit, OpenAI, Anthropic without touching `packages/core`.
 
-1. **Archetype detection** — your idea → 3 ICP archetypes (industry / role / pain / buying-signals) via Gemini with Google grounding.
-2. **Candidate discovery** — each archetype → 5 real companies with verified decision-maker emails via Hunter.io.
-3. **Outreach personalization** — each candidate → a 2-sentence hook referencing a real, observable signal (recent funding, hiring posts, public discussion).
-
-## Self-host (planned API)
+## Quickstart
 
 ```bash
-git clone https://github.com/clickspider/icpfinder
+git clone https://github.com/clickspider/icpfinder.git
 cd icpfinder
 bun install
-bun run demo                    # zero keys, fixture data, 5 minutes to first result
-cp .env.example .env            # add HUNTER_API_KEY + GOOGLE_GENERATIVE_AI_API_KEY
-bun run dev                     # full pipeline with your keys
+bun run demo                       # zero keys, stub providers
+cd packages/web && bun run dev     # full web UI
 ```
 
-Costs (your keys, your bill): Hunter free tier is 25 searches/month, ~$0.05-0.07 per Email Finder call on paid tiers. Gemini 2.5 Flash free tier is 1500 requests/day. See `docs/costs.md` once it lands.
+Full guide: [docs/quickstart.md](./docs/quickstart.md).
 
-## Library API (planned)
+## Hosted demo
+
+<https://icpfinder.dev> — free, IP-capped, no signup. Bring your own keys to remove caps + see real archetypes (self-host or fork).
+
+## Library usage
 
 ```ts
-import { IcpFinder, HunterEmailProvider, GeminiLlmProvider } from "icpfinder";
+import { IcpFinder } from "@icpfinder/core";
+import { GeminiLlmProvider, HunterEmailProvider } from "@icpfinder/providers";
 
-const client = new IcpFinder({
-  emailProvider: new HunterEmailProvider({ apiKey: process.env.HUNTER_API_KEY }),
-  llmProvider:   new GeminiLlmProvider({ apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY }),
+const finder = new IcpFinder({
+  llm: new GeminiLlmProvider({ apiKey: process.env.GEMINI_API_KEY }),
+  email: new HunterEmailProvider({ apiKey: process.env.HUNTER_API_KEY }),
 });
 
-// Stream events as they generate
-for await (const event of client.find("an AI tool that helps freelance designers handle client revisions")) {
-  console.log(event); // { type: 'archetype-start' | 'company-found' | 'hook-generated' | ... }
+for await (const event of finder.find({
+  seed: "AI tool that helps freelance designers handle client revisions",
+  archetypeLimit: 3,
+  candidatesPerArchetype: 5,
+  budgetCapCents: 200,
+})) {
+  console.log(event);
+  // { type: "archetype", archetype: {...} }
+  // { type: "candidate", candidate: {...} }
+  // { type: "cost",      cost: { costCents, provider, endpoint } }
+  // { type: "done",      totalCostCents }
 }
-
-// Or block until done
-const result = await client.findAll("...");
-console.log(result.archetypes, result.cost.usd);
 ```
+
+Both packages publish as ESM, TypeScript-first, zero side effects on import.
 
 ## Architecture
 
-- `packages/core` — algorithm, no IO except via provider interfaces
-- `packages/providers` — swappable Hunter / Gemini / future Apollo / Clearbit / OpenAI / fake (for demo mode)
-- `packages/web` — Next.js + Prisma hosted demo
+```
+packages/
+├── providers/   EmailProvider + LlmProvider interfaces
+│                  → HunterEmailProvider, GeminiLlmProvider, Fake*
+├── core/        IcpFinder orchestrator + safeFetch (SSRF-hardened)
+│                  → async-generator API, cost reporting, budget caps
+└── web/         Next.js 15 app
+                   → POST /api/find (text/event-stream)
+                   → Prisma (Run + Event persistence)
+                   → InMemory or Upstash rate limit (per-IP)
+```
+
+The dependency graph is strictly acyclic: `web → core → providers`.
+
+## Costs
+
+Stub mode: free, no keys. Live mode: ~$1.05 per run (mostly Hunter). Cap with `ICPFINDER_BUDGET_CAP_CENTS` + `ICPFINDER_DAILY_CAP_CENTS`. Full breakdown: [docs/costs.md](./docs/costs.md).
+
+## Self-host
+
+Vercel + Postgres + Upstash, three steps: [docs/self-host.md](./docs/self-host.md).
+
+## Tests
+
+```bash
+bun run test       # 80 tests across providers, core, web
+bun run typecheck
+bun run lint
+```
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md) once it lands. Highlights:
+- **v0.1** — streaming engine + web UI + library + Hunter/Gemini providers + Upstash rate limit ✅
+- **v0.2** — outreach personalization (per-candidate hook generation), React Flow visualization, CLI binary, Claude Code skill
+- **v0.3** — cold-email diagnostician (paste a failing thread, get rewritten)
 
-- **v0.1** — web demo + library + provider interfaces + streaming + demo mode
-- **v0.2** — React Flow node-graph visualization, CLI, Claude Code skill
-- **v0.3** — cold-outreach diagnostician (paste your failing emails, get a diagnosis + rewrite)
+## Contributing
 
-## Built in public
-
-Daily updates on X (handle linked once confirmed).
+Issues, PRs, ideas — all welcome. Add a new provider in <50 lines: implement the interface in `packages/providers/src/types.ts`, drop tests in `packages/providers/__tests__/`, ship.
 
 ## License
 
