@@ -22,7 +22,7 @@ import {
   ProviderRateLimitError,
   type VerifyEmailInput,
   type VerifyEmailResult,
-} from "./types.js";
+} from "./types";
 
 const HUNTER_BASE_URL = "https://api.hunter.io/v2";
 const DEFAULT_CONCURRENCY = 5;

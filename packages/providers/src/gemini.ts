@@ -13,7 +13,7 @@ import {
   type LlmProvider,
   ProviderAuthError,
   ProviderRateLimitError,
-} from "./types.js";
+} from "./types";
 
 const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 const DEFAULT_MODEL = "gemini-2.5-flash";

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
 import { describe, expect, it, vi } from "vitest";
-import { HunterEmailProvider } from "../src/hunter.js";
-import { ProviderAuthError, ProviderRateLimitError } from "../src/types.js";
+import { HunterEmailProvider } from "../src/hunter";
+import { ProviderAuthError, ProviderRateLimitError } from "../src/types";
 
 const okResponse = (body: unknown): Response =>
   new Response(JSON.stringify(body), {

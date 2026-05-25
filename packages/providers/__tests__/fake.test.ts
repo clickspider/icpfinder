@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 import { describe, expect, it } from "vitest";
-import { FakeEmailProvider, FakeLlmProvider } from "../src/fake.js";
+import { FakeEmailProvider, FakeLlmProvider } from "../src/fake";
 
 describe("FakeEmailProvider", () => {
   const provider = new FakeEmailProvider();

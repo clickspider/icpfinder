@@ -14,8 +14,8 @@
 //     provider's per-request AbortController.
 
 import type { EmailProvider, LlmProvider } from "@icpfinder/providers";
-import { generateArchetypes } from "./archetypes.js";
-import type { Archetype, Candidate, FindEvent, FindInput } from "./types.js";
+import { generateArchetypes } from "./archetypes";
+import type { Archetype, Candidate, FindEvent, FindInput } from "./types";
 
 const DEFAULT_ARCHETYPE_LIMIT = 3;
 const DEFAULT_CANDIDATES_PER_ARCHETYPE = 5;

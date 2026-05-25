@@ -6,7 +6,7 @@
 // streaming partial results keeps flowing if the model misbehaves.
 
 import type { GenerateInput, LlmProvider } from "@icpfinder/providers";
-import type { Archetype } from "./types.js";
+import type { Archetype } from "./types";
 
 const SYSTEM_PROMPT = `You are an ICP (Ideal Customer Profile) analyst.
 You help founders and indie builders find concrete buyer personas for

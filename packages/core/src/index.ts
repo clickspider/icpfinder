@@ -5,12 +5,12 @@ export {
   type GenerateArchetypesResult,
   generateArchetypes,
   parseArchetypes,
-} from "./archetypes.js";
-export { IcpFinder, type IcpFinderOptions } from "./icp-finder.js";
+} from "./archetypes";
+export { IcpFinder, type IcpFinderOptions } from "./icp-finder";
 export {
   SafeFetchError,
   type SafeFetchOptions,
   type SafeFetchResult,
   safeFetch,
-} from "./safe-fetch.js";
-export * from "./types.js";
+} from "./safe-fetch";
+export * from "./types";

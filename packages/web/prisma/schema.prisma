@@ -1,0 +1,44 @@
+// SPDX-License-Identifier: MIT
+//
+// Minimal schema for icpfinder web. SQLite by default for zero-config
+// local dev + Vercel preview deploys. Swap to Postgres in prod by
+// changing the datasource provider + DATABASE_URL.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Run {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  /// Free-form seed input from the user.
+  seed            String
+  /// Final status: "running", "done", "error", "budget_exceeded", "cancelled".
+  status          String   @default("running")
+  totalCostCents  Float    @default(0)
+  /// Hashed remote IP for rate-limit attribution. Null for server-side
+  /// invocations (cron, scripts, tests).
+  clientIpHash    String?
+  finishedAt      DateTime?
+  events          Event[]
+
+  @@index([clientIpHash, createdAt])
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  runId     String
+  run       Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  /// FindEvent discriminator: "archetype" | "candidate" | "cost" | "error" | "done".
+  type      String
+  /// JSON-serialized event payload.
+  payload   String
+
+  @@index([runId, createdAt])
+}

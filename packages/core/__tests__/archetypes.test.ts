@@ -2,7 +2,7 @@
 
 import type { GenerateInput, GenerateResult, LlmProvider } from "@icpfinder/providers";
 import { describe, expect, it, vi } from "vitest";
-import { generateArchetypes, parseArchetypes } from "../src/archetypes.js";
+import { generateArchetypes, parseArchetypes } from "../src/archetypes";
 
 const makeLlm = (text: string, costCents = 0.1, stub = false): LlmProvider => ({
   name: "mock",

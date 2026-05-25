@@ -3,8 +3,8 @@
 import type { EmailProvider, GenerateResult, LlmProvider } from "@icpfinder/providers";
 import { FakeEmailProvider, FakeLlmProvider } from "@icpfinder/providers";
 import { describe, expect, it, vi } from "vitest";
-import { IcpFinder } from "../src/icp-finder.js";
-import type { FindEvent } from "../src/types.js";
+import { IcpFinder } from "../src/icp-finder";
+import type { FindEvent } from "../src/types";
 
 const collect = async (gen: AsyncGenerator<FindEvent, void, void>): Promise<FindEvent[]> => {
   const events: FindEvent[] = [];

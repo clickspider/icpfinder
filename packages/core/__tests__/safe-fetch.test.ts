@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 import { describe, expect, it, vi } from "vitest";
-import { SafeFetchError, safeFetch } from "../src/safe-fetch.js";
+import { SafeFetchError, safeFetch } from "../src/safe-fetch";
 
 const okHtml = (body = "<html>ok</html>"): Response =>
   new Response(body, {

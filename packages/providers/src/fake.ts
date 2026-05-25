@@ -18,7 +18,7 @@ import type {
   LlmProvider,
   VerifyEmailInput,
   VerifyEmailResult,
-} from "./types.js";
+} from "./types";
 
 const buildFakeCost = (provider: string, endpoint: string, units = 0): CostUnit => ({
   units,

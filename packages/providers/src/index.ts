@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-export { FakeEmailProvider, FakeLlmProvider } from "./fake.js";
+export { FakeEmailProvider, FakeLlmProvider } from "./fake";
 export {
   type GeminiCostLogger,
   GeminiLlmProvider,
   type GeminiOptions,
-} from "./gemini.js";
-export { type CostLogger, HunterEmailProvider, type HunterOptions } from "./hunter.js";
-export * from "./types.js";
+} from "./gemini";
+export { type CostLogger, HunterEmailProvider, type HunterOptions } from "./hunter";
+export * from "./types";
