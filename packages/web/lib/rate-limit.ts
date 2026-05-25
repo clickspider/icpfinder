@@ -105,8 +105,10 @@ export const getDefaultRateLimiter = (): RateLimiter => {
   if (defaultLimiter) return defaultLimiter;
   const dailyCapCents = Number(process.env.ICPFINDER_DAILY_CAP_CENTS ?? 500);
   const dailyRuns = Number(process.env.ICPFINDER_DAILY_RUNS ?? 20);
-  const upstashUrl = process.env.UPSTASH_REDIS_REST_URL;
-  const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+  // Accept both the Upstash-native names and Vercel's KV-style aliases.
+  // Vercel's marketplace Upstash install ships KV_REST_API_*.
+  const upstashUrl = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
+  const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
   if (upstashUrl && upstashToken) {
     // Lazy require to avoid pulling the module into Edge bundles that
     // don't use Upstash.
