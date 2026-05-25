@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: MIT
 //
-// Minimal schema for icpfinder web. SQLite by default for zero-config
-// local dev + Vercel preview deploys. Swap to Postgres in prod by
-// changing the datasource provider + DATABASE_URL.
+// Schema for icpfinder web. Postgres in prod (Vercel Neon integration
+// injects DATABASE_URL). Local dev: spin up Neon or run postgres in
+// Docker. App falls back to NoopRunRecorder when DATABASE_URL is
+// absent, so the schema is only consulted when persistence is on.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model Run {
