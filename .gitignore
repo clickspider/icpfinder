@@ -9,3 +9,8 @@ coverage/
 .DS_Store
 .vercel/
 .vercel
+
+# Private content (launch copy, drafts, internal notes) — never published.
+content/
+private/
+.notes/
