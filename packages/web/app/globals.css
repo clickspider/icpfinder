@@ -112,6 +112,55 @@ a:hover {
   font-size: 13px;
 }
 
+.link-button {
+  background: none;
+  border: 0;
+  color: var(--accent-2);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  padding: 0;
+  text-align: left;
+  align-self: flex-start;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
+
+.byok {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.byok label {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.byok input {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+}
+
+.byok small {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.byok-disclaimer {
+  line-height: 1.4;
+}
+
 .results {
   display: grid;
   gap: 12px;

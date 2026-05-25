@@ -17,6 +17,7 @@
         "ICPFINDER_DAILY_CAP_CENTS",
         "ICPFINDER_DAILY_RUNS",
         "ICPFINDER_IP_SALT",
+        "ICPFINDER_MONTHLY_BUDGET_USD",
         "NODE_ENV"
       ]
     },
