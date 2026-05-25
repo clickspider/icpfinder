@@ -12,6 +12,18 @@
         "vitest": "^2.1.0",
       },
     },
+    "packages/core": {
+      "name": "@icpfinder/core",
+      "version": "0.1.0",
+      "dependencies": {
+        "@icpfinder/providers": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^22.10.0",
+        "typescript": "^5.7.0",
+        "vitest": "^2.1.0",
+      },
+    },
     "packages/providers": {
       "name": "@icpfinder/providers",
       "version": "0.1.0",
@@ -89,6 +101,8 @@
     "@esbuild/win32-ia32": ["@esbuild/win32-ia32@0.21.5", "", { "os": "win32", "cpu": "ia32" }, "sha512-SWXFF1CL2RVNMaVs+BBClwtfZSvDgtL//G/smwAc5oVK/UPu2Gu9tIaRgFmYFFKrmg3SyAjSrElf0TiJ1v8fYA=="],
 
     "@esbuild/win32-x64": ["@esbuild/win32-x64@0.21.5", "", { "os": "win32", "cpu": "x64" }, "sha512-tQd/1efJuzPC6rCFwEvLtci/xNFcTZknmXs98FYDfGE4wP9ClFV98nyKrzJKVPMhdDnjzLhdUyMX4PsQAPjwIw=="],
+
+    "@icpfinder/core": ["@icpfinder/core@workspace:packages/core"],
 
     "@icpfinder/providers": ["@icpfinder/providers@workspace:packages/providers"],
 
