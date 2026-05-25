@@ -1,0 +1,29 @@
+{
+  "name": "@icpfinder/providers",
+  "version": "0.1.0",
+  "description": "Swappable EmailProvider + LlmProvider implementations for icpfinder.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./hunter": "./src/hunter.ts",
+    "./gemini": "./src/gemini.ts",
+    "./fake": "./src/fake.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "p-limit": "^6.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}

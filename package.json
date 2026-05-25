@@ -1,0 +1,29 @@
+{
+  "name": "icpfinder",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Free, open-source first-customer-discovery tool for indie AI builders.",
+  "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "@types/node": "^22.10.0",
+    "turbo": "^2.3.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  },
+  "packageManager": "bun@1.3.0",
+  "engines": {
+    "node": ">=20"
+  }
+}
