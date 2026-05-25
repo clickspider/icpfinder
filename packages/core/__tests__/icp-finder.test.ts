@@ -12,7 +12,7 @@ const collect = async (gen: AsyncGenerator<FindEvent, void, void>): Promise<Find
   return events;
 };
 
-const archetypeJson = (count: number): string =>
+const archetypeJson = (count: number, companiesPerArchetype = 5): string =>
   JSON.stringify(
     Array.from({ length: count }, (_, i) => ({
       industry: `Industry ${i}`,
@@ -20,6 +20,10 @@ const archetypeJson = (count: number): string =>
       companySize: "10-50",
       pain: "pain",
       buyingSignals: ["s1"],
+      exampleCompanies: Array.from({ length: companiesPerArchetype }, (_unused, j) => ({
+        name: `Company ${i}-${j}`,
+        domain: `company-${i}-${j}.com`,
+      })),
     }))
   );
 
@@ -134,6 +138,33 @@ describe("IcpFinder.find — error handling", () => {
     expect(errors.length).toBeGreaterThan(0);
     expect(candidates).toHaveLength(2); // candidates still emitted, just with null email
     expect(events.at(-1)?.type).toBe("done");
+  });
+});
+
+describe("IcpFinder.find — empty exampleCompanies", () => {
+  it("emits an error event and skips enrichment when LLM returns no example companies", async () => {
+    const archetypeWithoutCompanies = JSON.stringify([
+      {
+        industry: "I",
+        role: "R",
+        companySize: "S",
+        pain: "p",
+        buyingSignals: [],
+        exampleCompanies: [],
+      },
+    ]);
+    const finder = new IcpFinder({
+      llm: mockLlm(archetypeWithoutCompanies),
+      email: new FakeEmailProvider(),
+    });
+    const events = await collect(finder.find({ seed: "x" }));
+    const candidates = events.filter((e) => e.type === "candidate");
+    const errors = events.filter((e) => e.type === "error");
+    expect(candidates).toHaveLength(0);
+    expect(errors).toHaveLength(1);
+    expect(errors[0] && errors[0].type === "error" && errors[0].message).toMatch(
+      /no real example/i
+    );
   });
 });
 

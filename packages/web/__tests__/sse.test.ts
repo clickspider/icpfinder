@@ -28,6 +28,7 @@ describe("encodeEvent", () => {
         companySize: "Z",
         pain: "p",
         buyingSignals: [],
+        exampleCompanies: [],
       },
     };
     const frame = decoder.decode(encodeEvent(event));
@@ -55,6 +56,7 @@ describe("sseStreamFromEvents", () => {
           companySize: "s",
           pain: "p",
           buyingSignals: [],
+          exampleCompanies: [],
         },
       },
       { type: "cost", cost: { units: 1, costCents: 0.1, provider: "p", endpoint: "e" } },

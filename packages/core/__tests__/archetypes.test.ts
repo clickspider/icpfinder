@@ -85,6 +85,96 @@ describe("parseArchetypes", () => {
     const archetypes = parseArchetypes(raw);
     expect(archetypes.map((a) => a.id)).toEqual(["arch_0", "arch_1"]);
   });
+
+  it("parses exampleCompanies and normalizes domains", () => {
+    const raw = JSON.stringify([
+      {
+        industry: "X",
+        role: "Y",
+        companySize: "Z",
+        pain: "p",
+        buyingSignals: [],
+        exampleCompanies: [
+          { name: "Stripe", domain: "https://www.stripe.com/payments" },
+          { name: "Linear", domain: "  LINEAR.APP  " },
+          { name: "Notion", domain: "notion.so" },
+        ],
+      },
+    ]);
+    const [arch] = parseArchetypes(raw);
+    expect(arch?.exampleCompanies).toEqual([
+      { name: "Stripe", domain: "stripe.com" },
+      { name: "Linear", domain: "linear.app" },
+      { name: "Notion", domain: "notion.so" },
+    ]);
+  });
+
+  it("strips banned placeholder domains (example.com, acme.com, etc.)", () => {
+    const raw = JSON.stringify([
+      {
+        industry: "X",
+        role: "Y",
+        companySize: "Z",
+        pain: "p",
+        buyingSignals: [],
+        exampleCompanies: [
+          { name: "Real", domain: "stripe.com" },
+          { name: "Placeholder", domain: "example.com" },
+          { name: "Acme", domain: "acme.com" },
+          { name: "Test", domain: "foo.test" },
+          { name: "Your", domain: "yourcompany.com" },
+        ],
+      },
+    ]);
+    const [arch] = parseArchetypes(raw);
+    expect(arch?.exampleCompanies).toEqual([{ name: "Real", domain: "stripe.com" }]);
+  });
+
+  it("dedupes example companies by normalized domain", () => {
+    const raw = JSON.stringify([
+      {
+        industry: "X",
+        role: "Y",
+        companySize: "Z",
+        pain: "p",
+        buyingSignals: [],
+        exampleCompanies: [
+          { name: "Stripe", domain: "stripe.com" },
+          { name: "Stripe Inc", domain: "https://stripe.com" },
+        ],
+      },
+    ]);
+    const [arch] = parseArchetypes(raw);
+    expect(arch?.exampleCompanies).toHaveLength(1);
+  });
+
+  it("returns empty exampleCompanies when field missing", () => {
+    const raw = JSON.stringify([
+      { industry: "X", role: "Y", companySize: "Z", pain: "p", buyingSignals: [] },
+    ]);
+    const [arch] = parseArchetypes(raw);
+    expect(arch?.exampleCompanies).toEqual([]);
+  });
+
+  it("skips entries with missing or invalid domain", () => {
+    const raw = JSON.stringify([
+      {
+        industry: "X",
+        role: "Y",
+        companySize: "Z",
+        pain: "p",
+        buyingSignals: [],
+        exampleCompanies: [
+          { name: "NoDomain" },
+          { domain: 12345 },
+          { name: "Bare", domain: "notavaliddomain" },
+          { name: "Good", domain: "good.io" },
+        ],
+      },
+    ]);
+    const [arch] = parseArchetypes(raw);
+    expect(arch?.exampleCompanies).toEqual([{ name: "Good", domain: "good.io" }]);
+  });
 });
 
 describe("generateArchetypes", () => {

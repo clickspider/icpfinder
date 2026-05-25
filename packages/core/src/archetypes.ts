@@ -6,7 +6,51 @@
 // streaming partial results keeps flowing if the model misbehaves.
 
 import type { GenerateInput, LlmProvider } from "@icpfinder/providers";
-import type { Archetype } from "./types";
+import type { Archetype, ExampleCompany } from "./types";
+
+const NON_DOMAIN_CHARS = /[^a-z0-9.-]/g;
+const PROTOCOL_OR_WWW = /^(?:https?:\/\/)?(?:www\.)?/i;
+const PATH_OR_QUERY = /[/?#].*$/;
+const BANNED_DOMAINS = new Set([
+  "example.com",
+  "example.org",
+  "example.net",
+  "test.com",
+  "acme.com",
+  "yourcompany.com",
+  "yoursite.com",
+  "placeholder.com",
+]);
+
+const normalizeDomain = (raw: unknown): string | null => {
+  if (typeof raw !== "string") return null;
+  const cleaned = raw
+    .trim()
+    .toLowerCase()
+    .replace(PROTOCOL_OR_WWW, "")
+    .replace(PATH_OR_QUERY, "")
+    .replace(NON_DOMAIN_CHARS, "");
+  if (!cleaned || !cleaned.includes(".")) return null;
+  if (BANNED_DOMAINS.has(cleaned)) return null;
+  if (cleaned.endsWith(".example") || cleaned.endsWith(".test")) return null;
+  return cleaned;
+};
+
+const coerceExampleCompanies = (v: unknown): ExampleCompany[] => {
+  if (!Array.isArray(v)) return [];
+  const seen = new Set<string>();
+  const out: ExampleCompany[] = [];
+  for (const entry of v) {
+    if (!entry || typeof entry !== "object") continue;
+    const obj = entry as Record<string, unknown>;
+    const domain = normalizeDomain(obj.domain);
+    if (!domain || seen.has(domain)) continue;
+    const name = typeof obj.name === "string" && obj.name.trim() ? obj.name.trim() : domain;
+    seen.add(domain);
+    out.push({ name, domain });
+  }
+  return out;
+};
 
 const SYSTEM_PROMPT = `You are an ICP (Ideal Customer Profile) analyst.
 You help founders and indie builders find concrete buyer personas for
@@ -21,6 +65,12 @@ Each archetype object MUST have these exact fields:
 - buyingSignals (string[], 3-5 observable signals the company is
   currently in pain — e.g. "hiring SDRs", "recently funded",
   "expanded to new market")
+- exampleCompanies (object[], 3-8 REAL companies matching this
+  archetype RIGHT NOW. Each object: { name: string, domain: string }.
+  Domain is the company's actual primary website domain, no protocol,
+  no path, no www. ("stripe.com" not "https://www.stripe.com/").
+  Only include companies you are highly confident exist and have that
+  exact domain. NEVER invent placeholder or example.com domains.)
 
 Generate distinct archetypes that target different buyer segments,
 not minor variations of the same persona.`;
@@ -74,6 +124,7 @@ export const parseArchetypes = (raw: string): Archetype[] => {
       companySize: coerceString(obj.companySize, "Unknown size"),
       pain: coerceString(obj.pain, ""),
       buyingSignals: coerceStringArray(obj.buyingSignals),
+      exampleCompanies: coerceExampleCompanies(obj.exampleCompanies),
     };
   });
 };

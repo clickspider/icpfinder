@@ -3,15 +3,20 @@
 // IcpFinder — high-level orchestrator. Composes an LlmProvider +
 // EmailProvider into a streaming `find()` generator.
 //
+// Real candidate flow:
+//   1. LLM (with grounding when available) returns archetypes WITH
+//      a list of real example companies + domains.
+//   2. We enrich each example company via the EmailProvider's
+//      searchDomain — gets verified decision-maker contacts.
+//   3. If the LLM returned fewer example companies than requested,
+//      that archetype yields fewer candidates (no fabrication).
+//
 // Design notes:
-//   - Streaming via async generator (yield FindEvent). UI subscribes
-//     and renders each event as it arrives. No buffering, no all-or-
-//     nothing batches.
-//   - Budget cap is enforced AFTER each cost event. Generator yields
-//     a final `done` event and returns; never throws on cap.
-//   - Cancellation honored via input.signal. Each iteration checks
-//     signal.aborted; mid-fetch cancellation is delegated to the
-//     provider's per-request AbortController.
+//   - Streaming via async generator. UI subscribes and renders each
+//     event as it arrives.
+//   - Budget cap enforced AFTER each cost event. Generator yields
+//     a final `done` and returns; never throws on cap.
+//   - Cancellation honored via input.signal.
 
 import type { EmailProvider, LlmProvider } from "@icpfinder/providers";
 import { generateArchetypes } from "./archetypes";
@@ -24,29 +29,6 @@ export interface IcpFinderOptions {
   llm: LlmProvider;
   email: EmailProvider;
 }
-
-const slugifyCompany = (industry: string, role: string, idx: number): string => {
-  const base = `${industry}-${role}`
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return `${base || "co"}-${idx}`;
-};
-
-/**
- * Placeholder company synthesis. Real implementation (Day 3) will
- * search the web via grounding or call out to Apollo/Clearbit; for
- * now we generate deterministic stand-ins so the streaming pipeline
- * is testable end-to-end.
- */
-const synthesizeCompanies = (
-  archetype: Archetype,
-  count: number
-): Array<{ name: string; domain: string }> =>
-  Array.from({ length: count }, (_, i) => {
-    const slug = slugifyCompany(archetype.industry, archetype.role, i);
-    return { name: `Example ${slug}`, domain: `${slug}.example.com` };
-  });
 
 export class IcpFinder {
   private readonly llm: LlmProvider;
@@ -70,7 +52,7 @@ export class IcpFinder {
     const signal = input.signal;
 
     let totalCostCents = 0;
-    const yieldCost = (
+    const buildCostEvent = (
       cents: number,
       provider: string,
       endpoint: string,
@@ -106,7 +88,7 @@ export class IcpFinder {
       return;
     }
 
-    yield yieldCost(
+    yield buildCostEvent(
       archetypeResult.costCents,
       this.llm.name,
       "generate",
@@ -131,58 +113,88 @@ export class IcpFinder {
     for (const archetype of archetypeResult.archetypes) {
       if (signal?.aborted) break;
       yield { type: "archetype", archetype };
-
-      const companies = synthesizeCompanies(archetype, candidatesPerArchetype);
-      for (let i = 0; i < companies.length; i += 1) {
-        if (signal?.aborted) break;
-        if (totalCostCents >= budgetCapCents) break;
-        const company = companies[i];
-        if (!company) continue;
-
-        const candidate: Candidate = {
-          id: `${archetype.id}_cand_${i}`,
-          archetypeId: archetype.id,
-          companyName: company.name,
-          domain: company.domain,
-          contactFirstName: null,
-          contactLastName: null,
-          contactRole: archetype.role,
-          contactEmail: null,
-          emailConfidence: null,
-          emailScore: null,
-        };
-
-        try {
-          const search = await this.email.searchDomain({ domain: company.domain });
-          yield yieldCost(
-            search.cost.costCents,
-            this.email.name,
-            search.cost.endpoint,
-            search.cost.units
-          );
-          const top = search.contacts[0];
-          if (top) {
-            candidate.contactFirstName = top.firstName;
-            candidate.contactLastName = top.lastName;
-            candidate.contactRole = top.position ?? archetype.role;
-            candidate.contactEmail = top.email;
-            candidate.emailConfidence = top.confidence;
-            candidate.emailScore = top.score;
-          }
-        } catch (err) {
-          yield {
-            type: "error",
-            message: `Email lookup failed for ${company.domain}: ${err instanceof Error ? err.message : String(err)}`,
-            recoverable: true,
-          };
-        }
-
-        yield { type: "candidate", candidate };
-      }
-
+      yield* this.enrichArchetype(archetype, candidatesPerArchetype, {
+        signal,
+        budgetCapCents,
+        getTotalCost: () => totalCostCents,
+        buildCostEvent,
+      });
       if (totalCostCents >= budgetCapCents) break;
     }
 
     yield { type: "done", totalCostCents };
+  }
+
+  private async *enrichArchetype(
+    archetype: Archetype,
+    candidatesPerArchetype: number,
+    ctx: {
+      signal?: AbortSignal;
+      budgetCapCents: number;
+      getTotalCost: () => number;
+      buildCostEvent: (
+        cents: number,
+        provider: string,
+        endpoint: string,
+        units: number
+      ) => FindEvent;
+    }
+  ): AsyncGenerator<FindEvent, void, void> {
+    if (archetype.exampleCompanies.length === 0) {
+      yield {
+        type: "error",
+        message: `Archetype "${archetype.role}" had no real example companies; skipping candidate enrichment.`,
+        recoverable: true,
+      };
+      return;
+    }
+
+    const companies = archetype.exampleCompanies.slice(0, candidatesPerArchetype);
+    for (let i = 0; i < companies.length; i += 1) {
+      if (ctx.signal?.aborted) break;
+      if (ctx.getTotalCost() >= ctx.budgetCapCents) break;
+      const company = companies[i];
+      if (!company) continue;
+
+      const candidate: Candidate = {
+        id: `${archetype.id}_cand_${i}`,
+        archetypeId: archetype.id,
+        companyName: company.name,
+        domain: company.domain,
+        contactFirstName: null,
+        contactLastName: null,
+        contactRole: archetype.role,
+        contactEmail: null,
+        emailConfidence: null,
+        emailScore: null,
+      };
+
+      try {
+        const search = await this.email.searchDomain({ domain: company.domain });
+        yield ctx.buildCostEvent(
+          search.cost.costCents,
+          this.email.name,
+          search.cost.endpoint,
+          search.cost.units
+        );
+        const top = search.contacts[0];
+        if (top) {
+          candidate.contactFirstName = top.firstName;
+          candidate.contactLastName = top.lastName;
+          candidate.contactRole = top.position ?? archetype.role;
+          candidate.contactEmail = top.email;
+          candidate.emailConfidence = top.confidence;
+          candidate.emailScore = top.score;
+        }
+      } catch (err) {
+        yield {
+          type: "error",
+          message: `Email lookup failed for ${company.domain}: ${err instanceof Error ? err.message : String(err)}`,
+          recoverable: true,
+        };
+      }
+
+      yield { type: "candidate", candidate };
+    }
   }
 }

@@ -122,6 +122,11 @@ const defaultArchetypesJson = JSON.stringify(
         "Public Behance updates mentioning AI-augmented workflows.",
         "Active in design-business Discord communities discussing workflow tools.",
       ],
+      exampleCompanies: [
+        { name: "Pentagram", domain: "pentagram.com" },
+        { name: "Collins", domain: "wearecollins.com" },
+        { name: "DesignStudio", domain: "design.studio" },
+      ],
     },
     {
       industry: "SaaS Product Design Agencies",
@@ -133,6 +138,11 @@ const defaultArchetypesJson = JSON.stringify(
         "Public discussion on design-leadership podcasts about efficiency-based pricing.",
         "GitHub activity from staff on Figma-to-Code tooling with revision tracking.",
       ],
+      exampleCompanies: [
+        { name: "Ueno", domain: "ueno.co" },
+        { name: "Work & Co", domain: "work.co" },
+        { name: "Instrument", domain: "instrument.com" },
+      ],
     },
     {
       industry: "Performance Marketing Agencies",
@@ -143,6 +153,11 @@ const defaultArchetypesJson = JSON.stringify(
         "Recent Series B press releases earmarking funds for AI creative transformation.",
         "Production Designer hiring posts requiring AI revision management.",
         "Company blog case studies on reducing creative friction with generative tools.",
+      ],
+      exampleCompanies: [
+        { name: "Wpromote", domain: "wpromote.com" },
+        { name: "Tinuiti", domain: "tinuiti.com" },
+        { name: "Power Digital", domain: "powerdigitalmarketing.com" },
       ],
     },
   ],
