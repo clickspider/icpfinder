@@ -2,7 +2,7 @@
 
 import { IcpFinder } from "@icpfinder/core";
 import { type NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getRunRecorder } from "@/lib/prisma";
 import { buildProviders } from "@/lib/providers";
 import { getDefaultRateLimiter, hashClientIp } from "@/lib/rate-limit";
 import { streamRun } from "@/lib/run-stream";
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   const stream = sseStreamFromEvents(
     streamRun({
       finder,
-      prisma,
+      recorder: getRunRecorder(),
       rateLimiter: limiter,
       clientIpHash,
       input: {

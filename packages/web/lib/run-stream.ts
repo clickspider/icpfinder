@@ -5,32 +5,25 @@
 //   - persist every FindEvent to Event table for later replay/debug
 //   - record cost into the rate limiter
 //   - re-yield the same events upstream so the route can stream them
+//
+// Persistence is pluggable via RunRecorder; NoopRunRecorder makes the
+// whole pipeline DB-optional.
 
 import type { FindEvent, FindInput, IcpFinder } from "@icpfinder/core";
-import type { PrismaClient } from "@prisma/client";
 import type { RateLimiter } from "./rate-limit";
+import type { RunRecorder, RunStatus } from "./run-recorder";
 
 export interface RunStreamDeps {
   finder: IcpFinder;
-  prisma: PrismaClient;
+  recorder: RunRecorder;
   rateLimiter: RateLimiter;
   clientIpHash: string;
   /** Already-validated FindInput. */
   input: FindInput;
 }
 
-/**
- * Persist + bookkeeping pipeline. Yields FindEvent values for the SSE
- * encoder. Always closes the Run row even on cancellation.
- */
 export async function* streamRun(deps: RunStreamDeps): AsyncGenerator<FindEvent, void, void> {
-  const run = await deps.prisma.run.create({
-    data: {
-      seed: deps.input.seed,
-      clientIpHash: deps.clientIpHash,
-      status: "running",
-    },
-  });
+  const run = await deps.recorder.startRun(deps.input.seed, deps.clientIpHash);
   // Send the runId as the very first frame so the client can deep-link.
   yield {
     type: "cost",
@@ -38,17 +31,16 @@ export async function* streamRun(deps: RunStreamDeps): AsyncGenerator<FindEvent,
   };
 
   let totalCostCents = 0;
-  let finalStatus: "done" | "error" | "cancelled" | "budget_exceeded" = "done";
+  let finalStatus: RunStatus = "done";
 
   try {
     for await (const event of deps.finder.find(deps.input)) {
-      await deps.prisma.event.create({
-        data: { runId: run.id, type: event.type, payload: JSON.stringify(event) },
-      });
+      // Recorder errors must never break the stream.
+      deps.recorder.recordEvent(run.id, event).catch(() => undefined);
 
       if (event.type === "cost") {
         totalCostCents += event.cost.costCents;
-        await deps.rateLimiter.recordCost(deps.clientIpHash, event.cost.costCents);
+        deps.rateLimiter.recordCost(deps.clientIpHash, event.cost.costCents).catch(() => undefined);
       }
       if (event.type === "error" && !event.recoverable) {
         finalStatus = "error";
@@ -74,13 +66,6 @@ export async function* streamRun(deps: RunStreamDeps): AsyncGenerator<FindEvent,
     };
     yield { type: "done", totalCostCents };
   } finally {
-    await deps.prisma.run.update({
-      where: { id: run.id },
-      data: {
-        status: finalStatus,
-        totalCostCents,
-        finishedAt: new Date(),
-      },
-    });
+    await deps.recorder.finishRun(run.id, finalStatus, totalCostCents).catch(() => undefined);
   }
 }
