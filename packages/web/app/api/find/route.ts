@@ -2,6 +2,7 @@
 
 import { IcpFinder } from "@icpfinder/core";
 import { type NextRequest, NextResponse } from "next/server";
+import { getMonthlyBudget } from "@/lib/monthly-budget";
 import { getRunRecorder } from "@/lib/prisma";
 import { buildProviders } from "@/lib/providers";
 import { getDefaultRateLimiter, hashClientIp } from "@/lib/rate-limit";
@@ -12,13 +13,21 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const MAX_SEED_LENGTH = 2_000;
-const DEFAULT_BUDGET_CAP_CENTS = 200;
+const DEFAULT_BUDGET_CAP_CENTS = 100;
+const FREE_TIER_ARCHETYPE_LIMIT = 1;
+const FREE_TIER_CANDIDATES_PER_ARCHETYPE = 3;
+const BYOK_DEFAULT_ARCHETYPE_LIMIT = 3;
+const BYOK_DEFAULT_CANDIDATES_PER_ARCHETYPE = 5;
 
 interface FindRequestBody {
   seed?: unknown;
   archetypeLimit?: unknown;
   candidatesPerArchetype?: unknown;
   grounding?: unknown;
+  /** User-supplied Gemini key (BYOK). Never persisted. */
+  geminiApiKey?: unknown;
+  /** User-supplied Hunter key (BYOK). Never persisted. */
+  hunterApiKey?: unknown;
 }
 
 const clampInt = (raw: unknown, min: number, max: number, fallback: number): number => {
@@ -36,6 +45,8 @@ const getClientIp = (request: NextRequest): string => {
   return request.headers.get("x-real-ip") ?? "0.0.0.0";
 };
 
+const asString = (v: unknown): string | undefined => (typeof v === "string" ? v : undefined);
+
 export async function POST(request: NextRequest): Promise<Response> {
   let body: FindRequestBody;
   try {
@@ -51,37 +62,85 @@ export async function POST(request: NextRequest): Promise<Response> {
     return NextResponse.json({ error: `seed exceeds ${MAX_SEED_LENGTH} chars` }, { status: 400 });
   }
 
+  const { llm, email, mode } = buildProviders({
+    userGeminiKey: asString(body.geminiApiKey),
+    userHunterKey: asString(body.hunterApiKey),
+  });
+
   const clientIpHash = hashClientIp(getClientIp(request));
   const limiter = getDefaultRateLimiter();
-  const check = await limiter.reserveRun(clientIpHash);
-  if (!check.allowedRun) {
-    return NextResponse.json(
-      {
-        error: "Daily rate limit reached",
-        remainingRuns: check.remainingRuns,
-        remainingCents: check.remainingCents,
-      },
-      { status: 429 }
+  const monthlyBudget = getMonthlyBudget();
+
+  let archetypeLimit: number;
+  let candidatesPerArchetype: number;
+  let budgetCapCents: number;
+
+  if (mode === "byok") {
+    // User pays — no rate limit, no operator budget guard.
+    archetypeLimit = clampInt(body.archetypeLimit, 1, 5, BYOK_DEFAULT_ARCHETYPE_LIMIT);
+    candidatesPerArchetype = clampInt(
+      body.candidatesPerArchetype,
+      1,
+      10,
+      BYOK_DEFAULT_CANDIDATES_PER_ARCHETYPE
+    );
+    budgetCapCents = Number.POSITIVE_INFINITY;
+  } else {
+    // Operator-paid (live or stub). Enforce both per-IP and monthly caps.
+    const check = await limiter.reserveRun(clientIpHash);
+    if (!check.allowedRun) {
+      return NextResponse.json(
+        {
+          error: "Daily free-tier limit reached. Add your own API keys for unlimited runs.",
+          mode,
+          remainingRuns: check.remainingRuns,
+          remainingCents: check.remainingCents,
+        },
+        { status: 429 }
+      );
+    }
+    if (mode === "operator" && !(await monthlyBudget.isAvailable())) {
+      return NextResponse.json(
+        {
+          error:
+            "Monthly free-tier budget exhausted. Add your own API keys to keep going — they stay in your browser and cost the operator $0.",
+          mode,
+        },
+        { status: 402 }
+      );
+    }
+    archetypeLimit = clampInt(
+      body.archetypeLimit,
+      1,
+      FREE_TIER_ARCHETYPE_LIMIT,
+      FREE_TIER_ARCHETYPE_LIMIT
+    );
+    candidatesPerArchetype = clampInt(
+      body.candidatesPerArchetype,
+      1,
+      FREE_TIER_CANDIDATES_PER_ARCHETYPE,
+      FREE_TIER_CANDIDATES_PER_ARCHETYPE
+    );
+    budgetCapCents = Math.min(
+      Number(process.env.ICPFINDER_BUDGET_CAP_CENTS ?? DEFAULT_BUDGET_CAP_CENTS),
+      check.remainingCents
     );
   }
 
-  const { llm, email } = buildProviders();
   const finder = new IcpFinder({ llm, email });
-  const budgetCapCents = Math.min(
-    Number(process.env.ICPFINDER_BUDGET_CAP_CENTS ?? DEFAULT_BUDGET_CAP_CENTS),
-    check.remainingCents
-  );
 
   const stream = sseStreamFromEvents(
     streamRun({
       finder,
       recorder: getRunRecorder(),
       rateLimiter: limiter,
+      monthlyBudget: mode === "operator" ? monthlyBudget : undefined,
       clientIpHash,
+      mode,
       input: {
         seed: body.seed,
-        archetypeLimit: clampInt(body.archetypeLimit, 1, 5, 3),
-        candidatesPerArchetype: clampInt(body.candidatesPerArchetype, 1, 10, 5),
+        archetypeLimit,
+        candidatesPerArchetype,
         grounding: body.grounding === true,
         budgetCapCents,
         signal: request.signal,
@@ -95,6 +154,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       "cache-control": "no-cache, no-transform",
       connection: "keep-alive",
       "x-accel-buffering": "no",
+      "x-icpfinder-mode": mode,
     },
   });
 }

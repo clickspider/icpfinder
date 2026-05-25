@@ -3,7 +3,7 @@
 "use client";
 
 import type { Archetype, Candidate, FindEvent } from "@icpfinder/core";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface RunState {
   status: "idle" | "running" | "done" | "error";
@@ -20,6 +20,9 @@ const initialState: RunState = {
   totalCostCents: 0,
   errors: [],
 };
+
+const GEMINI_LS_KEY = "icpfinder:geminiApiKey";
+const HUNTER_LS_KEY = "icpfinder:hunterApiKey";
 
 const parseSseChunk = (raw: string): FindEvent[] => {
   const events: FindEvent[] = [];
@@ -39,7 +42,34 @@ const parseSseChunk = (raw: string): FindEvent[] => {
 export default function Page() {
   const [seed, setSeed] = useState("");
   const [state, setState] = useState<RunState>(initialState);
+  const [showKeys, setShowKeys] = useState(false);
+  const [geminiKey, setGeminiKey] = useState("");
+  const [hunterKey, setHunterKey] = useState("");
   const abortRef = useRef<AbortController | null>(null);
+
+  // Hydrate BYOK keys from localStorage (browser-only).
+  useEffect(() => {
+    try {
+      const g = window.localStorage.getItem(GEMINI_LS_KEY) ?? "";
+      const h = window.localStorage.getItem(HUNTER_LS_KEY) ?? "";
+      setGeminiKey(g);
+      setHunterKey(h);
+      if (g || h) setShowKeys(true);
+    } catch {
+      // localStorage may be disabled (private mode); silently ignore.
+    }
+  }, []);
+
+  const persistKeys = useCallback((gemini: string, hunter: string) => {
+    try {
+      if (gemini) window.localStorage.setItem(GEMINI_LS_KEY, gemini);
+      else window.localStorage.removeItem(GEMINI_LS_KEY);
+      if (hunter) window.localStorage.setItem(HUNTER_LS_KEY, hunter);
+      else window.localStorage.removeItem(HUNTER_LS_KEY);
+    } catch {
+      // Ignore; keys still work for the current run via state.
+    }
+  }, []);
 
   const applyEvent = useCallback((event: FindEvent) => {
     setState((prev) => {
@@ -75,13 +105,20 @@ export default function Page() {
     const controller = new AbortController();
     abortRef.current = controller;
 
+    persistKeys(geminiKey.trim(), hunterKey.trim());
     setState({ ...initialState, status: "running" });
+
+    const requestBody: Record<string, unknown> = { seed };
+    if (geminiKey.trim() && hunterKey.trim()) {
+      requestBody.geminiApiKey = geminiKey.trim();
+      requestBody.hunterApiKey = hunterKey.trim();
+    }
 
     try {
       const response = await fetch("/api/find", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ seed }),
+        body: JSON.stringify(requestBody),
         signal: controller.signal,
       });
       if (!response.ok || !response.body) {
@@ -113,7 +150,7 @@ export default function Page() {
         errors: [...prev.errors, err instanceof Error ? err.message : String(err)],
       }));
     }
-  }, [seed, applyEvent]);
+  }, [seed, geminiKey, hunterKey, applyEvent, persistKeys]);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
@@ -121,12 +158,15 @@ export default function Page() {
   }, []);
 
   const archetypeList = Array.from(state.archetypes.values());
+  const byok = Boolean(geminiKey.trim() && hunterKey.trim());
 
   return (
     <div className="container">
       <header className="hero">
         <h1>icpfinder</h1>
-        <p>Paste your product. Get three buyer archetypes and lookalike companies in 30 seconds.</p>
+        <p>
+          Paste your product. Stream buyer archetypes + verified contact emails. Open source, MIT.
+        </p>
       </header>
 
       <section className="form">
@@ -136,6 +176,7 @@ export default function Page() {
           onChange={(e) => setSeed(e.target.value)}
           disabled={state.status === "running"}
         />
+
         <div className="form-row">
           {state.status === "running" ? (
             <button type="button" onClick={stop}>
@@ -147,16 +188,66 @@ export default function Page() {
             </button>
           )}
           <span className="hint">
-            Runs in stub mode by default. Set GEMINI_API_KEY + HUNTER_API_KEY for live data.
+            {byok
+              ? "Using your keys (free, unlimited)."
+              : "Free demo: 1 archetype + 3 contacts. Add keys below for unlimited."}
           </span>
         </div>
+
+        <button type="button" className="link-button" onClick={() => setShowKeys((v) => !v)}>
+          {showKeys ? "Hide" : "Use my own API keys (free, unlimited)"}
+        </button>
+
+        {showKeys && (
+          <div className="byok">
+            <label>
+              <span>Gemini API key</span>
+              <input
+                type="password"
+                value={geminiKey}
+                onChange={(e) => setGeminiKey(e.target.value)}
+                placeholder="AIza..."
+                autoComplete="off"
+              />
+              <small>
+                <a
+                  href="https://aistudio.google.com/app/apikey"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Get a free key →
+                </a>
+              </small>
+            </label>
+            <label>
+              <span>Hunter.io API key</span>
+              <input
+                type="password"
+                value={hunterKey}
+                onChange={(e) => setHunterKey(e.target.value)}
+                placeholder="..."
+                autoComplete="off"
+              />
+              <small>
+                <a href="https://hunter.io/api-keys" target="_blank" rel="noopener noreferrer">
+                  Get a free key (25/mo) →
+                </a>
+              </small>
+            </label>
+            <small className="byok-disclaimer">
+              Keys stay in your browser (localStorage). Sent only with each request, never logged or
+              persisted server-side.
+            </small>
+          </div>
+        )}
       </section>
 
       {state.status !== "idle" && (
         <div className="status">
-          <span className="badge">status: {state.status}</span>
-          <span className="badge">archetypes: {archetypeList.length}</span>
-          <span className="badge">cost: {state.totalCostCents.toFixed(2)} ¢</span>
+          <span className="badge">{state.status}</span>
+          <span className="badge">{archetypeList.length} archetypes</span>
+          <span className="badge">{state.totalCostCents.toFixed(2)} ¢</span>
+          <span className="badge">{byok ? "byok" : "free demo"}</span>
         </div>
       )}
 
