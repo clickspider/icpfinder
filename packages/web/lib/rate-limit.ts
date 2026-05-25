@@ -102,11 +102,24 @@ export const hashClientIp = (ip: string, saltSource?: string): string => {
 let defaultLimiter: RateLimiter | null = null;
 
 export const getDefaultRateLimiter = (): RateLimiter => {
-  if (!defaultLimiter) {
-    defaultLimiter = new InMemoryRateLimiter({
-      dailyCapCents: Number(process.env.ICPFINDER_DAILY_CAP_CENTS ?? 500),
-      dailyRuns: Number(process.env.ICPFINDER_DAILY_RUNS ?? 20),
+  if (defaultLimiter) return defaultLimiter;
+  const dailyCapCents = Number(process.env.ICPFINDER_DAILY_CAP_CENTS ?? 500);
+  const dailyRuns = Number(process.env.ICPFINDER_DAILY_RUNS ?? 20);
+  const upstashUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (upstashUrl && upstashToken) {
+    // Lazy require to avoid pulling the module into Edge bundles that
+    // don't use Upstash.
+    const { UpstashRateLimiter } =
+      require("./upstash-rate-limit") as typeof import("./upstash-rate-limit");
+    defaultLimiter = new UpstashRateLimiter({
+      url: upstashUrl,
+      token: upstashToken,
+      dailyCapCents,
+      dailyRuns,
     });
+  } else {
+    defaultLimiter = new InMemoryRateLimiter({ dailyCapCents, dailyRuns });
   }
   return defaultLimiter;
 };
