@@ -3,7 +3,20 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", ".next/**"],
+      "env": [
+        "DATABASE_URL",
+        "DATABASE_URL_UNPOOLED",
+        "GEMINI_API_KEY",
+        "HUNTER_API_KEY",
+        "UPSTASH_REDIS_REST_URL",
+        "UPSTASH_REDIS_REST_TOKEN",
+        "ICPFINDER_BUDGET_CAP_CENTS",
+        "ICPFINDER_DAILY_CAP_CENTS",
+        "ICPFINDER_DAILY_RUNS",
+        "ICPFINDER_IP_SALT",
+        "NODE_ENV"
+      ]
     },
     "test": {
       "dependsOn": ["^build"]
