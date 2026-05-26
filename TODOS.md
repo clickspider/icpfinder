@@ -70,6 +70,12 @@ If one archetype fails mid-stream (Hunter timeout, provider 429), show a coral X
 
 Auto-attach a preview URL badge to PR body via the existing `/ship` flow.
 
+### Live recorded run in hero / Integration
+**Priority:** P2
+
+When stars > 0 and we have a deployed production endpoint, record a real `/api/find` SSE stream against a public seed (e.g. "AI invoicing for indie SaaS") and commit the JSON to `packages/web/public/demo-run.json`. Render it as an animated playback alongside `CodePreview` with a `recorded run · YYYY-MM-DD · seed: …` provenance label. Today the hero just shows the SDK code — once we have a real run on the books, the streaming output becomes the visual proof. Do NOT ship synthetic SSE replay with fake emails — provenance is the whole point.
+
 ## Completed
 
-- **T1–T10 design implementation** — Luminous Light + Dark tokens, fonts, FOUC bootstrap, `( · )` brand mark, favicon + OG, mode toggle, sticky nav, Hero B split + inline live demo, live GitHub+npm social proof strip, `/find` page with state matrix, a11y baseline, DESIGN.md + CLAUDE.md. **Completed:** v0.1 (2026-05-26).
+- **T1–T10 design implementation** — Luminous Light + Dark tokens, fonts, FOUC bootstrap, `( · )` brand mark, favicon + OG, mode toggle, sticky nav, Hero B split, live GitHub+npm social proof strip, `/find` page with state matrix, a11y baseline, DESIGN.md + CLAUDE.md. **Completed:** v0.1 (2026-05-26).
+- **L1–L8 landing redesign** — Dropped marketing-chrome badge pill. Added `NpmInstallLine` with clipboard copy. Replaced fake `DemoCard` with hand-tokenized RSC `CodePreview` showing real `IcpFinder` + `@icpfinder/providers` usage (vitest gate pins snippet to API). Added `Integration` + `FinalCta` sections below hero (3 screens total: Hero → Integration → FinalCta). Footer carries `MIT · v0.1 · PRs welcome` + roadmap link. **Completed:** v0.1 (2026-05-26).

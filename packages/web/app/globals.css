@@ -192,6 +192,24 @@ html[data-mode="dark"] {
     font-variant-numeric: tabular-nums;
   }
 
+  .token-keyword {
+    color: var(--iris-deep);
+    font-weight: 600;
+  }
+  .token-string {
+    color: var(--mint-deep);
+  }
+  .token-comment {
+    color: var(--text-dim);
+    font-style: italic;
+  }
+  .token-type {
+    color: var(--coral);
+  }
+  .token-builtin {
+    color: var(--text-muted);
+  }
+
   @keyframes icp-pulse {
     0%,
     100% {

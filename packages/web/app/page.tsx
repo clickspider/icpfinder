@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-import { Hero } from "../components/marketing/Hero";
-import { Nav } from "../components/marketing/Nav";
+import { FinalCta } from "../components/marketing/FinalCta";
 import { Footer } from "../components/marketing/Footer";
+import { Hero } from "../components/marketing/Hero";
+import { Integration } from "../components/marketing/Integration";
+import { Nav } from "../components/marketing/Nav";
 
 export default function MarketingLanding() {
   return (
@@ -16,6 +18,8 @@ export default function MarketingLanding() {
       <Nav />
       <main id="main">
         <Hero />
+        <Integration />
+        <FinalCta />
       </main>
       <Footer />
     </>

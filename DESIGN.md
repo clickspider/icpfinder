@@ -117,10 +117,14 @@ Implemented in `packages/web/components/brand/Logo.tsx`. SVG viewBox 64×64. Str
 | `Wordmark` | `components/brand/Wordmark.tsx` | Logo + "icpfinder" |
 | `ModeToggle` | `components/brand/ModeToggle.tsx` | Light / dark / system cycle, persists in `localStorage` |
 | `Nav` | `components/marketing/Nav.tsx` | Sticky nav with brand, links, mode toggle, Try-it-free pill |
-| `Hero` | `components/marketing/Hero.tsx` | Hero B split: copy + CTAs + features + inline live-demo card |
-| `DemoCard` | `components/marketing/DemoCard.tsx` | Static mock demo card for the hero |
-| `SocialProofStrip` | `components/marketing/SocialProofStrip.tsx` | Live GH stars + npm dl + MIT + v0.1 (RSC, fetched server-side) |
-| `Footer` | `components/marketing/Footer.tsx` | Wrapped wordmark + links |
+| `Hero` | `components/marketing/Hero.tsx` | Hero B split: copy + npm install line + CTAs + features + `CodePreview` on the right |
+| `NpmInstallLine` | `components/marketing/NpmInstallLine.tsx` | `$ npm i …` line with clipboard copy button (client component for clipboard only) |
+| `CodePreview` | `components/marketing/CodePreview.tsx` | Hand-tokenized TypeScript snippet, RSC, zero client JS for the highlight. Snippet pinned to real `IcpFinder` API via vitest gate (`__tests__/code-preview-snippet.test.ts`). |
+| `CopyCodeButton` | `components/marketing/CopyCodeButton.tsx` | Clipboard button used by `CodePreview` (the only client JS in the code block) |
+| `Integration` | `components/marketing/Integration.tsx` | Section below hero — heading + sub + `CodePreview` |
+| `FinalCta` | `components/marketing/FinalCta.tsx` | Bottom CTA strip — single sentence, two buttons, hairline top border |
+| `SocialProofStrip` | `components/marketing/SocialProofStrip.tsx` | Live GH stars + npm dl + MIT + v0.1 (RSC, fetched server-side). Hides on zero — no fake counts |
+| `Footer` | `components/marketing/Footer.tsx` | Wrapped wordmark + MIT/v0.1/PRs-welcome + roadmap link |
 | `ArchetypeCard` | `components/product/ArchetypeCard.tsx` | Streaming archetype card used on `/find` |
 | `RunProgress` | `components/product/RunProgress.tsx` | Gradient progress bar with `role=progressbar` |
 | `RunHeader` | `components/product/RunHeader.tsx` | Run ID, pulse, elapsed, cost, BYOK badge |
@@ -128,7 +132,7 @@ Implemented in `packages/web/components/brand/Logo.tsx`. SVG viewBox 64×64. Str
 
 ## Pages
 
-- **`app/page.tsx`** — marketing landing (Nav + Hero + Footer).
+- **`app/page.tsx`** — marketing landing (Nav + Hero + Integration + FinalCta + Footer). No fake testimonials. No press strip. No icon-grid feature cards. Code preview is the proof.
 - **`app/find/page.tsx`** — product run UI (Nav + RunHeader + input + progress + ArchetypeCard grid + Footer).
 - **`app/icon.tsx`** — Next dynamic favicon (32×32 PNG via `ImageResponse`).
 - **`app/opengraph-image.tsx`** — OG card (1200×630, brand mark + gradient headline + meta strip).
@@ -160,6 +164,8 @@ Implemented in `packages/web/components/brand/Logo.tsx`. SVG viewBox 64×64. Str
 | No emoji in marketing copy | Use → ✓ • ★ Unicode glyphs sparingly |
 | No 3-col SaaS feature grid with icon circles | Use horizontal text strip with pulse dots |
 | No decorative floating SVG shapes | Aurora only |
+| No fabricated demo data passed off as a live run | If the hero shows code, it must be runnable; the snippet is pinned to the real API via vitest gate. Static mock demo cards with invented contacts are not shipped. |
+| No "0 users today" performative honesty section | Absence speaks. `SocialProofStrip` hides on zero; footer carries `MIT · v0.1 · PRs welcome` + roadmap link. |
 
 ## Cost display
 
