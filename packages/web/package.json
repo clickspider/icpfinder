@@ -18,9 +18,12 @@
     "@icpfinder/core": "workspace:*",
     "@icpfinder/providers": "workspace:*",
     "@prisma/client": "^5.22.0",
+    "@tailwindcss/postcss": "^4.3.0",
     "next": "^15.0.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^4",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
