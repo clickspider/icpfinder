@@ -43,7 +43,7 @@ export default function FindPage() {
 
       <main
         id="main"
-        className="mx-auto grid max-w-[1240px] gap-6 px-5 pb-16 pt-8 sm:px-6 md:px-12 md:pt-12 lg:px-[72px]"
+        className="mx-auto grid w-full max-w-[1240px] flex-1 gap-6 px-5 pb-16 pt-8 sm:px-6 md:px-12 md:pt-12 lg:px-[72px]"
       >
         <header>
           <h1 className="text-[28px] font-semibold tracking-[-0.025em] text-[color:var(--text)] md:text-[36px]">

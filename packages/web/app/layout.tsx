@@ -26,7 +26,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           dangerouslySetInnerHTML={{ __html: modeBootstrap }}
         />
       </head>
-      <body>{children}</body>
+      <body className="flex min-h-screen flex-col">{children}</body>
     </html>
   );
 }

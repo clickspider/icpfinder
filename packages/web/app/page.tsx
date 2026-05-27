@@ -14,7 +14,7 @@ export default function MarketingLanding() {
         Skip to main content
       </a>
       <Nav />
-      <main id="main">
+      <main id="main" className="flex flex-1 flex-col justify-center">
         <Hero />
       </main>
       <Footer />

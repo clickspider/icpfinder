@@ -15,22 +15,10 @@ export function Nav() {
 
         <div className="hidden gap-7 md:flex">
           <a
-            href="https://github.com/clickspider/icpfinder#readme"
+            href="/roadmap"
             className="text-sm text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--text)]"
           >
-            docs
-          </a>
-          <a
-            href="https://github.com/clickspider/icpfinder/tree/main/examples"
-            className="text-sm text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--text)]"
-          >
-            examples
-          </a>
-          <a
-            href="https://github.com/clickspider/icpfinder#self-hosting"
-            className="text-sm text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--text)]"
-          >
-            self-host
+            roadmap
           </a>
           <a
             href="https://github.com/clickspider/icpfinder"
