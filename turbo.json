@@ -9,6 +9,12 @@
       "dependsOn": ["@icpfinder/providers#build"],
       "outputs": ["dist/**"]
     },
+    "@icpfinder/core#typecheck": {
+      "dependsOn": ["@icpfinder/providers#build"]
+    },
+    "@icpfinder/core#test": {
+      "dependsOn": ["@icpfinder/providers#build"]
+    },
     "@icpfinder/web#build": {
       "dependsOn": ["@icpfinder/core#build", "@icpfinder/providers#build"],
       "outputs": [".next/**"],

@@ -18,7 +18,8 @@
     "demo": "bun run scripts/demo.ts",
     "changeset": "changeset",
     "version-packages": "changeset version && bun install --lockfile-only",
-    "release": "turbo run build --filter=@icpfinder/core --filter=@icpfinder/providers && changeset publish"
+    "prepublish:strip-workspace": "bun run scripts/strip-workspace-protocol.ts",
+    "release": "turbo run build --filter=@icpfinder/core --filter=@icpfinder/providers && bun run prepublish:strip-workspace && changeset publish"
   },
   "dependencies": {
     "@icpfinder/core": "workspace:*",
