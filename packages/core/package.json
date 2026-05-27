@@ -4,39 +4,21 @@
   "description": "Core ICP discovery engine — archetype generation, candidate enrichment, streaming results.",
   "license": "MIT",
   "type": "module",
-  "main": "./dist/index.cjs",
+  "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./types": {
-      "import": {
-        "types": "./dist/types.d.ts",
-        "default": "./dist/types.js"
-      },
-      "require": {
-        "types": "./dist/types.d.cts",
-        "default": "./dist/types.cjs"
-      }
+      "types": "./dist/types.d.ts",
+      "default": "./dist/types.js"
     },
     "./safe-fetch": {
-      "import": {
-        "types": "./dist/safe-fetch.d.ts",
-        "default": "./dist/safe-fetch.js"
-      },
-      "require": {
-        "types": "./dist/safe-fetch.d.cts",
-        "default": "./dist/safe-fetch.cjs"
-      }
+      "types": "./dist/safe-fetch.d.ts",
+      "default": "./dist/safe-fetch.js"
     }
   },
   "files": ["dist", "README.md", "LICENSE"],

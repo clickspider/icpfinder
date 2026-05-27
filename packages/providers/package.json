@@ -4,49 +4,25 @@
   "description": "Swappable EmailProvider + LlmProvider implementations for icpfinder.",
   "license": "MIT",
   "type": "module",
-  "main": "./dist/index.cjs",
+  "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./hunter": {
-      "import": {
-        "types": "./dist/hunter.d.ts",
-        "default": "./dist/hunter.js"
-      },
-      "require": {
-        "types": "./dist/hunter.d.cts",
-        "default": "./dist/hunter.cjs"
-      }
+      "types": "./dist/hunter.d.ts",
+      "default": "./dist/hunter.js"
     },
     "./gemini": {
-      "import": {
-        "types": "./dist/gemini.d.ts",
-        "default": "./dist/gemini.js"
-      },
-      "require": {
-        "types": "./dist/gemini.d.cts",
-        "default": "./dist/gemini.cjs"
-      }
+      "types": "./dist/gemini.d.ts",
+      "default": "./dist/gemini.js"
     },
     "./fake": {
-      "import": {
-        "types": "./dist/fake.d.ts",
-        "default": "./dist/fake.js"
-      },
-      "require": {
-        "types": "./dist/fake.d.cts",
-        "default": "./dist/fake.cjs"
-      }
+      "types": "./dist/fake.d.ts",
+      "default": "./dist/fake.js"
     }
   },
   "files": ["dist", "README.md", "LICENSE"],
