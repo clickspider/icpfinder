@@ -4,22 +4,31 @@ import { HeroChat } from "./HeroChat";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden pt-12 pb-20 md:pt-20 md:pb-28">
-      {/* Aurora glow — hero only. Bigger + more saturated than v0.1 to read as
-          the dominant brand atmosphere on first paint. */}
+    <section className="relative isolate flex flex-1 flex-col justify-center overflow-hidden pt-12 pb-20 md:pt-20 md:pb-28">
+      {/* Aurora glow — hero only. Full bleed across the section so it reads as
+          the dominant brand atmosphere on first paint. Strong multi-stop radial
+          field with extra saturation in dark mode (coral + mint + iris). */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 z-0 mx-auto"
+        className="pointer-events-none absolute inset-0 -z-10"
         style={{
-          maxWidth: "1600px",
-          height: "900px",
-          filter: "blur(90px)",
-          opacity: 0.85,
+          filter: "blur(110px)",
+          opacity: 1,
           background: [
-            "radial-gradient(ellipse 45% 55% at 25% 30%, var(--iris-glow), transparent 60%)",
-            "radial-gradient(ellipse 45% 55% at 75% 25%, var(--mint-glow), transparent 60%)",
-            "radial-gradient(ellipse 40% 45% at 50% 65%, var(--coral-glow), transparent 60%)",
+            "radial-gradient(ellipse 65% 70% at 15% 20%, var(--iris-glow), transparent 65%)",
+            "radial-gradient(ellipse 70% 70% at 85% 15%, var(--mint-glow), transparent 65%)",
+            "radial-gradient(ellipse 60% 65% at 80% 85%, var(--coral-glow), transparent 65%)",
+            "radial-gradient(ellipse 55% 60% at 20% 90%, var(--mint-glow), transparent 65%)",
+            "radial-gradient(ellipse 80% 55% at 50% 50%, var(--iris-glow), transparent 70%)",
           ].join(", "),
+        }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(ellipse 60% 50% at 50% 0%, color-mix(in srgb, var(--bg) 0%, transparent), transparent 70%), linear-gradient(180deg, transparent 60%, color-mix(in srgb, var(--bg) 80%, transparent) 100%)",
         }}
       />
 

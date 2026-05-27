@@ -2,15 +2,16 @@
 
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { classifySeed, shortUrlLabel } from "../../lib/seed-input";
 import { useIcpRun } from "../../lib/use-icp-run";
 import { ArchetypeCard } from "../product/ArchetypeCard";
 import { RunProgress } from "../product/RunProgress";
 
 const EXAMPLES = [
   "AI invoicing tool for indie SaaS founders",
+  "linear.app",
   "DevTools for solo founders shipping their first app",
-  "ICP finder for OSS maintainers looking for sponsors",
 ];
 
 export function HeroChat() {
@@ -31,6 +32,8 @@ export function HeroChat() {
   };
 
   const hasActivity = state.status !== "idle";
+  const classified = useMemo(() => classifySeed(seed), [seed]);
+  const isUrl = classified.kind === "url";
 
   return (
     <div className="relative mx-auto w-full max-w-[860px]">
@@ -62,12 +65,25 @@ export function HeroChat() {
                 onSubmit();
               }
             }}
-            placeholder="Paste your product idea…"
+            placeholder="Paste your product idea, or a website URL…"
             disabled={state.status === "running"}
             rows={3}
             aria-describedby="hero-seed-examples"
-            className="w-full resize-none rounded-[24px] bg-transparent px-5 py-5 text-[17px] leading-[1.45] text-[color:var(--text)] outline-none placeholder:text-[color:var(--text-dim)] disabled:opacity-60 md:px-6 md:py-6 md:text-[18px]"
+            className="w-full resize-none rounded-[24px] bg-transparent px-5 pt-5 pb-16 text-[17px] leading-[1.45] text-[color:var(--text)] outline-none placeholder:text-[color:var(--text-dim)] disabled:opacity-60 md:px-6 md:pt-6 md:pb-16 md:text-[18px]"
           />
+
+          {/* URL badge — bottom-left, when input looks like a URL */}
+          {isUrl ? (
+            <div className="pointer-events-none absolute bottom-3 left-3 md:bottom-4 md:left-4">
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--mint-deep)] bg-[color:var(--bg-card-hi)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-[color:var(--mint-deep)]"
+                aria-label={`Will scan ${shortUrlLabel(seed)}`}
+              >
+                <span aria-hidden="true">↳</span>
+                scan {shortUrlLabel(seed)}
+              </span>
+            </div>
+          ) : null}
 
           {/* Submit / Stop button — top-right corner inside the input */}
           <div className="absolute bottom-3 right-3 md:bottom-4 md:right-4">

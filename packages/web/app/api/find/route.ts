@@ -7,12 +7,15 @@ import { getRunRecorder } from "@/lib/prisma";
 import { buildProviders } from "@/lib/providers";
 import { getDefaultRateLimiter, hashClientIp } from "@/lib/rate-limit";
 import { streamRun } from "@/lib/run-stream";
+import { scanUrl } from "@/lib/scan-url";
+import { classifySeed } from "@/lib/seed-input";
 import { sseStreamFromEvents } from "@/lib/sse";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const MAX_SEED_LENGTH = 2_000;
+const MAX_SEED_LENGTH = 8_000;
+const MAX_RAW_SEED_LENGTH = 2_000;
 const DEFAULT_BUDGET_CAP_CENTS = 100;
 const FREE_TIER_ARCHETYPE_LIMIT = 1;
 const FREE_TIER_CANDIDATES_PER_ARCHETYPE = 3;
@@ -58,8 +61,27 @@ export async function POST(request: NextRequest): Promise<Response> {
   if (typeof body.seed !== "string" || !body.seed.trim()) {
     return NextResponse.json({ error: "seed is required" }, { status: 400 });
   }
-  if (body.seed.length > MAX_SEED_LENGTH) {
-    return NextResponse.json({ error: `seed exceeds ${MAX_SEED_LENGTH} chars` }, { status: 400 });
+  if (body.seed.length > MAX_RAW_SEED_LENGTH) {
+    return NextResponse.json(
+      { error: `seed exceeds ${MAX_RAW_SEED_LENGTH} chars` },
+      { status: 400 },
+    );
+  }
+
+  // URL detection: if the user pasted a single URL token, scan the page and
+  // prepend the extracted product context to the seed before handing to the
+  // LLM. On scan failure, fall back to the raw URL string so the LLM at least
+  // has the domain to reason about.
+  const classified = classifySeed(body.seed);
+  let effectiveSeed = body.seed.trim();
+  if (classified.kind === "url" && classified.url) {
+    const scanned = await scanUrl(classified.url);
+    if (scanned.seed && scanned.seed.length > 0) {
+      effectiveSeed = scanned.seed;
+    }
+  }
+  if (effectiveSeed.length > MAX_SEED_LENGTH) {
+    effectiveSeed = effectiveSeed.slice(0, MAX_SEED_LENGTH);
   }
 
   const { llm, email, mode } = buildProviders({
@@ -138,7 +160,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       clientIpHash,
       mode,
       input: {
-        seed: body.seed,
+        seed: effectiveSeed,
         archetypeLimit,
         candidatesPerArchetype,
         grounding: body.grounding === true,

@@ -2,13 +2,14 @@
 
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Footer } from "../../components/marketing/Footer";
 import { Nav } from "../../components/marketing/Nav";
 import { ArchetypeCard } from "../../components/product/ArchetypeCard";
 import { EmptyState } from "../../components/product/EmptyState";
 import { RunHeader } from "../../components/product/RunHeader";
 import { RunProgress } from "../../components/product/RunProgress";
+import { classifySeed, shortUrlLabel } from "../../lib/seed-input";
 import { useIcpRun } from "../../lib/use-icp-run";
 
 export default function FindPage() {
@@ -30,6 +31,8 @@ export default function FindPage() {
   const expectedTotal = 3;
   const doneCount =
     state.status === "done" ? archetypeList.length : Math.max(0, archetypeList.length - 1);
+  const classified = useMemo(() => classifySeed(seed), [seed]);
+  const isUrl = classified.kind === "url";
 
   return (
     <>
@@ -85,12 +88,23 @@ export default function FindPage() {
           <textarea
             id="seed-input"
             value={seed}
-            placeholder="Describe your product or idea — one sentence is fine."
+            placeholder="Describe your product or paste a website URL — one sentence is fine."
             onChange={(e) => setSeed(e.target.value)}
             disabled={state.status === "running"}
             className="min-h-[112px] resize-y rounded-[14px] border border-[color:var(--hairline-2)] bg-[color:var(--bg-elev)] p-3.5 text-[16px] text-[color:var(--text)] outline-none placeholder:text-[color:var(--text-dim)] focus-visible:border-[color:var(--mint-deep)] focus-visible:shadow-[0_0_0_4px_var(--mint-glow)] disabled:opacity-60"
             aria-describedby="seed-hint"
           />
+          {isUrl ? (
+            <div className="-mt-2 flex">
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--mint-deep)] bg-[color:var(--bg-card-hi)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-[color:var(--mint-deep)]"
+                aria-label={`Will scan ${shortUrlLabel(seed)}`}
+              >
+                <span aria-hidden="true">↳</span>
+                scan {shortUrlLabel(seed)}
+              </span>
+            </div>
+          ) : null}
 
           <div className="flex flex-wrap items-center gap-3">
             {state.status === "running" ? (
