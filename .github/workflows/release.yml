@@ -6,6 +6,8 @@ on:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
+# id-token: write is required for npm Trusted Publishing (OIDC) + provenance.
+# contents/pull-requests: write let changesets/action open the "Version Packages" PR.
 permissions:
   contents: write
   pull-requests: write
@@ -21,6 +23,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Node 22 + npm 11.5+ is required for OIDC Trusted Publishing.
+      # setup-node also writes ~/.npmrc with registry-url, which npm publish reads.
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Upgrade npm to latest (>=11.5 needed for OIDC)
+        run: npm install -g npm@latest
+
+      # Bun is used for install + scripts. Changesets shells out to `npm publish`
+      # for the actual publish step, which is what picks up the OIDC token.
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -38,6 +53,9 @@ jobs:
       - name: Build publishable packages
         run: bunx turbo run build --filter=@icpfinder/core --filter=@icpfinder/providers
 
+      # No NPM_TOKEN — Trusted Publishing exchanges the GitHub OIDC token for
+      # a short-lived npm publish token at publish time. NPM_CONFIG_PROVENANCE
+      # is still required so the resulting tarball ships a provenance attestation.
       - name: Create release PR or publish
         uses: changesets/action@v1
         with:
@@ -47,5 +65,4 @@ jobs:
           title: "chore: version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
