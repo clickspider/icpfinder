@@ -1,6 +1,6 @@
 {
   "name": "@icpfinder/providers",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Swappable EmailProvider + LlmProvider implementations for icpfinder.",
   "license": "MIT",
   "type": "module",
@@ -25,7 +25,11 @@
       "default": "./dist/fake.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "sideEffects": false,
   "publishConfig": {
     "access": "public",
@@ -40,7 +44,13 @@
   "bugs": {
     "url": "https://github.com/clickspider/icpfinder/issues"
   },
-  "keywords": ["icpfinder", "gemini", "hunter", "llm-provider", "email-provider"],
+  "keywords": [
+    "icpfinder",
+    "gemini",
+    "hunter",
+    "llm-provider",
+    "email-provider"
+  ],
   "scripts": {
     "dev": "tsup --watch",
     "test": "vitest run",

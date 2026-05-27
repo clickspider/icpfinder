@@ -1,6 +1,6 @@
 {
   "name": "@icpfinder/core",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Core ICP discovery engine — archetype generation, candidate enrichment, streaming results.",
   "license": "MIT",
   "type": "module",
@@ -21,7 +21,11 @@
       "default": "./dist/safe-fetch.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "sideEffects": false,
   "publishConfig": {
     "access": "public",
@@ -36,7 +40,14 @@
   "bugs": {
     "url": "https://github.com/clickspider/icpfinder/issues"
   },
-  "keywords": ["icp", "customer-discovery", "openai", "gemini", "streaming", "b2b"],
+  "keywords": [
+    "icp",
+    "customer-discovery",
+    "openai",
+    "gemini",
+    "streaming",
+    "b2b"
+  ],
   "scripts": {
     "dev": "tsup --watch",
     "test": "vitest run",

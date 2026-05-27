@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "icpfinder",
@@ -20,7 +19,7 @@
     },
     "packages/core": {
       "name": "@icpfinder/core",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@icpfinder/providers": "workspace:*",
       },
@@ -33,7 +32,7 @@
     },
     "packages/providers": {
       "name": "@icpfinder/providers",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "p-limit": "^6.2.0",
       },
