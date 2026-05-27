@@ -70,6 +70,11 @@ If one archetype fails mid-stream (Hunter timeout, provider 429), show a coral X
 
 Auto-attach a preview URL badge to PR body via the existing `/ship` flow.
 
+### Live social proof strip (GitHub stars + npm downloads)
+**Priority:** P3
+
+Hero used to render a `SocialProofStrip` RSC that fetched GitHub stargazers + npm weekly downloads and hid when both were 0. Removed in the M1 minimal-hero redesign because hero is now the live demo, not a credibility list. When stars > 50 OR npm weekly > 100 (real signal), reintroduce a thin strip somewhere visible (footer or below the chat input). Rebuild the `/api/social-proof` RSC endpoint with the existing `revalidate: 3600` SWR pattern from git history.
+
 ### Live recorded run in hero / Integration
 **Priority:** P2
 

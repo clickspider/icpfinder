@@ -123,8 +123,7 @@ Implemented in `packages/web/components/brand/Logo.tsx`. SVG viewBox 64×64. Str
 | `CopyCodeButton` | `components/marketing/CopyCodeButton.tsx` | Clipboard button used by `CodePreview` (the only client JS in the code block) |
 | `Integration` | `components/marketing/Integration.tsx` | Section below hero — heading + sub + `CodePreview` |
 | `FinalCta` | `components/marketing/FinalCta.tsx` | Bottom CTA strip — single sentence, two buttons, hairline top border |
-| `SocialProofStrip` | `components/marketing/SocialProofStrip.tsx` | Live GH stars + npm dl + MIT + v0.1 (RSC, fetched server-side). Hides on zero — no fake counts |
-| `Footer` | `components/marketing/Footer.tsx` | Wrapped wordmark + MIT/v0.1/PRs-welcome + roadmap link |
+| `Footer` | `components/marketing/Footer.tsx` | Wordmark + github / npm / issues / roadmap links |
 | `ArchetypeCard` | `components/product/ArchetypeCard.tsx` | Streaming archetype card used on `/find` |
 | `RunProgress` | `components/product/RunProgress.tsx` | Gradient progress bar with `role=progressbar` |
 | `RunHeader` | `components/product/RunHeader.tsx` | Run ID, pulse, elapsed, cost, BYOK badge |
@@ -136,7 +135,6 @@ Implemented in `packages/web/components/brand/Logo.tsx`. SVG viewBox 64×64. Str
 - **`app/find/page.tsx`** — product run UI (Nav + RunHeader + input + progress + ArchetypeCard grid + Footer).
 - **`app/icon.tsx`** — Next dynamic favicon (32×32 PNG via `ImageResponse`).
 - **`app/opengraph-image.tsx`** — OG card (1200×630, brand mark + gradient headline + meta strip).
-- **`app/api/social-proof/route.ts`** — GitHub + npm fetch endpoint, `revalidate: 3600`.
 
 ## A11y baseline
 
