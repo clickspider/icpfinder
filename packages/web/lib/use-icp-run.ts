@@ -195,11 +195,6 @@ export function useIcpRun() {
     setState((prev) => ({ ...prev, status: "done", finishedAt: Date.now() }));
   }, []);
 
-  const reset = useCallback(() => {
-    abortRef.current?.abort();
-    setState(initialState);
-  }, []);
-
   const archetypeList = useMemo(() => Array.from(state.archetypes.values()), [state.archetypes]);
   const byok = Boolean(geminiKey.trim() && hunterKey.trim());
   const elapsedMs = state.startedAt ? (state.finishedAt ?? now) - state.startedAt : 0;
@@ -215,6 +210,5 @@ export function useIcpRun() {
     setHunterKey,
     submit,
     stop,
-    reset,
   };
 }

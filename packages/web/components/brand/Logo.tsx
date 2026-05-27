@@ -2,8 +2,6 @@
 
 interface LogoProps {
   size?: number;
-  className?: string;
-  title?: string;
 }
 
 function strokeWidthFor(size: number): number {
@@ -24,21 +22,11 @@ function dotRadiusFor(size: number): number {
   return 8;
 }
 
-export function Logo({ size = 32, className, title }: LogoProps) {
+export function Logo({ size = 32 }: LogoProps) {
   const sw = strokeWidthFor(size);
   const dr = dotRadiusFor(size);
-  const isDecorative = !title;
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 64 64"
-      className={className}
-      aria-hidden={isDecorative}
-      role={isDecorative ? undefined : "img"}
-      aria-label={title}
-    >
-      {title ? <title>{title}</title> : null}
+    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
       <path
         d="M 18 14 Q 8 32 18 50"
         stroke="var(--mint-deep)"

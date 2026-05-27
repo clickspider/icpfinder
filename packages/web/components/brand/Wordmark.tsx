@@ -5,10 +5,9 @@ import { Logo } from "./Logo";
 interface WordmarkProps {
   size?: number;
   href?: string;
-  className?: string;
 }
 
-export function Wordmark({ size = 28, href, className }: WordmarkProps) {
+export function Wordmark({ size = 28, href }: WordmarkProps) {
   const content = (
     <>
       <Logo size={size} />
@@ -21,7 +20,7 @@ export function Wordmark({ size = 28, href, className }: WordmarkProps) {
     return (
       <a
         href={href}
-        className={`inline-flex items-center gap-3 text-[color:var(--text)] no-underline ${className ?? ""}`}
+        className="inline-flex items-center gap-3 text-[color:var(--text)] no-underline"
         aria-label="icpfinder home"
       >
         {content}
@@ -29,8 +28,6 @@ export function Wordmark({ size = 28, href, className }: WordmarkProps) {
     );
   }
   return (
-    <span className={`inline-flex items-center gap-3 text-[color:var(--text)] ${className ?? ""}`}>
-      {content}
-    </span>
+    <span className="inline-flex items-center gap-3 text-[color:var(--text)]">{content}</span>
   );
 }
