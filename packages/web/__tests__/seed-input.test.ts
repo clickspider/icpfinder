@@ -30,6 +30,18 @@ describe("classifySeed", () => {
     expect(classifySeed(".bar").kind).toBe("text");
   });
 
+  it("rejects literal IPv4 hosts (SSRF defense in depth)", () => {
+    expect(classifySeed("127.0.0.1").kind).toBe("text");
+    expect(classifySeed("192.168.1.1").kind).toBe("text");
+    expect(classifySeed("169.254.169.254").kind).toBe("text");
+    expect(classifySeed("http://10.0.0.5/admin").kind).toBe("text");
+  });
+
+  it("rejects bracketed IPv6 literals (SSRF defense in depth)", () => {
+    expect(classifySeed("[::1]").kind).toBe("text");
+    expect(classifySeed("http://[fe80::1]/").kind).toBe("text");
+  });
+
   it("trims and rejects empty", () => {
     expect(classifySeed("   ").kind).toBe("text");
     expect(classifySeed("   ").raw).toBe("");

@@ -60,7 +60,14 @@ export function HeroChat() {
             value={seed}
             onChange={(e) => setSeed(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
+              // Guard against IME composition: when CJK / accent IMEs commit
+              // a character with Enter the keydown still fires — submitting
+              // here would lose the in-flight composition.
+              if (
+                e.key === "Enter" &&
+                !e.shiftKey &&
+                !e.nativeEvent.isComposing
+              ) {
                 e.preventDefault();
                 onSubmit();
               }

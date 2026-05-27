@@ -7,6 +7,14 @@ const URL_PROTOCOL_RE = /^https?:\/\//i;
 const BARE_DOMAIN_RE =
   /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}(?:\/[^\s]*)?$/i;
 
+// Explicit numeric-host guards. The regex above happens to exclude pure
+// IPv4 because the trailing TLD requires letters, but inputs like
+// `192.168.1.app` (mixed) or `[::1]` literals would slip through into the
+// scanner. Reject anything that looks like a literal IP / bracketed IPv6
+// before classification — defense-in-depth alongside scan-url's SSRF guard.
+const IPV4_HOST_RE = /^(?:\d{1,3}\.){3}\d{1,3}(?::\d+)?(?:\/.*)?$/;
+const IPV6_BRACKET_RE = /^\[[0-9a-f:]+\](?::\d+)?(?:\/.*)?$/i;
+
 export type SeedKind = "text" | "url";
 
 export interface ClassifiedSeed {
@@ -35,10 +43,19 @@ export function classifySeed(raw: string): ClassifiedSeed {
   if (URL_PROTOCOL_RE.test(trimmed)) {
     try {
       const url = new URL(trimmed);
+      // Reject IP literals at the classify boundary — scan-url.ts also
+      // refuses them, but stopping here avoids a needless server round-trip.
+      if (IPV4_HOST_RE.test(url.host) || IPV6_BRACKET_RE.test(url.host)) {
+        return { kind: "text", raw: trimmed };
+      }
       return { kind: "url", raw: trimmed, url: url.toString() };
     } catch {
       return { kind: "text", raw: trimmed };
     }
+  }
+
+  if (IPV4_HOST_RE.test(trimmed) || IPV6_BRACKET_RE.test(trimmed)) {
+    return { kind: "text", raw: trimmed };
   }
 
   if (BARE_DOMAIN_RE.test(trimmed)) {

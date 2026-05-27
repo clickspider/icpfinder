@@ -68,21 +68,8 @@ export async function POST(request: NextRequest): Promise<Response> {
     );
   }
 
-  // URL detection: if the user pasted a single URL token, scan the page and
-  // prepend the extracted product context to the seed before handing to the
-  // LLM. On scan failure, fall back to the raw URL string so the LLM at least
-  // has the domain to reason about.
   const classified = classifySeed(body.seed);
   let effectiveSeed = body.seed.trim();
-  if (classified.kind === "url" && classified.url) {
-    const scanned = await scanUrl(classified.url);
-    if (scanned.seed && scanned.seed.length > 0) {
-      effectiveSeed = scanned.seed;
-    }
-  }
-  if (effectiveSeed.length > MAX_SEED_LENGTH) {
-    effectiveSeed = effectiveSeed.slice(0, MAX_SEED_LENGTH);
-  }
 
   const { llm, email, mode } = buildProviders({
     userGeminiKey: asString(body.geminiApiKey),
@@ -147,6 +134,20 @@ export async function POST(request: NextRequest): Promise<Response> {
       Number(process.env.ICPFINDER_BUDGET_CAP_CENTS ?? DEFAULT_BUDGET_CAP_CENTS),
       check.remainingCents
     );
+  }
+
+  // URL detection runs AFTER rate-limit reservation so anonymous attackers
+  // cannot use /api/find as an unrate-limited outbound-fetch primitive. Scan
+  // failure is non-fatal — fall back to the raw URL so the LLM still has the
+  // domain to reason about. SSRF-protected in scan-url.ts.
+  if (classified.kind === "url" && classified.url) {
+    const scanned = await scanUrl(classified.url);
+    if (scanned.seed && scanned.seed.length > 0) {
+      effectiveSeed = scanned.seed;
+    }
+  }
+  if (effectiveSeed.length > MAX_SEED_LENGTH) {
+    effectiveSeed = effectiveSeed.slice(0, MAX_SEED_LENGTH);
   }
 
   const finder = new IcpFinder({ llm, email });
