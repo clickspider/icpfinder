@@ -20,7 +20,7 @@
     },
     "packages/core": {
       "name": "@icpfinder/core",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@icpfinder/providers": "^0.2.0",
       },
@@ -33,7 +33,7 @@
     },
     "packages/providers": {
       "name": "@icpfinder/providers",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "p-limit": "^6.2.0",
       },
