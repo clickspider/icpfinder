@@ -9,6 +9,7 @@
     "packages/*"
   ],
   "scripts": {
+    "dev": "turbo run dev --concurrency=15",
     "build": "turbo run build",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",

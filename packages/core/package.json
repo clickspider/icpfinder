@@ -12,6 +12,7 @@
     "./safe-fetch": "./src/safe-fetch.ts"
   },
   "scripts": {
+    "dev": "tsc --noEmit --watch --preserveWatchOutput",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
