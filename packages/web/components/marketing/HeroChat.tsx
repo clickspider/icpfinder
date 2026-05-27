@@ -3,6 +3,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { formatCostCents } from "../../lib/format-cost";
 import { classifySeed, shortUrlLabel } from "../../lib/seed-input";
 import { useIcpRun } from "../../lib/use-icp-run";
 import { ArchetypeCard } from "../product/ArchetypeCard";
@@ -184,7 +185,7 @@ export function HeroChat() {
           </span>
           <span aria-hidden="true">·</span>
           <span className="text-[color:var(--coral)] font-semibold">
-            {state.totalCostCents.toFixed(2)}¢
+            {formatCostCents(state.totalCostCents)}
           </span>
           <span aria-hidden="true">·</span>
           <span>{byok ? "byok" : "free demo"}</span>

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+import { formatCostCents } from "../../lib/format-cost";
+
 interface RunHeaderProps {
   status: "idle" | "running" | "done" | "error";
   archetypeCount: number;
@@ -12,10 +14,6 @@ interface RunHeaderProps {
 function formatElapsed(ms: number): string {
   if (ms < 1000) return `${ms}ms`;
   return `${(ms / 1000).toFixed(1)}s`;
-}
-
-function formatCost(cents: number): string {
-  return `${cents.toFixed(2)}¢`;
 }
 
 export function RunHeader({
@@ -64,7 +62,7 @@ export function RunHeader({
         {archetypeCount} {archetypeCount === 1 ? "archetype" : "archetypes"}
       </span>
       <span aria-hidden="true">·</span>
-      <span className="text-[color:var(--coral)] font-bold">{formatCost(totalCostCents)}</span>
+      <span className="text-[color:var(--coral)] font-bold">{formatCostCents(totalCostCents)}</span>
       <span aria-hidden="true">·</span>
       <span>{byok ? "byok" : "free demo"}</span>
     </div>

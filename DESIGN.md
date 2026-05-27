@@ -167,7 +167,11 @@ Implemented in `packages/web/components/brand/Logo.tsx`. SVG viewBox 64×64. Str
 
 ## Cost display
 
-Format = **cents 2-decimal** everywhere. Examples: `0.04¢`, `1.23¢`. Never dollars 4-decimal.
+Format = **USD dollars, 2 decimals**, the same way a grocery receipt prints. Examples:
+`$0.00`, `$0.05`, `$1.05`, `$123.45`. Sub-cent amounts render as `<$0.01` so a real
+(but tiny) run doesn't look free. Never roll your own format — use
+`formatCostCents(cents)` from `lib/format-cost.ts`. Provider events stream raw
+cents (e.g. `0.13`, `105.05`); the formatter divides by 100 before display.
 
 ## Non-goals (v0.2+)
 

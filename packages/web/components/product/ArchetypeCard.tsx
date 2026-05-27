@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 import type { Archetype, Candidate } from "@icpfinder/core";
+import { formatCostCents } from "../../lib/format-cost";
 
 type Status = "streaming" | "done" | "failed";
 
@@ -10,11 +11,6 @@ interface ArchetypeCardProps {
   status: Status;
   index: number;
   costCents?: number;
-}
-
-function formatCost(cents: number): string {
-  if (cents <= 0) return "0.00¢";
-  return `${cents.toFixed(2)}¢`;
 }
 
 export function ArchetypeCard({ archetype, candidates, status, index, costCents }: ArchetypeCardProps) {
@@ -64,7 +60,7 @@ export function ArchetypeCard({ archetype, candidates, status, index, costCents 
           {typeof costCents === "number" ? (
             <>
               {" "}
-              · <span className="tabular">{formatCost(costCents)}</span>
+              · <span className="tabular">{formatCostCents(costCents)}</span>
             </>
           ) : null}
         </span>
