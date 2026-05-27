@@ -22,13 +22,66 @@ export interface CostUnit {
   endpoint: string;
 }
 
+export type ProviderErrorCode = "auth" | "rate_limit" | "quota" | "network";
+export type ProviderName = "gemini" | "hunter";
+
 /** Lifecycle errors all providers may throw. */
 export class ProviderAuthError extends Error {
   override name = "ProviderAuthError";
+  readonly code: ProviderErrorCode = "auth";
+  readonly provider: ProviderName;
+  constructor(message: string, provider: ProviderName) {
+    super(message);
+    this.provider = provider;
+  }
 }
 
 export class ProviderRateLimitError extends Error {
   override name = "ProviderRateLimitError";
+  readonly code: ProviderErrorCode = "rate_limit";
+  readonly provider: ProviderName;
+  constructor(message: string, provider: ProviderName) {
+    super(message);
+    this.provider = provider;
+  }
+}
+
+export class ProviderQuotaError extends Error {
+  override name = "ProviderQuotaError";
+  readonly code: ProviderErrorCode = "quota";
+  readonly provider: ProviderName;
+  constructor(message: string, provider: ProviderName) {
+    super(message);
+    this.provider = provider;
+  }
+}
+
+export class ProviderNetworkError extends Error {
+  override name = "ProviderNetworkError";
+  readonly code: ProviderErrorCode = "network";
+  readonly provider: ProviderName;
+  constructor(message: string, provider: ProviderName) {
+    super(message);
+    this.provider = provider;
+  }
+}
+
+const PROVIDER_ERROR_NAMES = new Set([
+  "ProviderAuthError",
+  "ProviderRateLimitError",
+  "ProviderQuotaError",
+  "ProviderNetworkError",
+]);
+
+export function isProviderError(
+  err: unknown
+): err is Error & { code: ProviderErrorCode; provider: ProviderName } {
+  return (
+    err instanceof Error &&
+    PROVIDER_ERROR_NAMES.has(err.name) &&
+    typeof (err as { code?: unknown }).code === "string" &&
+    typeof (err as { provider?: unknown }).provider === "string"
+  );
 }
 
 // ---------------------------------------------------------------------------

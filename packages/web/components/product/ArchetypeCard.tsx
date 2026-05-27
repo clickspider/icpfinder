@@ -13,12 +13,22 @@ interface ArchetypeCardProps {
   costCents?: number;
 }
 
-export function ArchetypeCard({ archetype, candidates, status, index, costCents }: ArchetypeCardProps) {
+export function ArchetypeCard({
+  archetype,
+  candidates,
+  status,
+  index,
+  costCents,
+}: ArchetypeCardProps) {
   const numLabel = String(index + 1).padStart(3, "0");
   const headingId = `archetype-${archetype.id}-heading`;
 
   const statusColor =
-    status === "streaming" ? "var(--coral)" : status === "failed" ? "var(--error)" : "var(--mint-deep)";
+    status === "streaming"
+      ? "var(--coral)"
+      : status === "failed"
+        ? "var(--error)"
+        : "var(--mint-deep)";
   const statusGlow =
     status === "streaming"
       ? "0 0 6px var(--coral-glow)"
@@ -41,7 +51,8 @@ export function ArchetypeCard({ archetype, candidates, status, index, costCents 
     >
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--hairline)] bg-[color:var(--bg-card-hi)] px-2.5 py-1 text-[11px] font-medium text-[color:var(--text-muted)]">
-          archetype <span className="font-bold text-[color:var(--mint-deep)] tabular">{numLabel}</span>
+          archetype{" "}
+          <span className="font-bold text-[color:var(--mint-deep)] tabular">{numLabel}</span>
         </span>
         <span
           className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em]"
@@ -53,7 +64,8 @@ export function ArchetypeCard({ archetype, candidates, status, index, costCents 
             style={{
               background: statusColor,
               boxShadow: statusGlow,
-              animation: status === "streaming" ? "icp-pulse 1100ms ease-in-out infinite" : undefined,
+              animation:
+                status === "streaming" ? "icp-pulse 1100ms ease-in-out infinite" : undefined,
             }}
           />
           {status}
@@ -99,9 +111,7 @@ export function ArchetypeCard({ archetype, candidates, status, index, costCents 
               key={c.id}
               className="rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--bg-card-hi)] px-2.5 py-2"
             >
-              <div className="font-semibold text-[color:var(--text)]">
-                {c.companyName}
-              </div>
+              <div className="font-semibold text-[color:var(--text)]">{c.companyName}</div>
               <div className="font-mono text-[12px] text-[color:var(--mint-deep)] break-all">
                 <span className="font-sans font-bold">→ </span>
                 {c.contactEmail ?? c.domain}

@@ -29,6 +29,9 @@ export function Footer() {
           <a href="/roadmap" className="hover:text-[color:var(--text)] transition-colors">
             roadmap
           </a>
+          <a href="/find#keys" className="hover:text-[color:var(--text)] transition-colors">
+            keys
+          </a>
         </div>
       </div>
     </footer>

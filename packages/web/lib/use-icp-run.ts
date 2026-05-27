@@ -6,17 +6,29 @@
 
 "use client";
 
-import type { Archetype, Candidate, FindEvent } from "@icpfinder/core";
+import type {
+  Archetype,
+  Candidate,
+  FindErrorCode,
+  FindErrorProvider,
+  FindEvent,
+} from "@icpfinder/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export type RunStatus = "idle" | "running" | "done" | "error";
+
+export interface RunError {
+  message: string;
+  code?: FindErrorCode;
+  provider?: FindErrorProvider;
+}
 
 export interface RunState {
   status: RunStatus;
   archetypes: Map<string, Archetype>;
   candidatesByArchetype: Map<string, Candidate[]>;
   totalCostCents: number;
-  errors: string[];
+  errors: RunError[];
   startedAt: number | null;
   finishedAt: number | null;
   runId: string | null;
@@ -61,6 +73,7 @@ export function useIcpRun() {
   const [hunterKey, setHunterKey] = useState("");
   const [now, setNow] = useState(() => Date.now());
   const abortRef = useRef<AbortController | null>(null);
+  const lastSeedRef = useRef<string>("");
 
   // Hydrate BYOK keys from localStorage on mount
   useEffect(() => {
@@ -111,7 +124,11 @@ export function useIcpRun() {
       } else if (event.type === "cost") {
         next.totalCostCents = prev.totalCostCents + event.cost.costCents;
       } else if (event.type === "error") {
-        next.errors.push(event.message);
+        next.errors.push({
+          message: event.message,
+          code: event.code,
+          provider: event.provider,
+        });
       } else if (event.type === "done") {
         next.status = "done";
         next.totalCostCents = event.totalCostCents || prev.totalCostCents;
@@ -128,6 +145,7 @@ export function useIcpRun() {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
+      lastSeedRef.current = trimmed;
 
       persistKeys(geminiKey.trim(), hunterKey.trim());
       setState({
@@ -152,11 +170,29 @@ export function useIcpRun() {
           signal: controller.signal,
         });
         if (!response.ok || !response.body) {
-          const message = await response.text().catch(() => `HTTP ${response.status}`);
+          const raw = await response.text().catch(() => "");
+          type ApiError = {
+            error?: string;
+            code?: FindErrorCode;
+            provider?: FindErrorProvider;
+          };
+          let parsed: ApiError | null = null;
+          if (raw) {
+            try {
+              parsed = JSON.parse(raw) as ApiError;
+            } catch {
+              // not JSON
+            }
+          }
+          const errorEntry: RunError = {
+            message: parsed?.error ?? raw ?? `HTTP ${response.status}`,
+            code: parsed?.code,
+            provider: parsed?.provider,
+          };
           setState((prev) => ({
             ...prev,
             status: "error",
-            errors: [...prev.errors, message],
+            errors: [...prev.errors, errorEntry],
             finishedAt: Date.now(),
           }));
           return;
@@ -179,16 +215,23 @@ export function useIcpRun() {
         }
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") return;
+        const message = err instanceof Error ? err.message : String(err);
         setState((prev) => ({
           ...prev,
           status: "error",
-          errors: [...prev.errors, err instanceof Error ? err.message : String(err)],
+          errors: [...prev.errors, { message, code: "network" }],
           finishedAt: Date.now(),
         }));
       }
     },
-    [geminiKey, hunterKey, applyEvent, persistKeys],
+    [geminiKey, hunterKey, applyEvent, persistKeys]
   );
+
+  const retry = useCallback(() => {
+    const seed = lastSeedRef.current;
+    if (!seed) return;
+    void submit(seed);
+  }, [submit]);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
@@ -198,6 +241,7 @@ export function useIcpRun() {
   const archetypeList = useMemo(() => Array.from(state.archetypes.values()), [state.archetypes]);
   const byok = Boolean(geminiKey.trim() && hunterKey.trim());
   const elapsedMs = state.startedAt ? (state.finishedAt ?? now) - state.startedAt : 0;
+  const canRetry = Boolean(lastSeedRef.current) && state.status !== "running";
 
   return {
     state,
@@ -209,6 +253,8 @@ export function useIcpRun() {
     setGeminiKey,
     setHunterKey,
     submit,
+    retry,
+    canRetry,
     stop,
   };
 }

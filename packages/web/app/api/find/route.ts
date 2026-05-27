@@ -6,10 +6,12 @@ import { getMonthlyBudget } from "@/lib/monthly-budget";
 import { getRunRecorder } from "@/lib/prisma";
 import { buildProviders } from "@/lib/providers";
 import { getDefaultRateLimiter, hashClientIp } from "@/lib/rate-limit";
+import { getCachedRun, setCachedRun } from "@/lib/run-cache";
 import { streamRun } from "@/lib/run-stream";
 import { scanUrl } from "@/lib/scan-url";
 import { classifySeed } from "@/lib/seed-input";
 import { sseStreamFromEvents } from "@/lib/sse";
+import { replayEvents, teeEvents } from "@/lib/tee-events";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -64,7 +66,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   if (body.seed.length > MAX_RAW_SEED_LENGTH) {
     return NextResponse.json(
       { error: `seed exceeds ${MAX_RAW_SEED_LENGTH} chars` },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -75,6 +77,25 @@ export async function POST(request: NextRequest): Promise<Response> {
     userGeminiKey: asString(body.geminiApiKey),
     userHunterKey: asString(body.hunterApiKey),
   });
+
+  // Operator-mode cache lookup. Skips entirely for BYOK (user data stays user-side)
+  // and for stub (no real data anyway).
+  if (mode === "operator") {
+    const cached = await getCachedRun(body.seed);
+    if (cached) {
+      const replayStream = sseStreamFromEvents(replayEvents(cached));
+      return new Response(replayStream, {
+        headers: {
+          "content-type": "text/event-stream; charset=utf-8",
+          "cache-control": "no-cache, no-transform",
+          connection: "keep-alive",
+          "x-accel-buffering": "no",
+          "x-icpfinder-mode": mode,
+          "x-icpfinder-cache": "hit",
+        },
+      });
+    }
+  }
 
   const clientIpHash = hashClientIp(getClientIp(request));
   const limiter = getDefaultRateLimiter();
@@ -101,6 +122,8 @@ export async function POST(request: NextRequest): Promise<Response> {
       return NextResponse.json(
         {
           error: "Daily free-tier limit reached. Add your own API keys for unlimited runs.",
+          code: "rate_limit",
+          provider: "gemini",
           mode,
           remainingRuns: check.remainingRuns,
           remainingCents: check.remainingCents,
@@ -111,8 +134,9 @@ export async function POST(request: NextRequest): Promise<Response> {
     if (mode === "operator" && !(await monthlyBudget.isAvailable())) {
       return NextResponse.json(
         {
-          error:
-            "Monthly free-tier budget exhausted. Add your own API keys to keep going — they stay in your browser and cost the operator $0.",
+          error: "Free demo is at capacity right now from previous requests.",
+          code: "quota",
+          provider: "gemini",
           mode,
         },
         { status: 402 }
@@ -152,24 +176,32 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   const finder = new IcpFinder({ llm, email });
 
-  const stream = sseStreamFromEvents(
-    streamRun({
-      finder,
-      recorder: getRunRecorder(),
-      rateLimiter: limiter,
-      monthlyBudget: mode === "operator" ? monthlyBudget : undefined,
-      clientIpHash,
-      mode,
-      input: {
-        seed: effectiveSeed,
-        archetypeLimit,
-        candidatesPerArchetype,
-        grounding: body.grounding === true,
-        budgetCapCents,
-        signal: request.signal,
-      },
-    })
-  );
+  const liveStream = streamRun({
+    finder,
+    recorder: getRunRecorder(),
+    rateLimiter: limiter,
+    monthlyBudget: mode === "operator" ? monthlyBudget : undefined,
+    clientIpHash,
+    mode,
+    input: {
+      seed: effectiveSeed,
+      archetypeLimit,
+      candidatesPerArchetype,
+      grounding: body.grounding === true,
+      budgetCapCents,
+      signal: request.signal,
+    },
+  });
+
+  // Operator runs are eligible for caching. Tee captures every event without
+  // adding latency; the cache write fires once the source iterator closes.
+  const eligibleForCache = mode === "operator";
+  const teed = eligibleForCache
+    ? teeEvents(liveStream, (all) => {
+        void setCachedRun(body.seed as string, all);
+      })
+    : liveStream;
+  const stream = sseStreamFromEvents(teed);
 
   return new Response(stream, {
     headers: {
@@ -178,6 +210,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       connection: "keep-alive",
       "x-accel-buffering": "no",
       "x-icpfinder-mode": mode,
+      "x-icpfinder-cache": eligibleForCache ? "miss" : "skip",
     },
   });
 }

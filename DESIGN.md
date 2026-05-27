@@ -125,9 +125,15 @@ Implemented in `packages/web/components/brand/Logo.tsx`. SVG viewBox 64×64. Str
 | `FinalCta` | `components/marketing/FinalCta.tsx` | Bottom CTA strip — single sentence, two buttons, hairline top border |
 | `Footer` | `components/marketing/Footer.tsx` | Wordmark + github / npm / issues / roadmap links |
 | `ArchetypeCard` | `components/product/ArchetypeCard.tsx` | Streaming archetype card used on `/find` |
+| `ArchetypeResultsGrid` | `components/product/ArchetypeResultsGrid.tsx` | Shared results grid + per-card status logic. Used by hero + `/find`. |
 | `RunProgress` | `components/product/RunProgress.tsx` | Gradient progress bar with `role=progressbar` |
 | `RunHeader` | `components/product/RunHeader.tsx` | Run ID, pulse, elapsed, cost, BYOK badge |
+| `RunErrorState` | `components/product/RunErrorState.tsx` | Typed-error banner (rate-limit / quota / auth / network). Pill CTAs for "Add keys" + "Try again". `role=alert`, `aria-live=polite`. Soft `--error` fill, `--radius-md`. |
+| `ByokPanel` | `components/product/ByokPanel.tsx` | Bring-your-own-key inputs (Gemini + Hunter). Controlled `open`. `id="keys"` for `/find#keys` deep-link. Auto-focuses Gemini input on open. |
+| `RunDoneCallouts` | `components/product/RunDoneCallouts.tsx` | Post-run CTA pills. Hero variant: "Run again on /find →" + "Add your keys for unlimited" (inline toggle or `/find#keys` fallback). |
 | `EmptyState` | `components/product/EmptyState.tsx` | First-time `/find` — how-it-works + 3 example chips |
+| `HeroSurface` | `components/marketing/HeroSurface.tsx` | Owns the shared `useIcpRun` hook; mounts `HeroChat` + `HeroDemoVideo`. Hides video when a real run starts (anti-slop rule). |
+| `HeroDemoVideo` | `components/marketing/HeroDemoVideo.tsx` | Hero proof video — `<figure>` with rounded-28 frame, autoplay muted loop. Reduced-motion: poster + native controls. Served from Vercel Blob. |
 
 ## Pages
 

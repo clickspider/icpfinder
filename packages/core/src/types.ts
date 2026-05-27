@@ -51,11 +51,20 @@ export interface Candidate {
  * guaranteed except that `archetype` events arrive before any
  * `candidate` referencing that archetype.
  */
+export type FindErrorCode = "auth" | "rate_limit" | "quota" | "network" | "unknown";
+export type FindErrorProvider = "gemini" | "hunter";
+
 export type FindEvent =
   | { type: "archetype"; archetype: Archetype }
   | { type: "candidate"; candidate: Candidate }
   | { type: "cost"; cost: CostUnit }
-  | { type: "error"; message: string; recoverable: boolean }
+  | {
+      type: "error";
+      message: string;
+      recoverable: boolean;
+      code?: FindErrorCode;
+      provider?: FindErrorProvider;
+    }
   | { type: "done"; totalCostCents: number };
 
 export interface FindInput {

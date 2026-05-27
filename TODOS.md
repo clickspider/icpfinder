@@ -65,6 +65,11 @@ If one archetype fails mid-stream (Hunter timeout, provider 429), show a coral X
 
 ## ops
 
+### Operator Gemini key rotation
+**Priority:** P2
+
+Operator mode runs against a single shared Gemini key and keeps hitting Google's free-tier rate limit. The KV run cache (shipped 2026-05-27) deduplicates repeat seeds but cold-cache traffic still funnels through one key. Add a small rotation pool: env var `GEMINI_API_KEYS` (comma-separated), round-robin per run, fail open to the next key when a request returns 429 with `RESOURCE_EXHAUSTED`. Skip when `mode === "byok"`. Bonus: surface aggregate cache hit-rate as a 1-pixel mint underline in `RunHeader`.
+
 ### Vercel preview deploy badge in README
 **Priority:** P4
 
@@ -82,6 +87,7 @@ When stars > 0 and we have a deployed production endpoint, record a real `/api/f
 
 ## Completed
 
+- **Production fix: typed errors + inline BYOK + KV run cache + hero video + DRY pass.** Production users hitting the homepage demo were seeing raw "Gemini rate limit exceeded after 3 retries" with no recovery path. Shipped: (1) typed provider errors (`ProviderAuth/RateLimit/Quota/NetworkError`) with `code` + `provider` propagated to the FindEvent, (2) `RunErrorState` shared component with friendly per-code copy + inline BYOK CTA, (3) `ByokPanel` extracted and mounted on hero + `/find` + reachable via `/find#keys` deep-link (footer adds a `keys` link), (4) `ArchetypeResultsGrid` + `RunDoneCallouts` extracted so HeroChat and `/find` no longer duplicate markup, (5) Vercel KV-backed operator-mode run cache (sha256(seed), 15-min TTL) — duplicate seeds replay instantly with zero Gemini calls, (6) Gemini retry tuning (3→5 retries, jittered exponential backoff, `RESOURCE_EXHAUSTED` classified as quota), (7) hero demo video uploaded to Vercel Blob (MP4 + WebM + poster, 1080px cap, autoplay muted loop, reduced-motion fallback) mounted below the chat input and gated on `state.status === "idle"` per anti-slop rule. **Completed:** v0.1 (2026-05-27).
 - **npm publish pipeline** — `@icpfinder/core` + `@icpfinder/providers` are publish-ready with `publishConfig` overrides pointing main/types to `dist/`. Changesets manages versioning + per-package CHANGELOG. `release.yml` publishes to npmjs.com on `main` with provenance attestations. `pr-snapshot.yml` publishes per-commit alpha snapshots via `pkg.pr.new` on every PR (free, no `NPM_TOKEN`, works on forks). One-time user setup: `NPM_TOKEN` secret, install pkg.pr.new GitHub App, enable Actions to open PRs. **Completed:** v0.1 (2026-05-27).
 - **T1–T10 design implementation** — Luminous Light + Dark tokens, fonts, FOUC bootstrap, `( · )` brand mark, favicon + OG, mode toggle, sticky nav, Hero B split, live GitHub+npm social proof strip, `/find` page with state matrix, a11y baseline, DESIGN.md + CLAUDE.md. **Completed:** v0.1 (2026-05-26).
 - **L1–L8 landing redesign** — Dropped marketing-chrome badge pill. Added `NpmInstallLine` with clipboard copy. Replaced fake `DemoCard` with hand-tokenized RSC `CodePreview` showing real `IcpFinder` + `@icpfinder/providers` usage (vitest gate pins snippet to API). Added `Integration` + `FinalCta` sections below hero (3 screens total: Hero → Integration → FinalCta). Footer carries `MIT · v0.1 · PRs welcome` + roadmap link. **Completed:** v0.1 (2026-05-26).

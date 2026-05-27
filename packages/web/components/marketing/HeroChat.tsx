@@ -5,8 +5,10 @@
 import { useMemo, useState } from "react";
 import { formatCostCents } from "../../lib/format-cost";
 import { classifySeed, shortUrlLabel } from "../../lib/seed-input";
-import { useIcpRun } from "../../lib/use-icp-run";
-import { ArchetypeCard } from "../product/ArchetypeCard";
+import type { useIcpRun } from "../../lib/use-icp-run";
+import { ArchetypeResultsGrid } from "../product/ArchetypeResultsGrid";
+import { RunDoneCallouts } from "../product/RunDoneCallouts";
+import { RunErrorState } from "../product/RunErrorState";
 import { RunProgress } from "../product/RunProgress";
 
 const EXAMPLES = [
@@ -15,9 +17,17 @@ const EXAMPLES = [
   "DevTools for solo founders shipping their first app",
 ];
 
-export function HeroChat() {
+type IcpRun = ReturnType<typeof useIcpRun>;
+
+interface HeroChatProps {
+  run: IcpRun;
+  /** Opens the BYOK dialog. Owned by parent (HeroSurface) so the dialog is mounted once. */
+  onOpenByok: () => void;
+}
+
+export function HeroChat({ run, onOpenByok }: HeroChatProps) {
+  const { state, archetypeList, byok, elapsedMs, submit, retry, canRetry, stop } = run;
   const [seed, setSeed] = useState("");
-  const { state, archetypeList, byok, elapsedMs, submit, stop } = useIcpRun();
   const expectedTotal = 3;
   const doneCount =
     state.status === "done" ? archetypeList.length : Math.max(0, archetypeList.length - 1);
@@ -37,7 +47,7 @@ export function HeroChat() {
   const isUrl = classified.kind === "url";
 
   return (
-    <div className="relative mx-auto w-full max-w-[860px]">
+    <div className="relative mx-auto w-full max-w-[860px] lg:mx-0 lg:max-w-none">
       {/* Chat input — the centerpiece. Borderless except for the focus glow. */}
       <form
         onSubmit={(e) => {
@@ -64,11 +74,7 @@ export function HeroChat() {
               // Guard against IME composition: when CJK / accent IMEs commit
               // a character with Enter the keydown still fires — submitting
               // here would lose the in-flight composition.
-              if (
-                e.key === "Enter" &&
-                !e.shiftKey &&
-                !e.nativeEvent.isComposing
-              ) {
+              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
                 e.preventDefault();
                 onSubmit();
               }
@@ -93,8 +99,51 @@ export function HeroChat() {
             </div>
           ) : null}
 
-          {/* Submit / Stop button — top-right corner inside the input */}
-          <div className="absolute bottom-3 right-3 md:bottom-4 md:right-4">
+          {/* Action row — settings + submit/stop, bottom-right */}
+          <div className="absolute right-3 bottom-3 flex items-center gap-2 md:right-4 md:bottom-4">
+            <button
+              type="button"
+              onClick={onOpenByok}
+              aria-label="Open API key settings"
+              title={byok ? "Your API keys" : "Use your own API keys"}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--hairline-2)] bg-[color:var(--bg-card-hi)] text-[color:var(--text-muted)] transition-colors hover:bg-[color:var(--bg-elev)] hover:text-[color:var(--text)]"
+            >
+              {byok ? (
+                // Filled "key" glyph when BYOK is active — subtle mint tint
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ color: "var(--mint-deep)" }}
+                >
+                  <circle cx="7.5" cy="15.5" r="3.5" />
+                  <path d="m10 13 9-9 3 3-3 3-3-3-3 3" />
+                </svg>
+              ) : (
+                // Outlined key glyph when running on operator keys
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="7.5" cy="15.5" r="3.5" />
+                  <path d="m10 13 9-9 3 3-3 3-3-3-3 3" />
+                </svg>
+              )}
+            </button>
+
             {state.status === "running" ? (
               <button
                 type="button"
@@ -102,7 +151,10 @@ export function HeroChat() {
                 aria-label="Stop run"
                 className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--hairline-2)] bg-[color:var(--bg-card-hi)] text-[color:var(--text)] transition-colors hover:bg-[color:var(--bg-elev)]"
               >
-                <span aria-hidden="true" className="block h-3 w-3 rounded-sm bg-[color:var(--coral)]" />
+                <span
+                  aria-hidden="true"
+                  className="block h-3 w-3 rounded-sm bg-[color:var(--coral)]"
+                />
               </button>
             ) : (
               <button
@@ -112,7 +164,8 @@ export function HeroChat() {
                 className="inline-flex h-11 w-11 items-center justify-center rounded-full text-white transition-transform hover:-translate-y-px active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
                 style={{
                   background: "linear-gradient(135deg, var(--mint-deep), var(--iris-deep))",
-                  boxShadow: "0 0 0 1px rgba(255,255,255,0.5) inset, 0 8px 20px -6px var(--iris-glow)",
+                  boxShadow:
+                    "0 0 0 1px rgba(255,255,255,0.5) inset, 0 8px 20px -6px var(--iris-glow)",
                 }}
               >
                 <svg
@@ -199,68 +252,32 @@ export function HeroChat() {
 
       {/* Errors */}
       {state.errors.length > 0 ? (
-        <div
-          role="alert"
-          className="mt-3 rounded-[14px] border px-3.5 py-2.5 text-[13px] text-[color:var(--error)]"
-          style={{
-            borderColor: "color-mix(in srgb, var(--error) 30%, transparent)",
-            background: "color-mix(in srgb, var(--error) 8%, transparent)",
-          }}
-        >
-          <ul className="grid gap-1">
-            {state.errors.map((msg) => (
-              <li key={msg}>{msg}</li>
-            ))}
-          </ul>
+        <div className="mt-3">
+          <RunErrorState
+            errors={state.errors}
+            byok={byok}
+            onAddKeys={onOpenByok}
+            onRetry={retry}
+            canRetry={canRetry}
+          />
         </div>
       ) : null}
 
       {/* Results — stream inline below the input */}
       {hasActivity && archetypeList.length > 0 ? (
-        <section
-          aria-label="Streaming results"
-          aria-live="polite"
-          className="mt-6 grid gap-3 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-        >
-          {archetypeList.map((a, idx) => {
-            const candidates = state.candidatesByArchetype.get(a.id) ?? [];
-            const isLast = idx === archetypeList.length - 1;
-            const status: "streaming" | "done" | "failed" =
-              state.status === "error" && isLast
-                ? "failed"
-                : state.status === "running" && isLast
-                  ? "streaming"
-                  : "done";
-            return (
-              <ArchetypeCard
-                key={a.id}
-                archetype={a}
-                candidates={candidates}
-                status={status}
-                index={idx}
-              />
-            );
-          })}
-        </section>
+        <div className="mt-6">
+          <ArchetypeResultsGrid
+            archetypeList={archetypeList}
+            candidatesByArchetype={state.candidatesByArchetype}
+            status={state.status}
+          />
+        </div>
       ) : null}
 
       {/* Done state — link to /find for sharing / full UI */}
       {state.status === "done" ? (
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-[13px] text-[color:var(--text-muted)]">
-          <a
-            href="/find"
-            className="rounded-full border border-[color:var(--hairline-2)] bg-[color:var(--bg-elev)] px-3.5 py-1.5 hover:bg-[color:var(--bg-card-hi)] hover:text-[color:var(--text)] transition-colors"
-          >
-            Run again on /find →
-          </a>
-          {!byok ? (
-            <a
-              href="/find"
-              className="rounded-full border border-[color:var(--hairline-2)] bg-[color:var(--bg-elev)] px-3.5 py-1.5 hover:bg-[color:var(--bg-card-hi)] hover:text-[color:var(--text)] transition-colors"
-            >
-              Add your keys for unlimited
-            </a>
-          ) : null}
+        <div className="mt-6">
+          <RunDoneCallouts variant="hero" byok={byok} onAddKeys={onOpenByok} />
         </div>
       ) : null}
     </div>

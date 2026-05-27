@@ -27,9 +27,12 @@ export function RunHeader({
   if (status === "idle") return null;
 
   const dotColor =
-    status === "running" ? "var(--mint-deep)" : status === "error" ? "var(--error)" : "var(--mint-deep)";
-  const dotGlow =
-    status === "running" ? "0 0 10px var(--mint-glow)" : "0 0 6px var(--mint-glow)";
+    status === "running"
+      ? "var(--mint-deep)"
+      : status === "error"
+        ? "var(--error)"
+        : "var(--mint-deep)";
+  const dotGlow = status === "running" ? "0 0 10px var(--mint-glow)" : "0 0 6px var(--mint-glow)";
 
   return (
     <div
@@ -38,7 +41,8 @@ export function RunHeader({
       aria-live="polite"
     >
       <span className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--hairline)] bg-[color:var(--bg-card-hi)] px-2.5 py-1 text-[11px] font-medium">
-        run · <span className="font-bold text-[color:var(--mint-deep)] tabular">{runId ?? "—"}</span>
+        run ·{" "}
+        <span className="font-bold text-[color:var(--mint-deep)] tabular">{runId ?? "—"}</span>
       </span>
       <span
         className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em]"

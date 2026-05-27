@@ -2,11 +2,13 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Footer } from "../../components/marketing/Footer";
 import { Nav } from "../../components/marketing/Nav";
-import { ArchetypeCard } from "../../components/product/ArchetypeCard";
+import { ArchetypeResultsGrid } from "../../components/product/ArchetypeResultsGrid";
+import { ByokPanel } from "../../components/product/ByokPanel";
 import { EmptyState } from "../../components/product/EmptyState";
+import { RunErrorState } from "../../components/product/RunErrorState";
 import { RunHeader } from "../../components/product/RunHeader";
 import { RunProgress } from "../../components/product/RunProgress";
 import { classifySeed, shortUrlLabel } from "../../lib/seed-input";
@@ -25,6 +27,8 @@ export default function FindPage() {
     setGeminiKey,
     setHunterKey,
     submit,
+    retry,
+    canRetry,
     stop,
   } = useIcpRun();
 
@@ -33,6 +37,14 @@ export default function FindPage() {
     state.status === "done" ? archetypeList.length : Math.max(0, archetypeList.length - 1);
   const classified = useMemo(() => classifySeed(seed), [seed]);
   const isUrl = classified.kind === "url";
+
+  // Deep-link: /find#keys auto-opens BYOK dialog.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.hash === "#keys") setShowKeys(true);
+  }, []);
+
+  const openByok = () => setShowKeys(true);
 
   return (
     <>
@@ -133,118 +145,64 @@ export default function FindPage() {
             <span id="seed-hint" className="text-[13px] text-[color:var(--text-muted)]">
               {byok
                 ? "Using your keys (free, unlimited)."
-                : "Free demo: 1 archetype + 3 contacts. Add keys for unlimited."}
+                : "Free demo: 1 archetype + 3 contacts."}
             </span>
             <button
               type="button"
-              onClick={() => setShowKeys((v) => !v)}
-              className="ml-auto text-[13px] font-medium text-[color:var(--mint-deep)] hover:underline"
+              onClick={openByok}
+              className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full border border-[color:var(--hairline-2)] bg-[color:var(--bg-elev)] px-3.5 text-[13px] font-medium text-[color:var(--text-muted)] transition-colors hover:bg-[color:var(--bg-card-hi)] hover:text-[color:var(--text)]"
             >
-              {showKeys ? "Hide keys" : "Use my own API keys (free, unlimited)"}
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={byok ? { color: "var(--mint-deep)" } : undefined}
+              >
+                <circle cx="7.5" cy="15.5" r="3.5" />
+                <path d="m10 13 9-9 3 3-3 3-3-3-3 3" />
+              </svg>
+              {byok ? "Your keys" : "Use your own keys"}
             </button>
           </div>
-
-          {showKeys ? (
-            <div className="grid gap-2.5 rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--bg-card-hi)] p-3">
-              <label className="grid gap-1 text-[13px]">
-                <span className="text-[color:var(--text-muted)]">Gemini API key</span>
-                <input
-                  type="password"
-                  value={geminiKey}
-                  onChange={(e) => setGeminiKey(e.target.value)}
-                  placeholder="AIza…"
-                  autoComplete="off"
-                  className="rounded-[10px] border border-[color:var(--hairline-2)] bg-[color:var(--bg-elev)] px-3 py-2 text-[14px] text-[color:var(--text)] outline-none focus-visible:border-[color:var(--mint-deep)] focus-visible:shadow-[0_0_0_4px_var(--mint-glow)]"
-                />
-                <small className="text-[11px] text-[color:var(--text-muted)]">
-                  <a
-                    href="https://aistudio.google.com/app/apikey"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:underline"
-                  >
-                    Get a free key →
-                  </a>
-                </small>
-              </label>
-              <label className="grid gap-1 text-[13px]">
-                <span className="text-[color:var(--text-muted)]">Hunter.io API key</span>
-                <input
-                  type="password"
-                  value={hunterKey}
-                  onChange={(e) => setHunterKey(e.target.value)}
-                  placeholder="…"
-                  autoComplete="off"
-                  className="rounded-[10px] border border-[color:var(--hairline-2)] bg-[color:var(--bg-elev)] px-3 py-2 text-[14px] text-[color:var(--text)] outline-none focus-visible:border-[color:var(--mint-deep)] focus-visible:shadow-[0_0_0_4px_var(--mint-glow)]"
-                />
-                <small className="text-[11px] text-[color:var(--text-muted)]">
-                  <a
-                    href="https://hunter.io/api-keys"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:underline"
-                  >
-                    Get a free key (25/mo) →
-                  </a>
-                </small>
-              </label>
-              <small className="text-[11px] leading-[1.45] text-[color:var(--text-dim)]">
-                Keys stay in your browser (localStorage). Sent only with each request, never logged
-                or persisted server-side.
-              </small>
-            </div>
-          ) : null}
         </section>
 
         <RunProgress done={doneCount} total={expectedTotal} status={state.status} />
 
         {state.errors.length > 0 ? (
-          <div
-            role="alert"
-            className="rounded-[14px] border px-4 py-3 text-[13px] text-[color:var(--error)]"
-            style={{
-              borderColor: "color-mix(in srgb, var(--error) 30%, transparent)",
-              background: "color-mix(in srgb, var(--error) 8%, transparent)",
-            }}
-          >
-            <ul className="grid gap-1">
-              {state.errors.map((msg) => (
-                <li key={msg}>{msg}</li>
-              ))}
-            </ul>
-          </div>
+          <RunErrorState
+            errors={state.errors}
+            byok={byok}
+            onAddKeys={openByok}
+            onRetry={retry}
+            canRetry={canRetry}
+          />
         ) : null}
 
         {state.status === "idle" ? (
           <EmptyState onExamplePick={(ex) => setSeed(ex)} />
         ) : (
-          <section
-            aria-label="Run results"
-            aria-live="polite"
-            className="grid gap-3 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-          >
-            {archetypeList.map((a, idx) => {
-              const candidates = state.candidatesByArchetype.get(a.id) ?? [];
-              const isLast = idx === archetypeList.length - 1;
-              const status: "streaming" | "done" | "failed" =
-                state.status === "error" && isLast
-                  ? "failed"
-                  : state.status === "running" && isLast
-                    ? "streaming"
-                    : "done";
-              return (
-                <ArchetypeCard
-                  key={a.id}
-                  archetype={a}
-                  candidates={candidates}
-                  status={status}
-                  index={idx}
-                />
-              );
-            })}
-          </section>
+          <ArchetypeResultsGrid
+            archetypeList={archetypeList}
+            candidatesByArchetype={state.candidatesByArchetype}
+            status={state.status}
+          />
         )}
       </main>
+
+      <ByokPanel
+        open={showKeys}
+        onOpenChange={setShowKeys}
+        geminiKey={geminiKey}
+        hunterKey={hunterKey}
+        onGeminiChange={setGeminiKey}
+        onHunterChange={setHunterKey}
+      />
 
       <Footer />
     </>

@@ -18,9 +18,30 @@
 //     a final `done` and returns; never throws on cap.
 //   - Cancellation honored via input.signal.
 
-import type { EmailProvider, LlmProvider } from "@icpfinder/providers";
+import { type EmailProvider, isProviderError, type LlmProvider } from "@icpfinder/providers";
 import { generateArchetypes } from "./archetypes";
-import type { Archetype, Candidate, FindEvent, FindInput } from "./types";
+import type {
+  Archetype,
+  Candidate,
+  FindErrorCode,
+  FindErrorProvider,
+  FindEvent,
+  FindInput,
+} from "./types";
+
+function classifyError(err: unknown): {
+  code: FindErrorCode;
+  provider?: FindErrorProvider;
+  message: string;
+} {
+  if (isProviderError(err)) {
+    return { code: err.code, provider: err.provider, message: err.message };
+  }
+  return {
+    code: "unknown",
+    message: err instanceof Error ? err.message : String(err),
+  };
+}
 
 const DEFAULT_ARCHETYPE_LIMIT = 3;
 const DEFAULT_CANDIDATES_PER_ARCHETYPE = 5;
@@ -79,10 +100,13 @@ export class IcpFinder {
         grounding: input.grounding ?? false,
       });
     } catch (err) {
+      const classified = classifyError(err);
       yield {
         type: "error",
-        message: `Archetype generation failed: ${err instanceof Error ? err.message : String(err)}`,
+        message: `Archetype generation failed: ${classified.message}`,
         recoverable: false,
+        code: classified.code,
+        provider: classified.provider,
       };
       yield { type: "done", totalCostCents };
       return;
@@ -187,10 +211,13 @@ export class IcpFinder {
           candidate.emailScore = top.score;
         }
       } catch (err) {
+        const classified = classifyError(err);
         yield {
           type: "error",
-          message: `Email lookup failed for ${company.domain}: ${err instanceof Error ? err.message : String(err)}`,
+          message: `Email lookup failed for ${company.domain}: ${classified.message}`,
           recoverable: true,
+          code: classified.code,
+          provider: classified.provider,
         };
       }
 

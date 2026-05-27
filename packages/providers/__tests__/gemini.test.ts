@@ -172,12 +172,16 @@ describe("GeminiLlmProvider — live mode (mocked fetch)", () => {
 
   it("throws ProviderRateLimitError after exhausting 429 retries", async () => {
     const fetchImpl = vi.fn().mockResolvedValue(errorResponse(429));
-    const provider = new GeminiLlmProvider({ apiKey: "k", fetchImpl });
+    const provider = new GeminiLlmProvider({
+      apiKey: "k",
+      fetchImpl,
+      rateLimitBackoffBaseMs: 0,
+    });
 
     await expect(provider.generate({ system: "x", prompt: "x" })).rejects.toThrow(
       ProviderRateLimitError
     );
-  }, 15000);
+  });
 
   it("retries once on 5xx server error", async () => {
     const fetchImpl = vi

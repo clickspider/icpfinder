@@ -93,6 +93,17 @@ The dependency graph is strictly acyclic: `web → core → providers`.
 
 Stub mode: free, no keys. Live mode: ~$1.05 per run (mostly Hunter). Cap with `ICPFINDER_BUDGET_CAP_CENTS` + `ICPFINDER_DAILY_CAP_CENTS`. Full breakdown: [docs/costs.md](./docs/costs.md).
 
+## Run cache (optional)
+
+In operator mode, the `/api/find` endpoint can cache complete SSE event streams in Vercel KV (Upstash Redis), keyed by `sha256(seed)` with a 15-minute TTL. Duplicate seeds replay instantly with zero Gemini calls — useful when the shared free-tier key keeps hitting rate limits. To enable, set:
+
+```bash
+KV_REST_API_URL=…
+KV_REST_API_TOKEN=…
+```
+
+Unset → cache is a graceful no-op (every request goes live). BYOK runs always bypass the cache so user data stays user-side.
+
 ## Self-host
 
 Vercel + Postgres + Upstash, three steps: [docs/self-host.md](./docs/self-host.md).

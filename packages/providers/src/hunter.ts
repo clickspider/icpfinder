@@ -19,6 +19,7 @@ import {
   type FindEmailInput,
   type FindEmailResult,
   ProviderAuthError,
+  ProviderNetworkError,
   ProviderRateLimitError,
   type VerifyEmailInput,
   type VerifyEmailResult,
@@ -84,6 +85,7 @@ const buildUrl = (path: string, apiKey: string, params: HunterRequestParams): st
 interface FetchOptions {
   timeoutMs: number;
   fetchImpl: typeof fetch;
+  rateLimitBackoffBaseMs: number;
 }
 
 const fetchHunter = async (
@@ -99,20 +101,33 @@ const fetchHunter = async (
     let response: Response;
     try {
       response = await opts.fetchImpl(url, { method: "GET", signal: controller.signal });
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        throw new ProviderNetworkError(
+          `Hunter request timed out on ${endpoint} after ${opts.timeoutMs}ms`,
+          "hunter"
+        );
+      }
+      throw new ProviderNetworkError(
+        `Network error reaching Hunter on ${endpoint}: ${err instanceof Error ? err.message : String(err)}`,
+        "hunter"
+      );
     } finally {
       clearTimeout(timeoutId);
     }
     if (response.status === 401) {
-      throw new ProviderAuthError(`Hunter.io rejected the API key (401) on ${endpoint}`);
+      throw new ProviderAuthError(`Hunter.io rejected the API key (401) on ${endpoint}`, "hunter");
     }
     if (response.status === 429) {
       attempt += 1;
       if (attempt > MAX_RATE_LIMIT_RETRIES) {
         throw new ProviderRateLimitError(
-          `Hunter.io rate limit exceeded on ${endpoint} after ${MAX_RATE_LIMIT_RETRIES} retries`
+          `Hunter.io rate limit exceeded on ${endpoint} after ${MAX_RATE_LIMIT_RETRIES} retries`,
+          "hunter"
         );
       }
-      const backoff = RATE_LIMIT_BACKOFF_BASE_MS * 2 ** (attempt - 1);
+      const jitter = 0.5 + Math.random();
+      const backoff = opts.rateLimitBackoffBaseMs * 2 ** (attempt - 1) * jitter;
       await sleep(backoff);
       continue;
     }
@@ -152,6 +167,8 @@ export interface HunterOptions {
   onCost?: CostLogger;
   /** Override fetch (testing). */
   fetchImpl?: typeof fetch;
+  /** Base ms for jittered exponential 429 backoff. Tests override with 0. */
+  rateLimitBackoffBaseMs?: number;
 }
 
 export class HunterEmailProvider implements EmailProvider {
@@ -164,6 +181,7 @@ export class HunterEmailProvider implements EmailProvider {
   private readonly timeoutMs: number;
   private readonly onCost: CostLogger | undefined;
   private readonly fetchImpl: typeof fetch;
+  private readonly rateLimitBackoffBaseMs: number;
 
   constructor(opts: HunterOptions = {}) {
     this.apiKey = opts.apiKey;
@@ -173,6 +191,7 @@ export class HunterEmailProvider implements EmailProvider {
     this.timeoutMs = opts.timeoutMs ?? 15_000;
     this.onCost = opts.onCost;
     this.fetchImpl = opts.fetchImpl ?? globalThis.fetch;
+    this.rateLimitBackoffBaseMs = opts.rateLimitBackoffBaseMs ?? RATE_LIMIT_BACKOFF_BASE_MS;
   }
 
   private buildCost(
@@ -226,6 +245,7 @@ export class HunterEmailProvider implements EmailProvider {
       const json = (await fetchHunter(url, "email-finder", {
         timeoutMs: this.timeoutMs,
         fetchImpl: this.fetchImpl,
+        rateLimitBackoffBaseMs: this.rateLimitBackoffBaseMs,
       })) as {
         data?: {
           email?: string;
@@ -268,6 +288,7 @@ export class HunterEmailProvider implements EmailProvider {
       const json = (await fetchHunter(url, "email-verifier", {
         timeoutMs: this.timeoutMs,
         fetchImpl: this.fetchImpl,
+        rateLimitBackoffBaseMs: this.rateLimitBackoffBaseMs,
       })) as {
         data?: {
           score?: number;
@@ -319,6 +340,7 @@ export class HunterEmailProvider implements EmailProvider {
       const json = (await fetchHunter(url, "domain-search", {
         timeoutMs: this.timeoutMs,
         fetchImpl: this.fetchImpl,
+        rateLimitBackoffBaseMs: this.rateLimitBackoffBaseMs,
       })) as {
         data?: {
           emails?: Array<{

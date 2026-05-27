@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-import { HeroChat } from "./HeroChat";
+import { HeroSurface } from "./HeroSurface";
 
 export function Hero() {
   return (
@@ -59,10 +59,10 @@ export function Hero() {
           <p className="mt-5 max-w-[460px] text-[16px] text-[color:var(--text-muted)] md:mt-6 md:text-[18px]">
             3 ICPs + verified emails. 30 seconds. Free. MIT.
           </p>
+        </div>
 
-          <div className="mt-9 w-full md:mt-12">
-            <HeroChat />
-          </div>
+        <div className="mt-9 w-full md:mt-12">
+          <HeroSurface />
         </div>
       </div>
     </section>

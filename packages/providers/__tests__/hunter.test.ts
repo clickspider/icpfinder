@@ -93,12 +93,16 @@ describe("HunterEmailProvider — live mode (mocked fetch)", () => {
 
   it("throws ProviderRateLimitError after exhausting 429 retries", async () => {
     const fetchImpl = vi.fn().mockResolvedValue(errorResponse(429));
-    const provider = new HunterEmailProvider({ apiKey: "k", fetchImpl });
+    const provider = new HunterEmailProvider({
+      apiKey: "k",
+      fetchImpl,
+      rateLimitBackoffBaseMs: 0,
+    });
 
     await expect(
       provider.findEmail({ domain: "x.com", firstName: "A", lastName: "B" })
     ).rejects.toThrow(ProviderRateLimitError);
-  }, 15000);
+  });
 
   it("retries once on 5xx server error", async () => {
     const fetchImpl = vi
