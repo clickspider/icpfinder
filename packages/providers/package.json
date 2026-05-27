@@ -4,43 +4,32 @@
   "description": "Swappable EmailProvider + LlmProvider implementations for icpfinder.",
   "license": "MIT",
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./hunter": "./src/hunter.ts",
-    "./gemini": "./src/gemini.ts",
-    "./fake": "./src/fake.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./hunter": {
+      "types": "./dist/hunter.d.ts",
+      "default": "./dist/hunter.js"
+    },
+    "./gemini": {
+      "types": "./dist/gemini.d.ts",
+      "default": "./dist/gemini.js"
+    },
+    "./fake": {
+      "types": "./dist/fake.d.ts",
+      "default": "./dist/fake.js"
+    }
   },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
+  "files": ["dist", "README.md", "LICENSE"],
+  "sideEffects": false,
   "publishConfig": {
     "access": "public",
-    "provenance": true,
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "module": "./dist/index.js",
-    "exports": {
-      ".": {
-        "types": "./dist/index.d.ts",
-        "import": "./dist/index.js"
-      },
-      "./hunter": {
-        "types": "./dist/hunter.d.ts",
-        "import": "./dist/hunter.js"
-      },
-      "./gemini": {
-        "types": "./dist/gemini.d.ts",
-        "import": "./dist/gemini.js"
-      },
-      "./fake": {
-        "types": "./dist/fake.d.ts",
-        "import": "./dist/fake.js"
-      }
-    }
+    "provenance": true
   },
   "repository": {
     "type": "git",
@@ -51,25 +40,20 @@
   "bugs": {
     "url": "https://github.com/clickspider/icpfinder/issues"
   },
-  "keywords": [
-    "icpfinder",
-    "gemini",
-    "hunter",
-    "llm-provider",
-    "email-provider"
-  ],
+  "keywords": ["icpfinder", "gemini", "hunter", "llm-provider", "email-provider"],
   "scripts": {
-    "dev": "tsc --noEmit --watch --preserveWatchOutput",
+    "dev": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "build": "tsc"
+    "build": "tsup"
   },
   "dependencies": {
     "p-limit": "^6.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "tsup": "^8.3.0",
     "typescript": "^5.7.0",
     "vitest": "^2.1.0"
   },

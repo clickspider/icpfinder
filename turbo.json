@@ -3,7 +3,15 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**"],
+      "outputs": ["dist/**", ".next/**"]
+    },
+    "@icpfinder/core#build": {
+      "dependsOn": ["@icpfinder/providers#build"],
+      "outputs": ["dist/**"]
+    },
+    "@icpfinder/web#build": {
+      "dependsOn": ["@icpfinder/core#build", "@icpfinder/providers#build"],
+      "outputs": [".next/**"],
       "env": [
         "DATABASE_URL",
         "DATABASE_URL_UNPOOLED",
@@ -29,6 +37,7 @@
     },
     "lint": {},
     "dev": {
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
     }
