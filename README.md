@@ -192,6 +192,13 @@ PRs are gated on all three via [`.github/workflows/ci.yml`](./.github/workflows/
 - **v0.2** — outreach personalization (per-candidate hook generation), React Flow visualization, CLI binary, Claude Code skill
 - **v0.3** — cold-email diagnostician (paste a failing thread, get rewritten)
 
+## Project status
+
+icpfinder is **MIT, open source, free to self-host, forever**. We are not building closed-source enterprise features. We are not splitting into a private repo. We may eventually offer an optional hosted service for people who don't want to run their own infrastructure — the [CopilotKit](https://github.com/CopilotKit/CopilotKit) shape — but the entire codebase stays open.
+
+- [docs/business-model.md](./docs/business-model.md) — why MIT, what we'd sell if we sold anything, switch triggers
+- [docs/commercial-roadmap.md](./docs/commercial-roadmap.md) — when (and only when) we add paid features
+
 ## Contributing
 
 PRs, issues, and ideas are all welcome — this project gets better when more eyes find more edges. Whether you're fixing a typo, wiring up a new provider, or asking a question that turns into the next docs page, you belong here.
