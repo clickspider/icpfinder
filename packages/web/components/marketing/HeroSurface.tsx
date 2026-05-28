@@ -3,6 +3,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useFocusProvider } from "../../lib/use-focus-provider";
 import { useIcpRun } from "../../lib/use-icp-run";
 import { useReducedMotion } from "../../lib/use-reduced-motion";
 import { ByokPanel } from "../product/ByokPanel";
@@ -25,6 +26,8 @@ export function HeroSurface() {
   const reduced = useReducedMotion();
   const idle = run.state.status === "idle";
   const [byokOpen, setByokOpen] = useState(false);
+  // D9: contextual highlight derived from the latest provider-attributed error.
+  const focusProvider = useFocusProvider(run.state.errors);
 
   // /#keys deep-link auto-opens the dialog on the marketing page too.
   useEffect(() => {
@@ -68,6 +71,7 @@ export function HeroSurface() {
         rememberKeys={run.rememberKeys}
         onRememberChange={run.setRememberKeys}
         onClearKeys={run.clearKeys}
+        focusProvider={focusProvider}
       />
     </>
   );
