@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-label="icpfinder — find who will pay for your idea">
+  <title>icpfinder — find who will pay for your idea</title>
+  <defs>
+    <radialGradient id="auroraD" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#2DD4BF" stop-opacity="0.22"/>
+      <stop offset="45%" stop-color="#8B6DEB" stop-opacity="0.18"/>
+      <stop offset="80%" stop-color="#FB8E5A" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#0F1014" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="brandGradD" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2DD4BF"/>
+      <stop offset="60%" stop-color="#A78BFA"/>
+      <stop offset="100%" stop-color="#FB8E5A"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="400" fill="#0F1014"/>
+  <ellipse cx="640" cy="200" rx="720" ry="260" fill="url(#auroraD)"/>
+
+  <g transform="translate(640 180)">
+    <path d="M -260 -56 Q -300 0 -260 56" stroke="#2DD4BF" stroke-width="11" stroke-linecap="round" fill="none"/>
+    <text x="0" y="22"
+          text-anchor="middle"
+          font-family="ui-sans-serif, system-ui, -apple-system, 'Hanken Grotesk', 'Segoe UI', sans-serif"
+          font-size="108"
+          font-weight="700"
+          letter-spacing="-4.5"
+          fill="#F2EFE7">icpfinder</text>
+    <path d="M 260 -56 Q 300 0 260 56" stroke="#2DD4BF" stroke-width="11" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <text x="640" y="290"
+        text-anchor="middle"
+        font-family="ui-sans-serif, system-ui, -apple-system, 'Hanken Grotesk', 'Segoe UI', sans-serif"
+        font-size="30"
+        font-weight="500"
+        letter-spacing="-0.5"
+        fill="rgba(242,239,231,0.62)">Find who'll pay for your idea.</text>
+
+  <text x="640" y="338"
+        text-anchor="middle"
+        font-family="ui-sans-serif, system-ui, -apple-system, 'Hanken Grotesk', 'Segoe UI', sans-serif"
+        font-size="18"
+        font-weight="500"
+        letter-spacing="3"
+        text-transform="uppercase"
+        fill="url(#brandGradD)">3 ICPs · verified emails · 30 seconds · free · MIT</text>
+</svg>
