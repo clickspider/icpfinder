@@ -6,9 +6,15 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "icpfinder — find your ICP in 30 seconds",
+  metadataBase: new URL("https://icpfinder.dev"),
+  title: {
+    default: "icpfinder — find your ICP in 30 seconds",
+    template: "%s — icpfinder",
+  },
   description:
     "Paste your product idea. Stream three buyer archetypes + 15 lookalike companies with verified contact emails. Open source, MIT, self-host.",
+  alternates: { canonical: "/" },
+  twitter: { card: "summary_large_image" },
 };
 
 const modeBootstrap = `(function(){try{var m=localStorage.getItem('icpfinder.mode');if(m==='light'||m==='dark'){document.documentElement.setAttribute('data-mode',m);}else if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.setAttribute('data-mode','dark');}}catch(e){}})();`;
