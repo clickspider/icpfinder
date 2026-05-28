@@ -4,6 +4,15 @@
   "description": "Next.js web app — streaming ICP discovery UI for icpfinder.",
   "license": "MIT",
   "private": true,
+  "homepage": "https://icpfinder.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/clickspider/icpfinder.git",
+    "directory": "packages/web"
+  },
+  "bugs": {
+    "url": "https://github.com/clickspider/icpfinder/issues"
+  },
   "type": "module",
   "scripts": {
     "dev": "next dev",
