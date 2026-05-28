@@ -68,12 +68,6 @@ On `<md` viewports, when a new archetype card appends mid-stream, smooth-scroll 
 
 Replace the static code preview with an animated playback of a real recorded `/api/find` SSE stream, commit the JSON, label with seed + date provenance. Lands once we have a deployed production endpoint with a clean public seed worth replaying.
 
-## How voting works
-
-Every roadmap item maps to a GitHub Issue tagged `roadmap`. Sign in to GitHub, open the linked issue, react with 👍. Items with the most 👍 jump priority within their version band. New ideas: [open an issue](https://github.com/clickspider/icpfinder/issues/new/choose) and reference the roadmap if it's an extension.
-
-We don't promise specific dates. Roadmap items can slip, swap, or get cut based on what users actually need.
-
 ## Completed
 
 - **Streaming engine + web UI + library + Hunter/Gemini providers + Upstash rate limit** — initial public release. **Completed:** v0.1 (2026-05-26).
