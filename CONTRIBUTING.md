@@ -47,6 +47,50 @@ Commit messages don't need to be Conventional Commits. Just describe the change.
 
 Keep PRs focused: one logical change per PR. If you find yourself bundling a bugfix with a refactor with a new feature, split it.
 
+## Sign off your commits
+
+Every commit must be signed off under the [Developer Certificate of Origin (DCO)](./DCO.md) — the same lightweight sign-off the Linux kernel uses. The `probot/dco` GitHub App checks this on every PR. Without it, CI blocks the merge.
+
+`git` does this automatically with the `-s` flag:
+
+```bash
+git commit -s -m "fix(web): handle stale CSRF on /find submit"
+```
+
+This appends a `Signed-off-by:` trailer to your commit message using your `user.name` and `user.email` from `git config`. Set those once globally if you haven't:
+
+```bash
+git config --global user.name  "Your Name"
+git config --global user.email "you@example.com"
+```
+
+**By signing off, you certify the [DCO v1.1 text](./DCO.md) AND you agree that:**
+
+1. Your contribution is licensed under the MIT License — the same license as the rest of the project ("inbound = outbound").
+2. The maintainers may relicense your contribution under any OSI-approved license should the project's license ever change.
+
+Why both: DCO certifies you have the right to submit the code, but doesn't grant relicensing rights on its own. The relicense clause keeps the project's license posture flexible without re-contacting every contributor later.
+
+### Forgot to sign off?
+
+```bash
+# Last commit only:
+git commit --amend --signoff
+
+# Multiple commits on your branch (replace 3 with the number to fix):
+git rebase --signoff HEAD~3
+```
+
+Then force-push to your PR branch.
+
+### Squash merges and DCO
+
+GitHub's default squash-merge UI **strips per-commit `Signed-off-by:` trailers**. If maintainers squash your PR, they will paste a `Signed-off-by:` line into the squash-merge body manually. You don't need to do anything different on your side — keep signing off your commits as usual.
+
+### AI-assisted commits
+
+If you use Claude Code, Copilot, or any AI assistant to write code, you (the human submitting it) are still responsible for the DCO sign-off. The AI tool's `Co-Authored-By:` trailer is **not** a substitute for `Signed-off-by:` — they certify different things. Run `git commit -s` like any other commit.
+
 ## Adding a new provider
 
 The whole point of `packages/providers` is that any model or contact API can slot in. New providers usually need under 50 lines:

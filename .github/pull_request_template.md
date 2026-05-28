@@ -9,6 +9,7 @@
 - [ ] `bun run typecheck` passes
 - [ ] `bun run test` passes
 - [ ] `bun run lint` passes
+- [ ] All commits signed off via `git commit -s` ([DCO](../DCO.md))
 - [ ] Added a changeset (`bunx changeset`) if this touches `@icpfinder/core` or `@icpfinder/providers`
 - [ ] Updated docs / README if behavior or API changed
 - [ ] Linked any related issue or discussion
