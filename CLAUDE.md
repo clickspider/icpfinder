@@ -50,7 +50,9 @@ bun run build        # next build + prisma generate + prisma migrate deploy
 
 ## TODOS
 
-See [`TODOS.md`](./TODOS.md) — items organized by component, P0–P4, with a Completed section.
+Internal todos and roadmap notes live in **`.context/todos.md`** (gitignored, never published). Items grouped by component / skill, P0–P4 priority, with a Completed section.
+
+For the community-facing roadmap, see the Roadmap section in [README.md](./README.md). For specific actionable items others might pick up, prefer GitHub Issues (use the [issue templates](./.github/ISSUE_TEMPLATE)).
 
 ## Reference
 
