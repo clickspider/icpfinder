@@ -149,11 +149,46 @@ export class IcpFinder {
     yield { type: "done", totalCostCents };
   }
 
+  /**
+   * Phase-2 helper for two-phase consumers. Yields candidate + cost +
+   * recoverable-error events for ONE archetype starting at `offset` of its
+   * exampleCompanies. No `done` frame — the caller is responsible for that.
+   */
+  async *enrichOne(
+    archetype: Archetype,
+    opts: {
+      candidatesPerArchetype: number;
+      offset?: number;
+      signal?: AbortSignal;
+      budgetCapCents?: number;
+    }
+  ): AsyncGenerator<FindEvent, void, void> {
+    const budget = opts.budgetCapCents ?? Number.POSITIVE_INFINITY;
+    let total = 0;
+    const buildCost = (
+      cents: number,
+      provider: string,
+      endpoint: string,
+      units: number
+    ): FindEvent => {
+      total += cents;
+      return { type: "cost", cost: { units, costCents: cents, provider, endpoint } };
+    };
+    yield* this.enrichArchetype(archetype, opts.candidatesPerArchetype, {
+      signal: opts.signal,
+      offset: opts.offset ?? 0,
+      budgetCapCents: budget,
+      getTotalCost: () => total,
+      buildCostEvent: buildCost,
+    });
+  }
+
   private async *enrichArchetype(
     archetype: Archetype,
     candidatesPerArchetype: number,
     ctx: {
       signal?: AbortSignal;
+      offset?: number;
       budgetCapCents: number;
       getTotalCost: () => number;
       buildCostEvent: (
@@ -173,7 +208,8 @@ export class IcpFinder {
       return;
     }
 
-    const companies = archetype.exampleCompanies.slice(0, candidatesPerArchetype);
+    const offset = ctx.offset ?? 0;
+    const companies = archetype.exampleCompanies.slice(offset, offset + candidatesPerArchetype);
     for (let i = 0; i < companies.length; i += 1) {
       if (ctx.signal?.aborted) break;
       if (ctx.getTotalCost() >= ctx.budgetCapCents) break;
@@ -181,7 +217,7 @@ export class IcpFinder {
       if (!company) continue;
 
       const candidate: Candidate = {
-        id: `${archetype.id}_cand_${i}`,
+        id: `${archetype.id}_cand_${offset + i}`,
         archetypeId: archetype.id,
         companyName: company.name,
         domain: company.domain,
@@ -192,6 +228,7 @@ export class IcpFinder {
         emailConfidence: null,
         emailScore: null,
       };
+      if (company.whyNow) candidate.whyNow = company.whyNow;
 
       try {
         const search = await this.email.searchDomain({ domain: company.domain });

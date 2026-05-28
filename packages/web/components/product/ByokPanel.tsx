@@ -14,6 +14,9 @@ interface ByokPanelProps {
   rememberKeys: boolean;
   onRememberChange: (next: boolean) => void;
   onClearKeys: () => void;
+  /** When set, paints a mint outline + hint copy on the matching input.
+   * Used by the run-error CTA so the user lands on the input they need. */
+  focusProvider?: "gemini" | "hunter" | null;
 }
 
 /**
@@ -37,21 +40,30 @@ export function ByokPanel({
   rememberKeys,
   onRememberChange,
   onClearKeys,
+  focusProvider,
 }: ByokPanelProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const geminiInputRef = useRef<HTMLInputElement>(null);
+  const hunterInputRef = useRef<HTMLInputElement>(null);
+  const focusGemini = focusProvider === "gemini";
+  const focusHunter = focusProvider === "hunter";
 
-  // Sync controlled `open` → dialog imperative API.
+  // Sync controlled `open` → dialog imperative API. When focusProvider is
+  // set, land focus on the matching input (so a rate-limit error CTA
+  // deep-links to the right field).
   useEffect(() => {
     const dlg = dialogRef.current;
     if (!dlg) return;
     if (open && !dlg.open) {
       dlg.showModal();
-      const id = window.setTimeout(() => geminiInputRef.current?.focus(), 16);
+      const id = window.setTimeout(() => {
+        const target = focusHunter ? hunterInputRef.current : geminiInputRef.current;
+        target?.focus();
+      }, 16);
       return () => window.clearTimeout(id);
     }
     if (!open && dlg.open) dlg.close();
-  }, [open]);
+  }, [open, focusHunter]);
 
   useEffect(() => {
     const dlg = dialogRef.current;
@@ -118,7 +130,14 @@ export function ByokPanel({
 
         <div className="grid gap-3">
           <label className="grid gap-1 text-[13px]">
-            <span className="font-medium text-[color:var(--text)]">Gemini API key</span>
+            <span className="flex items-center gap-1.5 font-medium text-[color:var(--text)]">
+              Gemini API key
+              {focusGemini ? (
+                <span className="rounded-full bg-[color:var(--mint-deep)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-white">
+                  needed
+                </span>
+              ) : null}
+            </span>
             <input
               ref={geminiInputRef}
               type="password"
@@ -126,9 +145,18 @@ export function ByokPanel({
               onChange={(e) => onGeminiChange(e.target.value)}
               placeholder="AIza…"
               autoComplete="off"
-              className="rounded-[10px] border border-[color:var(--hairline-2)] bg-[color:var(--bg-elev)] px-3 py-2.5 text-[14px] text-[color:var(--text)] outline-none focus-visible:border-[color:var(--mint-deep)] focus-visible:shadow-[0_0_0_4px_var(--mint-glow)]"
+              className="rounded-[10px] border bg-[color:var(--bg-elev)] px-3 py-2.5 text-[14px] text-[color:var(--text)] outline-none focus-visible:border-[color:var(--mint-deep)] focus-visible:shadow-[0_0_0_4px_var(--mint-glow)]"
+              style={{
+                borderColor: focusGemini ? "var(--mint-deep)" : "var(--hairline-2)",
+                boxShadow: focusGemini ? "0 0 0 4px var(--mint-glow)" : undefined,
+              }}
             />
             <small className="text-[11px] text-[color:var(--text-muted)]">
+              {focusGemini ? (
+                <span className="block font-medium text-[color:var(--mint-deep)]">
+                  Paste this to keep going — your last run hit our shared Gemini quota.
+                </span>
+              ) : null}
               <a
                 href="https://aistudio.google.com/app/apikey"
                 target="_blank"
@@ -140,16 +168,33 @@ export function ByokPanel({
             </small>
           </label>
           <label className="grid gap-1 text-[13px]">
-            <span className="font-medium text-[color:var(--text)]">Hunter.io API key</span>
+            <span className="flex items-center gap-1.5 font-medium text-[color:var(--text)]">
+              Hunter.io API key
+              {focusHunter ? (
+                <span className="rounded-full bg-[color:var(--mint-deep)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-white">
+                  needed
+                </span>
+              ) : null}
+            </span>
             <input
+              ref={hunterInputRef}
               type="password"
               value={hunterKey}
               onChange={(e) => onHunterChange(e.target.value)}
               placeholder="…"
               autoComplete="off"
-              className="rounded-[10px] border border-[color:var(--hairline-2)] bg-[color:var(--bg-elev)] px-3 py-2.5 text-[14px] text-[color:var(--text)] outline-none focus-visible:border-[color:var(--mint-deep)] focus-visible:shadow-[0_0_0_4px_var(--mint-glow)]"
+              className="rounded-[10px] border bg-[color:var(--bg-elev)] px-3 py-2.5 text-[14px] text-[color:var(--text)] outline-none focus-visible:border-[color:var(--mint-deep)] focus-visible:shadow-[0_0_0_4px_var(--mint-glow)]"
+              style={{
+                borderColor: focusHunter ? "var(--mint-deep)" : "var(--hairline-2)",
+                boxShadow: focusHunter ? "0 0 0 4px var(--mint-glow)" : undefined,
+              }}
             />
             <small className="text-[11px] text-[color:var(--text-muted)]">
+              {focusHunter ? (
+                <span className="block font-medium text-[color:var(--mint-deep)]">
+                  Paste this to keep going — Hunter rate-limited our shared key.
+                </span>
+              ) : null}
               <a
                 href="https://hunter.io/api-keys"
                 target="_blank"

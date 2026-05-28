@@ -4,12 +4,13 @@
 
 import { useMemo, useState } from "react";
 import { formatCostCents } from "../../lib/format-cost";
-import { classifySeed, shortUrlLabel } from "../../lib/seed-input";
+import { classifySeed } from "../../lib/seed-input";
 import type { useIcpRun } from "../../lib/use-icp-run";
 import { ArchetypeResultsGrid } from "../product/ArchetypeResultsGrid";
 import { RunDoneCallouts } from "../product/RunDoneCallouts";
 import { RunErrorState } from "../product/RunErrorState";
 import { RunProgress } from "../product/RunProgress";
+import { ScanBadge } from "../product/ScanBadge";
 
 const EXAMPLES = [
   "AI invoicing tool for indie SaaS founders",
@@ -26,7 +27,20 @@ interface HeroChatProps {
 }
 
 export function HeroChat({ run, onOpenByok }: HeroChatProps) {
-  const { state, archetypeList, byok, elapsedMs, submit, retry, canRetry, stop } = run;
+  const {
+    state,
+    archetypeList,
+    byok,
+    elapsedMs,
+    submit,
+    retry,
+    canRetry,
+    stop,
+    enrichArchetype,
+    moreContacts,
+    deepenCandidate,
+    copyOutreach,
+  } = run;
   const [seed, setSeed] = useState("");
   const expectedTotal = 3;
   const doneCount =
@@ -89,13 +103,7 @@ export function HeroChat({ run, onOpenByok }: HeroChatProps) {
           {/* URL badge — bottom-left, when input looks like a URL */}
           {isUrl ? (
             <div className="pointer-events-none absolute bottom-3 left-3 md:bottom-4 md:left-4">
-              <span
-                className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--mint-deep)] bg-[color:var(--bg-card-hi)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-[color:var(--mint-deep)]"
-                aria-label={`Will scan ${shortUrlLabel(seed)}`}
-              >
-                <span aria-hidden="true">↳</span>
-                scan {shortUrlLabel(seed)}
-              </span>
+              <ScanBadge raw={seed} />
             </div>
           ) : null}
 
@@ -270,6 +278,14 @@ export function HeroChat({ run, onOpenByok }: HeroChatProps) {
             archetypeList={archetypeList}
             candidatesByArchetype={state.candidatesByArchetype}
             status={state.status}
+            archetypeStatus={state.archetypeStatus}
+            deepenResults={state.deepenByCandidate}
+            deepenInFlight={state.deepenInFlight}
+            outreachByCandidate={state.outreachByCandidate}
+            onEnrich={enrichArchetype}
+            onMoreContacts={moreContacts}
+            onDeepen={deepenCandidate}
+            onCopyOutreach={copyOutreach}
           />
         </div>
       ) : null}

@@ -14,6 +14,9 @@ export interface ExampleCompany {
   name: string;
   /** Lowercase bare domain, no protocol, no www, no path. */
   domain: string;
+  /** One-line "why this company NOW" — concrete trigger the LLM inferred
+   * (recent funding, hiring spike, expansion, etc.). May be empty. */
+  whyNow?: string;
 }
 
 export interface Archetype {
@@ -23,7 +26,15 @@ export interface Archetype {
   role: string;
   companySize: string;
   pain: string;
+  /** Why this archetype belongs in the set — short paragraph explaining
+   * the LLM's selection criteria for this persona. Collapsible in UI. */
+  reasoning?: string;
+  /** One-line outreach hook tailored to the persona. Rendered as the
+   * mint-tinted "pitch angle" callout. */
+  sellingAngle?: string;
   buyingSignals: string[];
+  /** Top likely "no" objections this persona would raise — 3 short lines. */
+  objections?: string[];
   /** Real companies matching this archetype, returned by the LLM.
    * May be empty if the model declined to name any. */
   exampleCompanies: ExampleCompany[];
@@ -44,6 +55,20 @@ export interface Candidate {
   contactEmail: string | null;
   emailConfidence: Confidence | null;
   emailScore: number | null;
+  /** Populated by /api/deepen — empty by default. */
+  whyNow?: string;
+}
+
+/**
+ * Deepen response — Gemini-grounded trigger + provenance + dossier.
+ * Returned by /api/deepen, never streamed by core IcpFinder.find().
+ */
+export interface DeepenResult {
+  candidateId: string;
+  trigger: string;
+  /** Sanitized http(s) URL — only http/https accepted by renderer. */
+  provenanceUrl: string | null;
+  dossier: string;
 }
 
 /**

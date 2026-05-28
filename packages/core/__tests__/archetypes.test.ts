@@ -148,6 +148,41 @@ describe("parseArchetypes", () => {
     expect(arch?.exampleCompanies).toHaveLength(1);
   });
 
+  it("parses sellingAngle, reasoning, objections, and whyNow when present", () => {
+    const raw = JSON.stringify([
+      {
+        industry: "B2B SaaS",
+        role: "Head of Growth",
+        companySize: "10-50",
+        pain: "Cold reply rates dropping.",
+        reasoning: "User mentioned outbound — Head of Growth owns reply rates.",
+        sellingAngle: "Cut your outbound research time in half.",
+        buyingSignals: ["hiring SDRs"],
+        objections: ["already using Outreach", "no budget this quarter", "tried this once"],
+        exampleCompanies: [
+          { name: "Stripe", domain: "stripe.com", whyNow: "hired 4 AEs last month" },
+          { name: "Linear", domain: "linear.app" },
+        ],
+      },
+    ]);
+    const [arch] = parseArchetypes(raw);
+    expect(arch?.reasoning).toContain("Head of Growth");
+    expect(arch?.sellingAngle).toContain("outbound");
+    expect(arch?.objections).toHaveLength(3);
+    expect(arch?.exampleCompanies[0]?.whyNow).toContain("4 AEs");
+    expect(arch?.exampleCompanies[1]?.whyNow).toBeUndefined();
+  });
+
+  it("falls back to no objections when LLM omits them", () => {
+    const raw = JSON.stringify([
+      { industry: "X", role: "Y", companySize: "Z", pain: "p", buyingSignals: [] },
+    ]);
+    const [arch] = parseArchetypes(raw);
+    expect(arch?.objections).toBeUndefined();
+    expect(arch?.sellingAngle).toBeUndefined();
+    expect(arch?.reasoning).toBeUndefined();
+  });
+
   it("returns empty exampleCompanies when field missing", () => {
     const raw = JSON.stringify([
       { industry: "X", role: "Y", companySize: "Z", pain: "p", buyingSignals: [] },

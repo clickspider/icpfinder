@@ -11,12 +11,15 @@ import { EmptyState } from "../../components/product/EmptyState";
 import { RunErrorState } from "../../components/product/RunErrorState";
 import { RunHeader } from "../../components/product/RunHeader";
 import { RunProgress } from "../../components/product/RunProgress";
-import { classifySeed, shortUrlLabel } from "../../lib/seed-input";
+import { classifySeed } from "../../lib/seed-input";
+import { useFocusProvider } from "../../lib/use-focus-provider";
 import { useIcpRun } from "../../lib/use-icp-run";
+import { ScanBadge } from "../../components/product/ScanBadge";
 
 export default function FindPage() {
   const [seed, setSeed] = useState("");
   const [showKeys, setShowKeys] = useState(false);
+  const [byokFocusProvider, setByokFocusProvider] = useState<"gemini" | "hunter" | null>(null);
   const {
     state,
     archetypeList,
@@ -30,6 +33,10 @@ export default function FindPage() {
     setRememberKeys,
     clearKeys,
     submit,
+    enrichArchetype,
+    moreContacts,
+    deepenCandidate,
+    copyOutreach,
     retry,
     canRetry,
     stop,
@@ -40,6 +47,9 @@ export default function FindPage() {
     state.status === "done" ? archetypeList.length : Math.max(0, archetypeList.length - 1);
   const classified = useMemo(() => classifySeed(seed), [seed]);
   const isUrl = classified.kind === "url";
+  // D9: focus the BYOK panel on the provider attribute of the latest
+  // rate-limit / quota / auth error. Derived from state, not stored.
+  const latestProviderError = useFocusProvider(state.errors);
 
   // Deep-link: /find#keys auto-opens BYOK dialog.
   useEffect(() => {
@@ -47,7 +57,10 @@ export default function FindPage() {
     if (window.location.hash === "#keys") setShowKeys(true);
   }, []);
 
-  const openByok = () => setShowKeys(true);
+  const openByok = (provider?: "gemini" | "hunter") => {
+    setByokFocusProvider(provider ?? latestProviderError ?? null);
+    setShowKeys(true);
+  };
 
   return (
     <>
@@ -111,13 +124,7 @@ export default function FindPage() {
           />
           {isUrl ? (
             <div className="-mt-2 flex">
-              <span
-                className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--mint-deep)] bg-[color:var(--bg-card-hi)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-[color:var(--mint-deep)]"
-                aria-label={`Will scan ${shortUrlLabel(seed)}`}
-              >
-                <span aria-hidden="true">↳</span>
-                scan {shortUrlLabel(seed)}
-              </span>
+              <ScanBadge raw={seed} />
             </div>
           ) : null}
 
@@ -150,7 +157,7 @@ export default function FindPage() {
             </span>
             <button
               type="button"
-              onClick={openByok}
+              onClick={() => openByok()}
               className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full border border-[color:var(--hairline-2)] bg-[color:var(--bg-elev)] px-3.5 text-[13px] font-medium text-[color:var(--text-muted)] transition-colors hover:bg-[color:var(--bg-card-hi)] hover:text-[color:var(--text)]"
             >
               <svg
@@ -179,7 +186,7 @@ export default function FindPage() {
           <RunErrorState
             errors={state.errors}
             byok={byok}
-            onAddKeys={openByok}
+            onAddKeys={() => openByok()}
             onRetry={retry}
             canRetry={canRetry}
           />
@@ -192,6 +199,14 @@ export default function FindPage() {
             archetypeList={archetypeList}
             candidatesByArchetype={state.candidatesByArchetype}
             status={state.status}
+            archetypeStatus={state.archetypeStatus}
+            deepenResults={state.deepenByCandidate}
+            deepenInFlight={state.deepenInFlight}
+            outreachByCandidate={state.outreachByCandidate}
+            onEnrich={enrichArchetype}
+            onMoreContacts={moreContacts}
+            onDeepen={deepenCandidate}
+            onCopyOutreach={copyOutreach}
           />
         )}
       </main>
@@ -206,6 +221,7 @@ export default function FindPage() {
         rememberKeys={rememberKeys}
         onRememberChange={setRememberKeys}
         onClearKeys={clearKeys}
+        focusProvider={byokFocusProvider}
       />
 
       <Footer />
