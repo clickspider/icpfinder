@@ -4,7 +4,7 @@ import { IcpFinder } from "@icpfinder/core";
 import { type NextRequest, NextResponse } from "next/server";
 import { getMonthlyBudget } from "@/lib/monthly-budget";
 import { getRunRecorder } from "@/lib/prisma";
-import { buildProviders } from "@/lib/providers";
+import { buildProviders, byokProvidersHeader } from "@/lib/providers";
 import { getDefaultRateLimiter, hashClientIp } from "@/lib/rate-limit";
 import { getCachedRun, setCachedRun } from "@/lib/run-cache";
 import { streamRun } from "@/lib/run-stream";
@@ -73,10 +73,11 @@ export async function POST(request: NextRequest): Promise<Response> {
   const classified = classifySeed(body.seed);
   let effectiveSeed = body.seed.trim();
 
-  const { llm, email, mode } = buildProviders({
+  const { llm, email, mode, byokProviders, operatorPaidSides } = buildProviders({
     userGeminiKey: asString(body.geminiApiKey),
     userHunterKey: asString(body.hunterApiKey),
   });
+  const byokHeader = byokProvidersHeader(byokProviders);
 
   // Operator-mode cache lookup. Skips entirely for BYOK (user data stays user-side)
   // and for stub (no real data anyway).
@@ -91,6 +92,7 @@ export async function POST(request: NextRequest): Promise<Response> {
           connection: "keep-alive",
           "x-accel-buffering": "no",
           "x-icpfinder-mode": mode,
+          "x-icpfinder-byok-providers": byokHeader,
           "x-icpfinder-cache": "hit",
         },
       });
@@ -105,8 +107,8 @@ export async function POST(request: NextRequest): Promise<Response> {
   let candidatesPerArchetype: number;
   let budgetCapCents: number;
 
-  if (mode === "byok") {
-    // User pays — no rate limit, no operator budget guard.
+  if (operatorPaidSides.length === 0) {
+    // Every side is user-paid (or stub) — no rate limit, no operator budget guard.
     archetypeLimit = clampInt(body.archetypeLimit, 1, 5, BYOK_DEFAULT_ARCHETYPE_LIMIT);
     candidatesPerArchetype = clampInt(
       body.candidatesPerArchetype,
@@ -116,14 +118,17 @@ export async function POST(request: NextRequest): Promise<Response> {
     );
     budgetCapCents = Number.POSITIVE_INFINITY;
   } else {
-    // Operator-paid (live or stub). Enforce both per-IP and monthly caps.
+    // At least one side is operator-paid. Enforce per-IP + monthly caps and
+    // attribute the error to the first operator-paid side so the UI can
+    // deep-link the right BYOK input.
+    const primaryProvider = operatorPaidSides[0] ?? "gemini";
     const check = await limiter.reserveRun(clientIpHash);
     if (!check.allowedRun) {
       return NextResponse.json(
         {
-          error: "Daily free-tier limit reached. Add your own API keys for unlimited runs.",
+          error: `Daily free-tier limit reached. Paste your own ${primaryProvider} key for unlimited runs.`,
           code: "rate_limit",
-          provider: "gemini",
+          provider: primaryProvider,
           mode,
           remainingRuns: check.remainingRuns,
           remainingCents: check.remainingCents,
@@ -131,12 +136,12 @@ export async function POST(request: NextRequest): Promise<Response> {
         { status: 429 }
       );
     }
-    if (mode === "operator" && !(await monthlyBudget.isAvailable())) {
+    if (!(await monthlyBudget.isAvailable())) {
       return NextResponse.json(
         {
           error: "Free demo is at capacity right now from previous requests.",
           code: "quota",
-          provider: "gemini",
+          provider: primaryProvider,
           mode,
         },
         { status: 402 }
@@ -180,9 +185,10 @@ export async function POST(request: NextRequest): Promise<Response> {
     finder,
     recorder: getRunRecorder(),
     rateLimiter: limiter,
-    monthlyBudget: mode === "operator" ? monthlyBudget : undefined,
+    monthlyBudget: operatorPaidSides.length > 0 ? monthlyBudget : undefined,
     clientIpHash,
     mode,
+    operatorPaidSides,
     input: {
       seed: effectiveSeed,
       archetypeLimit,
@@ -210,6 +216,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       connection: "keep-alive",
       "x-accel-buffering": "no",
       "x-icpfinder-mode": mode,
+      "x-icpfinder-byok-providers": byokHeader,
       "x-icpfinder-cache": eligibleForCache ? "miss" : "skip",
     },
   });
