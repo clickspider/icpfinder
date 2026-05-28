@@ -8,31 +8,37 @@
 
 ### Per-candidate outreach hook generation
 **Priority:** P1
+**Vote:** [#28](https://github.com/clickspider/icpfinder/issues/28)
 
 For each surfaced candidate, generate a one-line cold-outreach hook grounded in the archetype's pain signals + the candidate's role. Drop-in for Lemlist/Smartlead/Instantly templates. The next-most-asked-for feature after enrichment itself.
 
 ### Public-runs feed on `/find` empty state
 **Priority:** P2
+**Vote:** [#29](https://github.com/clickspider/icpfinder/issues/29)
 
 Show a live feed of recently completed public runs (opt-in at submit time) on the `/find` empty state below the example chips. Social proof + new users see real outputs before committing. Requires opt-in checkbox, moderation pipeline, and identifying-info stripping before public display.
 
 ### Share-run URL
 **Priority:** P2
+**Vote:** [#30](https://github.com/clickspider/icpfinder/issues/30)
 
 `/run/[id]` read-only view of a completed run, with a short shareable link. Enables "look what icpfinder gave me" social sharing. Opt-in at submit time.
 
 ### Email export (CSV / JSON)
 **Priority:** P2
+**Vote:** [#31](https://github.com/clickspider/icpfinder/issues/31)
 
 "Export CSV" and "Export JSON" buttons in the action row after a run completes. Pure client-side, no server round-trip.
 
 ### Resume mid-stream run after network drop
 **Priority:** P2
+**Vote:** [#32](https://github.com/clickspider/icpfinder/issues/32)
 
 If the SSE connection drops mid-run, expose a "Resume?" toast on `/find` with a retry button. Server-side: persist partial run state + chunk offset so the client can pick up where it left off.
 
 ### Per-archetype retry
 **Priority:** P2
+**Vote:** [#33](https://github.com/clickspider/icpfinder/issues/33)
 
 If a single archetype fails enrichment (Hunter timeout, rate limit, partial result), let the user retry just that archetype without restarting the whole run.
 
@@ -40,31 +46,37 @@ If a single archetype fails enrichment (Hunter timeout, rate limit, partial resu
 
 ### Post-scanning: find leads from social posts
 **Priority:** P3
+**Vote:** [#34](https://github.com/clickspider/icpfinder/issues/34)
 
 Flip the discovery direction. Instead of "given a company, find emails," scan recent social posts (Reddit, HN, X, LinkedIn) for buying-signal language matching an archetype's pain and surface posters as lead candidates. Validated demand from early users.
 
 ### Cold-email diagnostician
 **Priority:** P3
+**Vote:** [#35](https://github.com/clickspider/icpfinder/issues/35)
 
 Paste a failing cold-email thread; get a rewritten version grounded in the recipient's archetype. Diagnose tone, framing, and CTA mismatch.
 
 ### Cmd+K command palette
 **Priority:** P3
+**Vote:** [#36](https://github.com/clickspider/icpfinder/issues/36)
 
 Global `Cmd+K` palette (cmdk-style) to jump to `/find`, focus the input, paste an example, view docs, or toggle mode. Lands after `/docs` since the palette without docs has nothing to navigate to.
 
 ### `/docs` page
 **Priority:** P3
+**Vote:** [#37](https://github.com/clickspider/icpfinder/issues/37)
 
 Bespoke docs at `/docs` (MDX). Inherit landing tokens, no custom design. Cover install, BYOK, self-host, API reference, cost model.
 
 ### Auto-scroll to newest streaming archetype on mobile
 **Priority:** P3
+**Vote:** [#38](https://github.com/clickspider/icpfinder/issues/38)
 
 On `<md` viewports, when a new archetype card appends mid-stream, smooth-scroll the page so the streaming card sits at the top of the viewport. Respects `prefers-reduced-motion`.
 
 ### Live recorded run in hero
 **Priority:** P3
+**Vote:** [#39](https://github.com/clickspider/icpfinder/issues/39)
 
 Replace the static code preview with an animated playback of a real recorded `/api/find` SSE stream, commit the JSON, label with seed + date provenance. Lands once we have a deployed production endpoint with a clean public seed worth replaying.
 
