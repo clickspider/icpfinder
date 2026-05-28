@@ -56,19 +56,19 @@ export default async function RoadmapPage() {
           <p className="mt-3 max-w-[560px] text-[15px] text-[color:var(--text-muted)]">
             Generated from{" "}
             <a
-              href="https://github.com/clickspider/icpfinder/blob/main/TODOS.md"
+              href="https://github.com/clickspider/icpfinder/blob/main/ROADMAP.md"
               className="text-[color:var(--mint-deep)] hover:underline"
             >
-              TODOS.md
+              ROADMAP.md
             </a>{" "}
-            at build time. P0 → blocker, P4 → someday. Want it sooner?{" "}
+            at build time. P0 → blocker, P3 → someday. Want it sooner?{" "}
             <a
-              href="https://github.com/clickspider/icpfinder/issues"
+              href="https://github.com/clickspider/icpfinder/issues/new/choose"
               className="text-[color:var(--mint-deep)] hover:underline"
             >
               Open an issue
             </a>{" "}
-            or PR.
+            and react 👍 on the ones you want most — community votes shape priority.
           </p>
         </header>
 

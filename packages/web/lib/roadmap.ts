@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 //
-// Minimal TODOS.md parser used by /roadmap. Server-only (uses node:fs).
+// Minimal markdown parser used by /roadmap. Server-only (uses node:fs).
+// Reads ROADMAP.md from the repo root — the curated, public-facing roadmap.
+// Internal todos live in .context/todos.md (gitignored) and are deliberately
+// not parsed here.
 
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -37,9 +40,9 @@ function findRepoRoot(start: string): string {
 export async function loadRoadmap(): Promise<RoadmapDoc> {
   const root = findRepoRoot(process.cwd());
   const candidates = [
-    join(process.cwd(), "TODOS.md"),
-    join(root, "TODOS.md"),
-    join(process.cwd(), "..", "..", "TODOS.md"),
+    join(process.cwd(), "ROADMAP.md"),
+    join(root, "ROADMAP.md"),
+    join(process.cwd(), "..", "..", "ROADMAP.md"),
   ];
   let raw: string | null = null;
   for (const path of candidates) {
