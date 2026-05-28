@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
@@ -26,7 +27,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           dangerouslySetInnerHTML={{ __html: modeBootstrap }}
         />
       </head>
-      <body className="flex min-h-screen flex-col">{children}</body>
+      <body className="flex min-h-screen flex-col">
+        {children}
+        {/* Vercel Web Analytics. No-op when process.env.VERCEL_ENV is unset, */}
+        {/* so self-hosters (non-Vercel deploys) get zero requests to */}
+        {/* /_vercel/insights/*. See docs/telemetry.md. Pinned exact to 1.5.0 */}
+        {/* in package.json because the self-host no-fire contract is */}
+        {/* version-specific. Bumping requires re-verifying that contract. */}
+        <Analytics />
+      </body>
     </html>
   );
 }

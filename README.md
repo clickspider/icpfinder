@@ -176,6 +176,10 @@ Unset → cache is a graceful no-op (every request goes live). BYOK runs always 
 
 Vercel + Postgres + Upstash, three steps: [docs/self-host.md](./docs/self-host.md).
 
+## Telemetry
+
+`icpfinder.dev` uses [Vercel Web Analytics](https://vercel.com/docs/analytics/privacy-policy) — no cookies, no PII storage, IP+UA hashed daily server-side. **Self-host gets nothing**: `@vercel/analytics` short-circuits when not deployed on Vercel, so cloning this repo phones nowhere. The npm libs (`@icpfinder/core`, `@icpfinder/providers`) never include tracking — ever. Full details + verification steps: [docs/telemetry.md](./docs/telemetry.md).
+
 ## Tests
 
 ```bash
