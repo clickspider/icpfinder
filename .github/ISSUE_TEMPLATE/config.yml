@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or discussion
+    url: https://github.com/clickspider/icpfinder/discussions
+    about: For open-ended questions, design discussions, or "should we do X?" conversations.
+  - name: Live demo
+    url: https://icpfinder.dev
+    about: Try icpfinder in the browser before filing — many "is this broken?" questions answer themselves there.

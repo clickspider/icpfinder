@@ -4,6 +4,14 @@
   "private": true,
   "description": "Free, open-source first-customer-discovery tool for indie AI builders.",
   "license": "MIT",
+  "homepage": "https://icpfinder.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/clickspider/icpfinder.git"
+  },
+  "bugs": {
+    "url": "https://github.com/clickspider/icpfinder/issues"
+  },
   "type": "module",
   "workspaces": [
     "packages/*"
