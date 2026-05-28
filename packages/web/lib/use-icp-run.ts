@@ -47,6 +47,7 @@ const initialState: RunState = {
 
 const GEMINI_LS_KEY = "icpfinder:geminiApiKey";
 const HUNTER_LS_KEY = "icpfinder:hunterApiKey";
+const REMEMBER_LS_KEY = "icpfinder:rememberKeys";
 
 const parseSseChunk = (raw: string): FindEvent[] => {
   const events: FindEvent[] = [];
@@ -71,17 +72,26 @@ export function useIcpRun() {
   const [state, setState] = useState<RunState>(initialState);
   const [geminiKey, setGeminiKey] = useState("");
   const [hunterKey, setHunterKey] = useState("");
+  // Memory-only by default. Persistence is opt-in to limit the blast radius
+  // of a malicious browser extension reading localStorage.
+  const [rememberKeys, setRememberKeysState] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const abortRef = useRef<AbortController | null>(null);
   const lastSeedRef = useRef<string>("");
 
-  // Hydrate BYOK keys from localStorage on mount
+  // Hydrate BYOK keys on mount — only if the user previously opted in.
   useEffect(() => {
     try {
-      const g = window.localStorage.getItem(GEMINI_LS_KEY) ?? "";
-      const h = window.localStorage.getItem(HUNTER_LS_KEY) ?? "";
-      setGeminiKey(g);
-      setHunterKey(h);
+      const remember = window.localStorage.getItem(REMEMBER_LS_KEY) === "1";
+      if (remember) {
+        setRememberKeysState(true);
+        setGeminiKey(window.localStorage.getItem(GEMINI_LS_KEY) ?? "");
+        setHunterKey(window.localStorage.getItem(HUNTER_LS_KEY) ?? "");
+      } else {
+        // Clean up any stale keys left from a previous opt-in.
+        window.localStorage.removeItem(GEMINI_LS_KEY);
+        window.localStorage.removeItem(HUNTER_LS_KEY);
+      }
     } catch {
       // localStorage may be disabled
     }
@@ -94,12 +104,41 @@ export function useIcpRun() {
     return () => window.clearInterval(id);
   }, [state.status]);
 
-  const persistKeys = useCallback((gemini: string, hunter: string) => {
+  const persistKeys = useCallback((gemini: string, hunter: string, remember: boolean) => {
     try {
-      if (gemini) window.localStorage.setItem(GEMINI_LS_KEY, gemini);
-      else window.localStorage.removeItem(GEMINI_LS_KEY);
-      if (hunter) window.localStorage.setItem(HUNTER_LS_KEY, hunter);
-      else window.localStorage.removeItem(HUNTER_LS_KEY);
+      if (remember) {
+        window.localStorage.setItem(REMEMBER_LS_KEY, "1");
+        if (gemini) window.localStorage.setItem(GEMINI_LS_KEY, gemini);
+        else window.localStorage.removeItem(GEMINI_LS_KEY);
+        if (hunter) window.localStorage.setItem(HUNTER_LS_KEY, hunter);
+        else window.localStorage.removeItem(HUNTER_LS_KEY);
+      } else {
+        // Memory-only — make sure nothing leaks into storage.
+        window.localStorage.removeItem(REMEMBER_LS_KEY);
+        window.localStorage.removeItem(GEMINI_LS_KEY);
+        window.localStorage.removeItem(HUNTER_LS_KEY);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const setRememberKeys = useCallback(
+    (next: boolean) => {
+      setRememberKeysState(next);
+      persistKeys(geminiKey.trim(), hunterKey.trim(), next);
+    },
+    [geminiKey, hunterKey, persistKeys]
+  );
+
+  const clearKeys = useCallback(() => {
+    setGeminiKey("");
+    setHunterKey("");
+    setRememberKeysState(false);
+    try {
+      window.localStorage.removeItem(REMEMBER_LS_KEY);
+      window.localStorage.removeItem(GEMINI_LS_KEY);
+      window.localStorage.removeItem(HUNTER_LS_KEY);
     } catch {
       // ignore
     }
@@ -147,7 +186,7 @@ export function useIcpRun() {
       abortRef.current = controller;
       lastSeedRef.current = trimmed;
 
-      persistKeys(geminiKey.trim(), hunterKey.trim());
+      persistKeys(geminiKey.trim(), hunterKey.trim(), rememberKeys);
       setState({
         ...initialState,
         status: "running",
@@ -224,7 +263,7 @@ export function useIcpRun() {
         }));
       }
     },
-    [geminiKey, hunterKey, applyEvent, persistKeys]
+    [geminiKey, hunterKey, rememberKeys, applyEvent, persistKeys]
   );
 
   const retry = useCallback(() => {
@@ -252,6 +291,9 @@ export function useIcpRun() {
     hunterKey,
     setGeminiKey,
     setHunterKey,
+    rememberKeys,
+    setRememberKeys,
+    clearKeys,
     submit,
     retry,
     canRetry,

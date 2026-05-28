@@ -11,6 +11,9 @@ interface ByokPanelProps {
   onHunterChange: (v: string) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  rememberKeys: boolean;
+  onRememberChange: (next: boolean) => void;
+  onClearKeys: () => void;
 }
 
 /**
@@ -18,6 +21,11 @@ interface ByokPanelProps {
  * a11y, ESC-to-close, backdrop click, focus trap). Mounted once on the page;
  * driven by controlled `open` prop. Deep-link target: `id="keys"` lives on
  * the dialog so `/find#keys` scrollIntoView still works.
+ *
+ * Security posture: keys live in memory by default. Persistence to
+ * localStorage is opt-in via the "Remember on this device" checkbox, with
+ * an explicit warning about what that exposes (any browser extension with
+ * "Read site data" permission on this origin).
  */
 export function ByokPanel({
   geminiKey,
@@ -26,6 +34,9 @@ export function ByokPanel({
   onHunterChange,
   open,
   onOpenChange,
+  rememberKeys,
+  onRememberChange,
+  onClearKeys,
 }: ByokPanelProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const geminiInputRef = useRef<HTMLInputElement>(null);
@@ -36,14 +47,12 @@ export function ByokPanel({
     if (!dlg) return;
     if (open && !dlg.open) {
       dlg.showModal();
-      // Defer focus a tick so the input is in the DOM + focusable.
       const id = window.setTimeout(() => geminiInputRef.current?.focus(), 16);
       return () => window.clearTimeout(id);
     }
     if (!open && dlg.open) dlg.close();
   }, [open]);
 
-  // Listen for the dialog's native close event (ESC, backdrop click via form).
   useEffect(() => {
     const dlg = dialogRef.current;
     if (!dlg) return;
@@ -52,17 +61,19 @@ export function ByokPanel({
     return () => dlg.removeEventListener("close", onClose);
   }, [onOpenChange]);
 
-  // Click on backdrop (outside .panel) → close.
   const onBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
     if (e.target === dialogRef.current) dialogRef.current?.close();
   };
 
+  const hasAnyKey = Boolean(geminiKey || hunterKey);
+
   return (
+    // biome-ignore lint/a11y/useKeyWithClickEvents: onClick only detects backdrop clicks; ESC + close button handle keyboard close via native <dialog>.
     <dialog
       ref={dialogRef}
       id="keys"
       onClick={onBackdropClick}
-      className="m-0 max-h-[90vh] w-[min(440px,calc(100vw-32px))] rounded-[20px] border border-[color:var(--hairline-2)] bg-[color:var(--bg-card)] p-0 text-[color:var(--text)] backdrop:bg-[color:rgba(15,16,20,0.35)] backdrop:backdrop-blur-sm open:m-auto"
+      className="m-0 max-h-[90vh] w-[min(460px,calc(100vw-32px))] rounded-[20px] border border-[color:var(--hairline-2)] bg-[color:var(--bg-card)] p-0 text-[color:var(--text)] backdrop:bg-[color:rgba(15,16,20,0.35)] backdrop:backdrop-blur-sm open:m-auto"
       style={{
         boxShadow:
           "0 1px 2px rgba(15,16,20,0.04), 0 24px 60px -16px rgba(15,16,20,0.32), 0 0 0 1px var(--hairline)",
@@ -151,6 +162,22 @@ export function ByokPanel({
           </label>
         </div>
 
+        <label className="flex items-start gap-2.5 rounded-[12px] border border-[color:var(--hairline)] bg-[color:var(--bg-card-hi)] px-3 py-2.5 text-[13px] leading-[1.5]">
+          <input
+            type="checkbox"
+            checked={rememberKeys}
+            onChange={(e) => onRememberChange(e.target.checked)}
+            className="mt-[3px] h-4 w-4 shrink-0 accent-[color:var(--mint-deep)]"
+          />
+          <span className="grid gap-0.5">
+            <span className="font-medium text-[color:var(--text)]">Remember on this device</span>
+            <span className="text-[12px] text-[color:var(--text-muted)]">
+              Saves to your browser's localStorage so you don't re-paste next visit. Off by default
+              — see the security note below.
+            </span>
+          </span>
+        </label>
+
         <div
           className="flex items-start gap-2 rounded-[12px] border px-3 py-2.5 text-[12px] leading-[1.5] text-[color:var(--text-muted)]"
           style={{
@@ -174,21 +201,32 @@ export function ByokPanel({
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
           <span>
-            <span className="font-medium text-[color:var(--text)]">Private by design.</span> Keys
-            stay in your browser (localStorage), sent once per request straight to Google + Hunter,
-            never logged or persisted on our servers.{" "}
+            <span className="font-medium text-[color:var(--text)]">How keys are handled.</span> Held
+            in memory only by default. Sent once per request straight to Google + Hunter, never
+            logged or persisted on our servers. If you tick <em>Remember</em>, keys are written to
+            your browser's localStorage — any browser extension you've granted{" "}
+            <em>"Read site data"</em> on this origin can read them. Read{" "}
             <a
               href="https://github.com/clickspider/icpfinder"
               target="_blank"
               rel="noopener noreferrer"
               className="underline hover:text-[color:var(--text)]"
             >
-              MIT source.
-            </a>
+              the MIT source
+            </a>{" "}
+            to verify.
           </span>
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+          <button
+            type="button"
+            onClick={onClearKeys}
+            disabled={!hasAnyKey}
+            className="inline-flex h-9 items-center rounded-full px-3 text-[13px] font-medium text-[color:var(--text-muted)] transition-colors hover:bg-[color:var(--bg-card-hi)] hover:text-[color:var(--text)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-[color:var(--text-muted)]"
+          >
+            Clear keys
+          </button>
           <button
             type="button"
             onClick={() => dialogRef.current?.close()}
