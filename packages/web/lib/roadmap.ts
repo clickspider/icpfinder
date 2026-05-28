@@ -14,6 +14,8 @@ export interface RoadmapItem {
   description: string;
   completed: boolean;
   completedTag?: string;
+  voteUrl?: string;
+  voteNumber?: number;
 }
 
 export interface RoadmapSection {
@@ -29,6 +31,7 @@ interface RoadmapDoc {
 
 const ITEM_HEADING_RE = /^###\s+(.+?)\s*$/;
 const PRIORITY_RE = /\*\*Priority:\*\*\s*(P\d)/;
+const VOTE_RE = /\*\*Vote:\*\*\s*\[#(\d+)\]\(([^)]+)\)/;
 const COMPLETED_TAG_RE = /\*\*Completed:\*\*\s*(.+?)\s*$/m;
 
 function findRepoRoot(start: string): string {
@@ -120,6 +123,12 @@ export async function loadRoadmap(): Promise<RoadmapDoc> {
       const pri = line.match(PRIORITY_RE);
       if (pri) {
         pendingItem.priority = pri[1] ?? null;
+        continue;
+      }
+      const vote = line.match(VOTE_RE);
+      if (vote) {
+        pendingItem.voteNumber = Number(vote[1]);
+        pendingItem.voteUrl = vote[2];
         continue;
       }
       pendingBodyLines.push(line);

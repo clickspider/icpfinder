@@ -113,6 +113,17 @@ export default async function RoadmapPage() {
                           {item.description}
                         </p>
                       ) : null}
+                      {item.voteUrl ? (
+                        <a
+                          href={item.voteUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--hairline)] bg-[color:var(--bg-card-hi)] px-3 py-1 text-[12px] font-medium text-[color:var(--text)] transition-colors hover:border-[color:var(--mint-deep)] hover:text-[color:var(--mint-deep)]"
+                        >
+                          👍 Vote on #{item.voteNumber}
+                          <span aria-hidden="true">→</span>
+                        </a>
+                      ) : null}
                     </li>
                   );
                 })}
