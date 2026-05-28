@@ -56,19 +56,19 @@ export default async function RoadmapPage() {
           <p className="mt-3 max-w-[560px] text-[15px] text-[color:var(--text-muted)]">
             Generated from{" "}
             <a
-              href="https://github.com/clickspider/icpfinder/blob/main/TODOS.md"
+              href="https://github.com/clickspider/icpfinder/blob/main/ROADMAP.md"
               className="text-[color:var(--mint-deep)] hover:underline"
             >
-              TODOS.md
+              ROADMAP.md
             </a>{" "}
-            at build time. P0 → blocker, P4 → someday. Want it sooner?{" "}
+            at build time. P0 → blocker, P3 → someday. Want it sooner?{" "}
             <a
-              href="https://github.com/clickspider/icpfinder/issues"
+              href="https://github.com/clickspider/icpfinder/issues/new/choose"
               className="text-[color:var(--mint-deep)] hover:underline"
             >
               Open an issue
             </a>{" "}
-            or PR.
+            and react 👍 on the ones you want most — community votes shape priority.
           </p>
         </header>
 
@@ -77,7 +77,9 @@ export default async function RoadmapPage() {
             Roadmap is empty for the moment — that&apos;s the perk of building in public on day one.
           </p>
         ) : (
-          sections.map((section) => (
+          sections
+            .filter((section) => section.items.length > 0)
+            .map((section) => (
             <section key={section.heading} aria-labelledby={`section-${section.heading}`}>
               <h2
                 id={`section-${section.heading}`}
@@ -118,6 +120,37 @@ export default async function RoadmapPage() {
             </section>
           ))
         )}
+
+        <section
+          aria-labelledby="section-voting"
+          className="rounded-[16px] border border-[color:var(--hairline)] bg-[color:var(--bg-card)] p-5 sm:p-6"
+        >
+          <h2
+            id="section-voting"
+            className="text-[18px] font-semibold tracking-[-0.015em] text-[color:var(--text)]"
+          >
+            How voting works
+          </h2>
+          <p className="mt-2 text-[13.5px] leading-[1.55] text-[color:var(--text-muted)]">
+            Every roadmap item maps to a GitHub Issue tagged{" "}
+            <code className="rounded bg-[color:var(--bg-card-hi)] px-1 py-0.5 text-[12px]">
+              roadmap
+            </code>
+            . Sign in to GitHub, open an item's issue, react with 👍. Items with the most votes
+            jump priority within their version band. New ideas:{" "}
+            <a
+              href="https://github.com/clickspider/icpfinder/issues/new/choose"
+              className="text-[color:var(--mint-deep)] hover:underline"
+            >
+              open an issue
+            </a>{" "}
+            and reference the roadmap if it&apos;s an extension.
+          </p>
+          <p className="mt-2 text-[12.5px] leading-[1.55] text-[color:var(--text-muted)]">
+            We don&apos;t promise dates. Items can slip, swap, or get cut based on what users
+            actually need.
+          </p>
+        </section>
 
         {completed.length > 0 ? (
           <section aria-labelledby="section-completed">

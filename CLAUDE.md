@@ -48,9 +48,16 @@ bun run test         # vitest
 bun run build        # next build + prisma generate + prisma migrate deploy
 ```
 
-## TODOS
+## TODOS & roadmap
 
-See [`TODOS.md`](./TODOS.md) — items organized by component, P0–P4, with a Completed section.
+Two separate files:
+
+- **`.context/todos.md`** (gitignored, never published) — internal scratchpad: in-flight thinking, design decisions, deferred work with rationale, validated demand notes, copy research. Add anything here freely.
+- **[`ROADMAP.md`](./ROADMAP.md)** (public, curated by hand) — community-facing roadmap. Parsed at build time by `packages/web/lib/roadmap.ts` and rendered at [`icpfinder.dev/roadmap`](https://icpfinder.dev/roadmap). Only items safe to expose go here. Each is a candidate for community 👍 voting via GitHub Issues.
+
+Rule of thumb: write everything in `.context/todos.md` first. Promote to `ROADMAP.md` once an item is concrete enough to ship and safe to publish.
+
+For specific actionable items others might pick up, prefer GitHub Issues with the `roadmap` label (use the [issue templates](./.github/ISSUE_TEMPLATE)).
 
 ## Reference
 
