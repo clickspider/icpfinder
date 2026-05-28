@@ -1,44 +1,46 @@
-<div align="center">
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/logo-dark.svg">
+    <img alt="icpfinder" src=".github/assets/logo-light.svg" width="140" height="140">
+  </picture>
+</p>
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/logo-dark.svg">
-  <img alt="icpfinder" src=".github/assets/logo-light.svg" width="140" height="140">
-</picture>
+<h1 align="center">icpfinder</h1>
 
-# icpfinder
+<p align="center">
+  <a href="https://icpfinder.dev">Live demo</a> ·
+  <a href="https://www.npmjs.com/package/@icpfinder/core">npm</a> ·
+  <a href="./docs/quickstart.md">Docs</a> ·
+  <a href="https://github.com/clickspider/icpfinder/discussions">Discussions</a> ·
+  <a href="https://github.com/clickspider/icpfinder/issues">Issues</a>
+</p>
 
-<a href="https://icpfinder.dev">Live demo</a> ·
-<a href="https://www.npmjs.com/package/@icpfinder/core">npm</a> ·
-<a href="./docs/quickstart.md">Docs</a> ·
-<a href="https://github.com/clickspider/icpfinder/discussions">Discussions</a> ·
-<a href="https://github.com/clickspider/icpfinder/issues">Issues</a>
+<p align="center">
+  <strong>Find who'll pay for your idea.</strong> Paste a product description, stream 3 ICP archetypes with verified contact emails in 30 seconds. Free. Open source. MIT.
+</p>
 
-**Find who'll pay for your idea.** Paste a product description, stream 3 ICP archetypes with verified contact emails in 30 seconds. Free. Open source. MIT.
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/banner-dark.svg">
+    <img alt="icpfinder" src=".github/assets/banner-light.svg" width="100%">
+  </picture>
+</p>
 
-</div>
+<p align="center">
+  <a href="https://github.com/clickspider/icpfinder/actions/workflows/ci.yml"><img src="https://github.com/clickspider/icpfinder/actions/workflows/ci.yml/badge.svg" alt="ci"></a>
+  <a href="https://github.com/clickspider/icpfinder/actions/workflows/release.yml"><img src="https://github.com/clickspider/icpfinder/actions/workflows/release.yml/badge.svg" alt="release"></a>
+  <a href="https://www.npmjs.com/package/@icpfinder/core"><img src="https://img.shields.io/npm/v/@icpfinder/core?label=%40icpfinder%2Fcore&color=14B8A6" alt="npm core"></a>
+  <a href="https://www.npmjs.com/package/@icpfinder/providers"><img src="https://img.shields.io/npm/v/@icpfinder/providers?label=%40icpfinder%2Fproviders&color=14B8A6" alt="npm providers"></a>
+  <a href="https://docs.npmjs.com/generating-provenance-statements"><img src="https://img.shields.io/badge/npm-provenance-7C3AED?logo=npm&logoColor=white" alt="provenance"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="license"></a>
+  <a href="./CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-F26B3D" alt="PRs welcome"></a>
+</p>
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/banner-dark.svg">
-  <img alt="icpfinder" src=".github/assets/banner-light.svg" width="100%">
-</picture>
-
-<div align="center">
-
-[![ci](https://github.com/clickspider/icpfinder/actions/workflows/ci.yml/badge.svg)](https://github.com/clickspider/icpfinder/actions/workflows/ci.yml)
-[![release](https://github.com/clickspider/icpfinder/actions/workflows/release.yml/badge.svg)](https://github.com/clickspider/icpfinder/actions/workflows/release.yml)
-[![npm core](https://img.shields.io/npm/v/@icpfinder/core?label=%40icpfinder%2Fcore&color=14B8A6)](https://www.npmjs.com/package/@icpfinder/core)
-[![npm providers](https://img.shields.io/npm/v/@icpfinder/providers?label=%40icpfinder%2Fproviders&color=14B8A6)](https://www.npmjs.com/package/@icpfinder/providers)
-[![provenance](https://img.shields.io/badge/npm-provenance-7C3AED?logo=npm&logoColor=white)](https://docs.npmjs.com/generating-provenance-statements)
-[![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
-[![PRs welcome](https://img.shields.io/badge/PRs-welcome-F26B3D)](./CONTRIBUTING.md)
-
-<br/>
-
-<a href="https://icpfinder.dev"><img src="https://img.shields.io/badge/▶_Try_the_live_demo-icpfinder.dev-14B8A6?style=for-the-badge&labelColor=15161B" height="36" alt="Try the live demo"></a>
-<a href="https://github.com/clickspider/icpfinder"><img src="https://img.shields.io/badge/★_Star_on_GitHub-7C3AED?style=for-the-badge&labelColor=15161B" height="36" alt="Star on GitHub"></a>
-<a href="https://www.npmjs.com/package/@icpfinder/core"><img src="https://img.shields.io/badge/↓_Install_from_npm-F26B3D?style=for-the-badge&labelColor=15161B" height="36" alt="Install from npm"></a>
-
-</div>
+<p align="center">
+  <a href="https://icpfinder.dev"><img src="https://img.shields.io/badge/▶_Try_the_live_demo-icpfinder.dev-14B8A6?style=for-the-badge&labelColor=15161B" height="36" alt="Try the live demo"></a>
+  <a href="https://github.com/clickspider/icpfinder"><img src="https://img.shields.io/badge/★_Star_on_GitHub-7C3AED?style=for-the-badge&labelColor=15161B" height="36" alt="Star on GitHub"></a>
+  <a href="https://www.npmjs.com/package/@icpfinder/core"><img src="https://img.shields.io/badge/↓_Install_from_npm-F26B3D?style=for-the-badge&labelColor=15161B" height="36" alt="Install from npm"></a>
+</p>
 
 <br/>
 
@@ -218,6 +220,6 @@ MIT. Use it. Fork it. Sell it. Don't sue. — See [LICENSE](./LICENSE).
 
 <br/>
 
-<div align="center">
-  <sub>Made with ( · ) by <a href="https://github.com/clickspider">clickspider</a> · <a href="https://icpfinder.dev">icpfinder.dev</a></sub>
-</div>
+<p align="center">
+  <sub>Made with ( · ) by <a href="https://github.com/clickspider">Daniel Frey (@clickspider)</a> · <a href="https://icpfinder.dev">icpfinder.dev</a></sub>
+</p>
