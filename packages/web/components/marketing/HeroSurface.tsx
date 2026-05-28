@@ -65,6 +65,9 @@ export function HeroSurface() {
         hunterKey={run.hunterKey}
         onGeminiChange={run.setGeminiKey}
         onHunterChange={run.setHunterKey}
+        rememberKeys={run.rememberKeys}
+        onRememberChange={run.setRememberKeys}
+        onClearKeys={run.clearKeys}
       />
     </>
   );

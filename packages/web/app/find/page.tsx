@@ -26,6 +26,9 @@ export default function FindPage() {
     hunterKey,
     setGeminiKey,
     setHunterKey,
+    rememberKeys,
+    setRememberKeys,
+    clearKeys,
     submit,
     retry,
     canRetry,
@@ -143,9 +146,7 @@ export default function FindPage() {
               </button>
             )}
             <span id="seed-hint" className="text-[13px] text-[color:var(--text-muted)]">
-              {byok
-                ? "Using your keys (free, unlimited)."
-                : "Free demo: 1 archetype + 3 contacts."}
+              {byok ? "Using your keys (free, unlimited)." : "Free demo: 1 archetype + 3 contacts."}
             </span>
             <button
               type="button"
@@ -202,6 +203,9 @@ export default function FindPage() {
         hunterKey={hunterKey}
         onGeminiChange={setGeminiKey}
         onHunterChange={setHunterKey}
+        rememberKeys={rememberKeys}
+        onRememberChange={setRememberKeys}
+        onClearKeys={clearKeys}
       />
 
       <Footer />

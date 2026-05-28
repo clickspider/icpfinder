@@ -150,8 +150,8 @@ export function RunErrorState({
           </svg>
           <span>
             <span className="font-medium text-[color:var(--text)]">Your keys stay private.</span>{" "}
-            Stored in your browser's localStorage, sent once per request straight to Google + Hunter,
-            never logged or persisted on our servers.
+            Held in memory only, sent once per request straight to Google + Hunter, never logged or
+            persisted on our servers. Opt in to remember on this device inside the dialog.
           </span>
         </div>
       ) : null}
@@ -165,9 +165,7 @@ export function RunErrorState({
             {errors
               .filter((e) => e !== primary)
               .map((e) => (
-                <li key={`${e.code ?? "unknown"}:${e.provider ?? ""}:${e.message}`}>
-                  {e.message}
-                </li>
+                <li key={`${e.code ?? "unknown"}:${e.provider ?? ""}:${e.message}`}>{e.message}</li>
               ))}
           </ul>
         </details>
