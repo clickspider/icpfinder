@@ -11,7 +11,7 @@
 
 import type { FindEvent, FindInput, IcpFinder } from "@icpfinder/core";
 import type { MonthlyBudget } from "./monthly-budget";
-import type { ProviderMode } from "./providers";
+import type { BillingSide, ProviderMode } from "./providers";
 import type { RateLimiter } from "./rate-limit";
 import type { RunRecorder, RunStatus } from "./run-recorder";
 
@@ -19,10 +19,13 @@ export interface RunStreamDeps {
   finder: IcpFinder;
   recorder: RunRecorder;
   rateLimiter: RateLimiter;
-  /** Provided when run is operator-paid. BYOK runs pass undefined. */
+  /** Provided when at least one side is operator-paid. */
   monthlyBudget?: MonthlyBudget;
   clientIpHash: string;
   mode: ProviderMode;
+  /** Sides the operator is paying for — only cost events from these providers
+   * debit per-IP and monthly caps. */
+  operatorPaidSides: BillingSide[];
   /** Already-validated FindInput. */
   input: FindInput;
 }
@@ -45,8 +48,16 @@ export async function* streamRun(deps: RunStreamDeps): AsyncGenerator<FindEvent,
 
       if (event.type === "cost") {
         totalCostCents += event.cost.costCents;
-        // Only operator-paid runs consume the per-IP and monthly caps.
-        if (deps.mode === "operator") {
+        // Per-side billing — only debit when this cost came from an
+        // operator-paid provider. User-paid sides are free for the operator.
+        const provider = event.cost.provider;
+        const isOperatorPaid =
+          provider === "gemini"
+            ? deps.operatorPaidSides.includes("gemini")
+            : provider === "hunter"
+              ? deps.operatorPaidSides.includes("hunter")
+              : false;
+        if (isOperatorPaid) {
           deps.rateLimiter
             .recordCost(deps.clientIpHash, event.cost.costCents)
             .catch(() => undefined);
