@@ -46,8 +46,10 @@ const coerceExampleCompanies = (v: unknown): ExampleCompany[] => {
     const domain = normalizeDomain(obj.domain);
     if (!domain || seen.has(domain)) continue;
     const name = typeof obj.name === "string" && obj.name.trim() ? obj.name.trim() : domain;
+    const whyNow =
+      typeof obj.whyNow === "string" && obj.whyNow.trim() ? obj.whyNow.trim() : undefined;
     seen.add(domain);
-    out.push({ name, domain });
+    out.push(whyNow ? { name, domain, whyNow } : { name, domain });
   }
   return out;
 };
@@ -62,15 +64,25 @@ Each archetype object MUST have these exact fields:
 - role (string, decision-maker job title, e.g. "Head of Marketing")
 - companySize (string, e.g. "10-50 employees", "Series A")
 - pain (string, one-sentence concrete pain the product solves)
+- reasoning (string, 1-2 sentences explaining why this archetype is in
+  the set — what specific signal in the product/company description
+  made you select this persona)
+- sellingAngle (string, one-line outreach hook tailored to the persona
+  — the exact opener you'd use in a cold email. Concrete, not generic)
 - buyingSignals (string[], 3-5 observable signals the company is
   currently in pain — e.g. "hiring SDRs", "recently funded",
   "expanded to new market")
+- objections (string[], top 3 likely "no" lines this persona would
+  raise to your pitch — short, real, not strawmen)
 - exampleCompanies (object[], 3-8 REAL companies matching this
-  archetype RIGHT NOW. Each object: { name: string, domain: string }.
-  Domain is the company's actual primary website domain, no protocol,
-  no path, no www. ("stripe.com" not "https://www.stripe.com/").
-  Only include companies you are highly confident exist and have that
-  exact domain. NEVER invent placeholder or example.com domains.)
+  archetype RIGHT NOW. Each object: { name: string, domain: string,
+  whyNow: string }. Domain is the company's actual primary website
+  domain, no protocol, no path, no www ("stripe.com" not
+  "https://www.stripe.com/"). whyNow is one short line naming a
+  concrete recent trigger (funding, hiring, launch, expansion) — if
+  unknown, output a short hypothesis prefixed "likely:". Only include
+  companies you are highly confident exist and have that exact domain.
+  NEVER invent placeholder or example.com domains.)
 
 Generate distinct archetypes that target different buyer segments,
 not minor variations of the same persona.`;
@@ -117,7 +129,10 @@ export const parseArchetypes = (raw: string): Archetype[] => {
   if (!Array.isArray(parsed)) return [];
   return parsed.map((entry, index) => {
     const obj = (entry ?? {}) as Record<string, unknown>;
-    return {
+    const reasoning = coerceString(obj.reasoning, "");
+    const sellingAngle = coerceString(obj.sellingAngle, "");
+    const objections = coerceStringArray(obj.objections).slice(0, 5);
+    const result: Archetype = {
       id: `arch_${index}`,
       industry: coerceString(obj.industry, "Unknown industry"),
       role: coerceString(obj.role, "Unknown role"),
@@ -126,6 +141,10 @@ export const parseArchetypes = (raw: string): Archetype[] => {
       buyingSignals: coerceStringArray(obj.buyingSignals),
       exampleCompanies: coerceExampleCompanies(obj.exampleCompanies),
     };
+    if (reasoning) result.reasoning = reasoning;
+    if (sellingAngle) result.sellingAngle = sellingAngle;
+    if (objections.length > 0) result.objections = objections;
+    return result;
   });
 };
 

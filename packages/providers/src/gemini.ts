@@ -93,7 +93,13 @@ const buildStubArchetypes = (): string =>
         role: "Founder",
         companySize: "1-10 employees",
         pain: "Stub pain placeholder.",
+        reasoning: "[STUB] reasoning placeholder — explains why this ICP was selected.",
+        sellingAngle: "[STUB] one-line outreach hook for this persona.",
         buyingSignals: ["[STUB] signal A", "[STUB] signal B", "[STUB] signal C"],
+        objections: ["[STUB] objection A", "[STUB] objection B", "[STUB] objection C"],
+        exampleCompanies: [
+          { name: "[STUB] Co", domain: "stub.example", whyNow: "[STUB] recent trigger" },
+        ],
       },
     ],
     null,
