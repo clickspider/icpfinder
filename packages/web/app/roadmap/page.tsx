@@ -6,8 +6,9 @@ import { Nav } from "../../components/marketing/Nav";
 import { loadRoadmap } from "../../lib/roadmap";
 
 export const metadata: Metadata = {
-  title: "icpfinder — roadmap",
+  title: "Roadmap",
   description: "What's shipped, what's next, what's deferred. Open in public.",
+  alternates: { canonical: "/roadmap" },
 };
 
 const PRIORITY_COLORS: Record<string, { fg: string; bg: string }> = {
@@ -80,56 +81,56 @@ export default async function RoadmapPage() {
           sections
             .filter((section) => section.items.length > 0)
             .map((section) => (
-            <section key={section.heading} aria-labelledby={`section-${section.heading}`}>
-              <h2
-                id={`section-${section.heading}`}
-                className="text-[20px] font-semibold tracking-[-0.015em] text-[color:var(--text)]"
-              >
-                {section.heading}
-              </h2>
-              <ul className="mt-4 grid gap-3">
-                {section.items.map((item) => {
-                  const tone = item.priority ? PRIORITY_COLORS[item.priority] : null;
-                  return (
-                    <li
-                      key={item.title}
-                      className="rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--bg-card)] p-4"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <h3 className="text-[15px] font-semibold tracking-[-0.005em] text-[color:var(--text)]">
-                          {item.title}
-                        </h3>
-                        {item.priority && tone ? (
-                          <span
-                            className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.1em] tabular"
-                            style={{ color: tone.fg, background: tone.bg }}
-                          >
-                            {item.priority}
-                          </span>
+              <section key={section.heading} aria-labelledby={`section-${section.heading}`}>
+                <h2
+                  id={`section-${section.heading}`}
+                  className="text-[20px] font-semibold tracking-[-0.015em] text-[color:var(--text)]"
+                >
+                  {section.heading}
+                </h2>
+                <ul className="mt-4 grid gap-3">
+                  {section.items.map((item) => {
+                    const tone = item.priority ? PRIORITY_COLORS[item.priority] : null;
+                    return (
+                      <li
+                        key={item.title}
+                        className="rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--bg-card)] p-4"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <h3 className="text-[15px] font-semibold tracking-[-0.005em] text-[color:var(--text)]">
+                            {item.title}
+                          </h3>
+                          {item.priority && tone ? (
+                            <span
+                              className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.1em] tabular"
+                              style={{ color: tone.fg, background: tone.bg }}
+                            >
+                              {item.priority}
+                            </span>
+                          ) : null}
+                        </div>
+                        {item.description ? (
+                          <p className="mt-2 whitespace-pre-line text-[13.5px] leading-[1.55] text-[color:var(--text-muted)]">
+                            {item.description}
+                          </p>
                         ) : null}
-                      </div>
-                      {item.description ? (
-                        <p className="mt-2 whitespace-pre-line text-[13.5px] leading-[1.55] text-[color:var(--text-muted)]">
-                          {item.description}
-                        </p>
-                      ) : null}
-                      {item.voteUrl ? (
-                        <a
-                          href={item.voteUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--hairline)] bg-[color:var(--bg-card-hi)] px-3 py-1 text-[12px] font-medium text-[color:var(--text)] transition-colors hover:border-[color:var(--mint-deep)] hover:text-[color:var(--mint-deep)]"
-                        >
-                          👍 Vote on #{item.voteNumber}
-                          <span aria-hidden="true">→</span>
-                        </a>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          ))
+                        {item.voteUrl ? (
+                          <a
+                            href={item.voteUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--hairline)] bg-[color:var(--bg-card-hi)] px-3 py-1 text-[12px] font-medium text-[color:var(--text)] transition-colors hover:border-[color:var(--mint-deep)] hover:text-[color:var(--mint-deep)]"
+                          >
+                            👍 Vote on #{item.voteNumber}
+                            <span aria-hidden="true">→</span>
+                          </a>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            ))
         )}
 
         <section
@@ -147,8 +148,8 @@ export default async function RoadmapPage() {
             <code className="rounded bg-[color:var(--bg-card-hi)] px-1 py-0.5 text-[12px]">
               roadmap
             </code>
-            . Sign in to GitHub, open an item's issue, react with 👍. Items with the most votes
-            jump priority within their version band. New ideas:{" "}
+            . Sign in to GitHub, open an item's issue, react with 👍. Items with the most votes jump
+            priority within their version band. New ideas:{" "}
             <a
               href="https://github.com/clickspider/icpfinder/issues/new/choose"
               className="text-[color:var(--mint-deep)] hover:underline"
