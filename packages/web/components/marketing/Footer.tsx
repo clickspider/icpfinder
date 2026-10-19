@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 
+import { LORE_URL, MAKER, makerLink } from "../../lib/site";
 import { Wordmark } from "../brand/Wordmark";
 
 export function Footer() {
@@ -32,7 +33,27 @@ export function Footer() {
           <a href="/find#keys" className="hover:text-[color:var(--text)] transition-colors">
             keys
           </a>
+          <a href="/llms.txt" className="hover:text-[color:var(--text)] transition-colors">
+            llms.txt
+          </a>
         </div>
+        <p className="text-[13px] text-[color:var(--text-muted)]">
+          built by{" "}
+          <a
+            href={makerLink(MAKER.url, "footer")}
+            rel="author"
+            className="hover:text-[color:var(--text)] transition-colors underline-offset-2 hover:underline"
+          >
+            {MAKER.name}
+          </a>
+          {" · also: "}
+          <a
+            href={makerLink(LORE_URL, "footer-lore")}
+            className="hover:text-[color:var(--text)] transition-colors underline-offset-2 hover:underline"
+          >
+            Lore, a second brain for your Mac
+          </a>
+        </p>
       </div>
     </footer>
   );

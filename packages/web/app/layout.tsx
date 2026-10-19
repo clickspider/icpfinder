@@ -3,17 +3,36 @@
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { MAKER, SITE_DESCRIPTION, SITE_NAME, SITE_URL, siteJsonLd } from "../lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://icpfinder.dev"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "icpfinder — find your ICP in 30 seconds",
     template: "%s — icpfinder",
   },
-  description:
-    "Paste your product idea. Stream three buyer archetypes + 15 lookalike companies with verified contact emails. Open source, MIT, self-host.",
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: [
+    "ICP finder",
+    "ideal customer profile",
+    "find first customers",
+    "customer discovery",
+    "B2B lead list",
+    "startup idea validation",
+    "open source",
+  ],
+  authors: [{ name: MAKER.name, url: MAKER.url }],
+  creator: MAKER.name,
   alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    url: SITE_URL,
+    title: "icpfinder — find your ICP in 30 seconds",
+    description: SITE_DESCRIPTION,
+  },
   twitter: { card: "summary_large_image" },
 };
 
@@ -31,6 +50,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script
           // biome-ignore lint/security/noDangerouslySetInnerHtml: FOUC prevention requires inline script before paint.
           dangerouslySetInnerHTML={{ __html: modeBootstrap }}
+        />
+        <script
+          type="application/ld+json"
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD must be inline; content is static site facts.
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd()) }}
         />
       </head>
       <body className="flex min-h-screen flex-col">

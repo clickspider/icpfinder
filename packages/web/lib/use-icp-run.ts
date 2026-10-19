@@ -29,6 +29,7 @@ import type {
   FindErrorProvider,
   FindEvent,
 } from "@icpfinder/core";
+import { track } from "@vercel/analytics";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export type RunStatus = "idle" | "running" | "done" | "error";
@@ -136,6 +137,17 @@ export function useIcpRun() {
     if (state.status !== "running") return;
     const id = window.setInterval(() => setNow(Date.now()), 200);
     return () => window.clearInterval(id);
+  }, [state.status]);
+
+  // Funnel events for Vercel Web Analytics. Counts and enums only, never the
+  // seed text, keys or contacts. See docs/telemetry.md.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fire once per status transition, not on every streamed update.
+  useEffect(() => {
+    if (state.status === "done") {
+      track("run_done", { archetypes: state.archetypes.size });
+    } else if (state.status === "error") {
+      track("run_error", { code: state.errors[state.errors.length - 1]?.code ?? "unknown" });
+    }
   }, [state.status]);
 
   const persistKeys = useCallback((gemini: string, hunter: string, remember: boolean) => {
@@ -319,6 +331,10 @@ export function useIcpRun() {
       abortRef.current = controller;
       lastSeedRef.current = trimmed;
       persistKeys(geminiKey.trim(), hunterKey.trim(), rememberKeys);
+      track("run_started", {
+        byok: Boolean(geminiKey.trim() || hunterKey.trim()),
+        input: /^https?:\/\//i.test(trimmed) ? "url" : "text",
+      });
       setState({
         ...initialState,
         archetypes: new Map(),
@@ -362,6 +378,7 @@ export function useIcpRun() {
     async (archetypeId: string) => {
       const seed = lastSeedRef.current;
       if (!seed) return;
+      track("contacts_requested");
       enrichAbortRefs.current.get(archetypeId)?.abort();
       const controller = new AbortController();
       enrichAbortRefs.current.set(archetypeId, controller);
@@ -401,6 +418,7 @@ export function useIcpRun() {
     async (archetypeId: string) => {
       const seed = lastSeedRef.current;
       if (!seed) return;
+      track("more_contacts");
       const controller = new AbortController();
       const current = state.candidatesByArchetype.get(archetypeId) ?? [];
       const offset = current.length;
@@ -435,6 +453,7 @@ export function useIcpRun() {
     async (candidate: Candidate): Promise<DeepenResult | null> => {
       const seed = lastSeedRef.current;
       if (!seed) return null;
+      track("deepen");
       setState((prev) => {
         const inFlight = new Set(prev.deepenInFlight);
         inFlight.add(candidate.id);
@@ -499,6 +518,7 @@ export function useIcpRun() {
     async (candidate: Candidate, archetype: Archetype): Promise<string | null> => {
       const seed = lastSeedRef.current;
       if (!seed) return null;
+      track("outreach_copied");
       const res = await fetch("/api/outreach", {
         method: "POST",
         headers: { "content-type": "application/json" },
