@@ -133,12 +133,15 @@ Implemented in `packages/web/components/brand/Logo.tsx`. SVG viewBox 64×64. Str
 | `RunDoneCallouts` | `components/product/RunDoneCallouts.tsx` | Post-run CTA pills. Hero variant: "Run again on /find →" + "Add your keys for unlimited" (inline toggle or `/find#keys` fallback). |
 | `EmptyState` | `components/product/EmptyState.tsx` | First-time `/find` — how-it-works + 3 example chips |
 | `HeroSurface` | `components/marketing/HeroSurface.tsx` | Owns the shared `useIcpRun` hook; mounts `HeroChat` + `HeroDemoVideo`. Hides video when a real run starts (anti-slop rule). |
+| `HomeExplainer` | `components/marketing/HomeExplainer.tsx` | Text section under the hero: numbered "How it works", key-facts checklist (mint dots), 5 FAQ `<details>`. Copy comes from `lib/content.ts`. |
+| `ContentPage` | `components/marketing/ContentPage.tsx` | Shell for long-form text pages: skip link, Nav, eyebrow + h1 + lede + visible "Updated" date, `.prose-icp` body, CTA card, Footer. Optional JSON-LD. |
 | `HeroDemoVideo` | `components/marketing/HeroDemoVideo.tsx` | Hero proof video — `<figure>` with rounded-28 frame, autoplay muted loop. Reduced-motion: poster + native controls. Served from Vercel Blob. |
 
 ## Pages
 
 - **`app/page.tsx`** — marketing landing (Nav + Hero + Integration + FinalCta + Footer). No fake testimonials. No press strip. No icon-grid feature cards. Code preview is the proof.
 - **`app/find/page.tsx`** — product run UI (Nav + RunHeader + input + progress + ArchetypeCard grid + Footer).
+- **`app/guides/*`, `app/alternatives`, `app/faq`** — long-form text pages on `ContentPage`. Body text uses `--text` (not `--text-muted`) for AAA. Facts and FAQ live in `lib/content.ts` so pages, JSON-LD and `/llms.txt` stay in sync. Bump `CONTENT_UPDATED` when copy changes.
 - **`app/icon.tsx`** — Next dynamic favicon (32×32 PNG via `ImageResponse`).
 - **`app/opengraph-image.tsx`** — OG card (1200×630, brand mark + gradient headline + meta strip).
 

@@ -231,3 +231,66 @@ html[data-mode="dark"] {
     }
   }
 }
+
+/* Long-form text pages (guides, alternatives, FAQ). Body uses --text, not
+   --text-muted, because muted fails AAA for long-form (see DESIGN.md). */
+.prose-icp {
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.7;
+}
+.prose-icp > * + * {
+  margin-top: 1.1em;
+}
+.prose-icp h2 {
+  margin-top: 2.2em;
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+.prose-icp h3 {
+  margin-top: 1.6em;
+  font-size: 18px;
+  font-weight: 600;
+}
+.prose-icp ol,
+.prose-icp ul {
+  padding-left: 1.3em;
+}
+.prose-icp ol {
+  list-style: decimal;
+}
+.prose-icp ul {
+  list-style: disc;
+}
+.prose-icp li + li {
+  margin-top: 0.45em;
+}
+.prose-icp a {
+  color: var(--iris-deep);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-icp table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.prose-icp th,
+.prose-icp td {
+  border-bottom: 1px solid var(--hairline-2);
+  padding: 10px 12px 10px 0;
+  text-align: left;
+  vertical-align: top;
+}
+.prose-icp thead th {
+  font-weight: 600;
+}
+.prose-icp .table-scroll {
+  overflow-x: auto;
+}
+.prose-icp .table-scroll table {
+  min-width: 620px;
+}

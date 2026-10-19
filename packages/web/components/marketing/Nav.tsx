@@ -15,6 +15,18 @@ export function Nav() {
 
         <div className="hidden gap-7 md:flex">
           <a
+            href="/guides/find-your-icp"
+            className="text-sm text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--text)]"
+          >
+            guide
+          </a>
+          <a
+            href="/alternatives"
+            className="text-sm text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--text)]"
+          >
+            alternatives
+          </a>
+          <a
             href="/roadmap"
             className="text-sm text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--text)]"
           >
