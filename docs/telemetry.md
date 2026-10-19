@@ -18,6 +18,19 @@ The hosted marketing site uses [Vercel Web Analytics](https://vercel.com/docs/an
 - **Country-level geo** (derived from IP at request time, not stored).
 - **Page URL** (path + query string) and **referrer header**.
 
+### Custom funnel events
+
+`packages/web/lib/use-icp-run.ts` sends a few named events so we can see where runs drop off. They carry counts and enums only. They never carry your product description, URL, keys, companies or contacts.
+
+| Event | Properties |
+|---|---|
+| `run_started` | `byok` (true/false), `input` (`url` or `text`) |
+| `run_done` | `archetypes` (count) |
+| `run_error` | `code` (error code enum) |
+| `contacts_requested`, `more_contacts`, `deepen`, `outreach_copied` | none |
+
+Like page views, these are no-ops off Vercel.
+
 What this means practically:
 
 - We can see "X people visited `/find`" and "Y people came from Hacker News."
