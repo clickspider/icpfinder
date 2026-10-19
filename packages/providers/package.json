@@ -1,6 +1,6 @@
 {
   "name": "@icpfinder/providers",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Swappable EmailProvider + LlmProvider implementations for icpfinder.",
   "license": "MIT",
   "type": "module",
