@@ -31,8 +31,11 @@ jobs:
           node-version: 22
           registry-url: "https://registry.npmjs.org"
 
-      - name: Upgrade npm to latest (>=11.5 needed for OIDC)
-        run: npm install -g npm@latest
+      # Pinned to npm 11 (>=11.5 for OIDC). npm 12 prints `npm info --json` as
+      # an array, which changesets reads as "not published", so every push to
+      # main re-publishes the current version and fails.
+      - name: Upgrade npm to 11.x (>=11.5 needed for OIDC)
+        run: npm install -g npm@11
 
       # Bun is used for install + scripts. Changesets shells out to `npm publish`
       # for the actual publish step, which is what picks up the OIDC token.
