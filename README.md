@@ -59,6 +59,18 @@
   <sub><a href="https://icpfinder.dev">Watch the live demo with audio →</a></sub>
 </p>
 
+## What is icpfinder?
+
+icpfinder is a free, open-source **ideal customer profile (ICP) finder** for solo founders and indie builders. Use it when you have a product idea and need to know **who will pay for it**, before you spend money on Apollo or Clay.
+
+- **3 ICP archetypes** per run: buyer role, pain, selling angle, objections and real example companies
+- **Up to 5 verified emails per archetype** (15 per run), found with Hunter
+- **About 30 seconds** from idea to first archetype
+- **Free:** demo runs need no signup; bring your own free Gemini key and Hunter key (25 searches/month) for unlimited runs
+- **MIT licensed:** self-host it, or use [`@icpfinder/core`](https://www.npmjs.com/package/@icpfinder/core) in your own code
+
+Guides: [how to find your ICP as a solo founder](https://icpfinder.dev/guides/find-your-icp) · [ICP vs buyer persona](https://icpfinder.dev/guides/icp-vs-buyer-persona) · [icpfinder vs Apollo, Clay and ChatGPT](https://icpfinder.dev/alternatives) · [FAQ](https://icpfinder.dev/faq)
+
 <br/>
 
 If you prefer the terminal:

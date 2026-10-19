@@ -2,6 +2,7 @@
 
 import { Footer } from "../components/marketing/Footer";
 import { Hero } from "../components/marketing/Hero";
+import { HomeExplainer } from "../components/marketing/HomeExplainer";
 import { Nav } from "../components/marketing/Nav";
 
 export default function MarketingLanding() {
@@ -16,6 +17,7 @@ export default function MarketingLanding() {
       <Nav />
       <main id="main" className="flex flex-1 flex-col justify-center">
         <Hero />
+        <HomeExplainer />
       </main>
       <Footer />
     </>

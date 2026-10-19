@@ -18,6 +18,21 @@ export const MAKER = {
   github: "https://github.com/clickspider",
 } as const;
 
+// AI crawlers and answer engines, allowed by name in robots.txt so a future
+// "*" change cannot block them by accident.
+export const AI_CRAWLERS = [
+  "GPTBot",
+  "ChatGPT-User",
+  "OAI-SearchBot",
+  "PerplexityBot",
+  "Perplexity-User",
+  "ClaudeBot",
+  "Claude-User",
+  "Claude-SearchBot",
+  "Google-Extended",
+  "Applebot-Extended",
+] as const;
+
 export const LORE_URL = "https://danielfrey.me/lore/";
 
 /** Outbound link to the maker's sites, tagged so danielfrey.me analytics can attribute it. */
