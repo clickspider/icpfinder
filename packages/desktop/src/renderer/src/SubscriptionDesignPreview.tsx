@@ -113,8 +113,8 @@ export function SubscriptionDesignPreview({ onExit }: { onExit: () => void }) {
       text: `Your ${name} session has expired. Sign in again to pick up where you left off.`,
     },
     missing: {
-      title: "Let’s restore your connection",
-      text: "The bundled Claude runtime is missing. Reinstall IcpFinder to restore it.",
+      title: "Let’s get your connection ready",
+      text: "The bundled Claude runtime is missing. Rebuild the local app or reinstall IcpFinder to restore it.",
     },
     unavailable: {
       title: "Couldn’t check your accounts",
@@ -158,9 +158,6 @@ export function SubscriptionDesignPreview({ onExit }: { onExit: () => void }) {
         )}
         {screen === "missing" && (
           <>
-            {primary("Restore IcpFinder", () =>
-              setNotice("Preview only: app recovery instructions would open.")
-            )}
             {secondary("Check again", () => go("checking"))}
             {secondary("Choose another provider", () => go("empty"))}
           </>
