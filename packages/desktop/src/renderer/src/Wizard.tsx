@@ -203,11 +203,7 @@ export const Wizard = ({
                   </div>
                   {mode === "site" ? (
                     <>
-                      <p className="ob-sub">
-                        Start with your website. We’ll take a look so you don’t have to explain
-                        everything from scratch.
-                      </p>
-                      <div className="ob-website-entry">
+                      <div className="ob-website-entry" style={{ gridRow: "3 / 5" }}>
                         <label htmlFor="business-website">Your website</label>
                         <input
                           id="business-website"
