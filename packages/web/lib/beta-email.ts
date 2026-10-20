@@ -7,7 +7,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { SITE_URL } from "./site";
 
-const FROM = process.env.BETA_EMAIL_FROM || "Daniel from IcpFinder <daniel@danielfrey.me>";
+const FROM = process.env.BETA_EMAIL_FROM || "Daniel from IcpFinder <daniel@icpfinder.dev>";
 const REPLY_TO = process.env.BETA_EMAIL_REPLY_TO || undefined;
 
 const esc = (s: string) =>
