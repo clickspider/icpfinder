@@ -24,6 +24,7 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "demo": "bun run scripts/demo.ts",
+    "research": "bun run scripts/research.ts",
     "changeset": "changeset",
     "version-packages": "changeset version && bun install --lockfile-only",
     "prepublish:strip-workspace": "bun run scripts/strip-workspace-protocol.ts",

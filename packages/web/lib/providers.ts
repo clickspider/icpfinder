@@ -14,6 +14,7 @@
 // CEO plan; tests pin every cell.
 
 import {
+  ClaudeCliLlmProvider,
   type EmailProvider,
   FakeEmailProvider,
   FakeLlmProvider,
@@ -58,7 +59,17 @@ export const buildProviders = (input: BuildProvidersInput = {}): ProviderBundle 
   const geminiFromUser = Boolean(userGemini);
   const hunterFromUser = Boolean(userHunter);
 
-  const llm = geminiKey ? new GeminiLlmProvider({ apiKey: geminiKey }) : new FakeLlmProvider();
+  // Self-host: ICPFINDER_LLM=claude-cli runs `claude -p` on the local Claude
+  // subscription. A user-supplied Gemini key still wins. Costs the operator 0.
+  const useClaudeCli = !userGemini && trimOrEmpty(env.ICPFINDER_LLM) === "claude-cli";
+  const llm = useClaudeCli
+    ? new ClaudeCliLlmProvider({
+        bin: trimOrEmpty(env.ICPFINDER_CLAUDE_BIN),
+        model: trimOrEmpty(env.ICPFINDER_CLAUDE_MODEL),
+      })
+    : geminiKey
+      ? new GeminiLlmProvider({ apiKey: geminiKey })
+      : new FakeLlmProvider();
   const email = hunterKey
     ? new HunterEmailProvider({ apiKey: hunterKey })
     : new FakeEmailProvider();
@@ -68,7 +79,7 @@ export const buildProviders = (input: BuildProvidersInput = {}): ProviderBundle 
   if (hunterFromUser) byokProviders.push("hunter");
 
   const operatorPaidSides: BillingSide[] = [];
-  if (geminiKey && !geminiFromUser) operatorPaidSides.push("gemini");
+  if (geminiKey && !geminiFromUser && !useClaudeCli) operatorPaidSides.push("gemini");
   if (hunterKey && !hunterFromUser) operatorPaidSides.push("hunter");
 
   // Mode resolution: any user key → byok (even partial); else operator if any
@@ -76,7 +87,7 @@ export const buildProviders = (input: BuildProvidersInput = {}): ProviderBundle 
   let mode: ProviderMode = "stub";
   if (byokProviders.length > 0 && operatorPaidSides.length === 0) {
     mode = "byok";
-  } else if (geminiKey || hunterKey) {
+  } else if (useClaudeCli || geminiKey || hunterKey) {
     mode = "operator";
   }
 
