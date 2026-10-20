@@ -1,4 +1,5 @@
 import type { Product } from "../../shared/types";
+import { BusinessOverview } from "./BusinessOverview";
 import { Mark } from "./ui";
 import "./onboarding-frame.css";
 
@@ -16,11 +17,15 @@ export function OnboardingAside({
   product,
   name,
   loading,
+  onSave,
+  onEditing,
 }: {
   kind: "welcome" | "product" | "idea" | "ai" | "about";
   product?: Product;
   name?: string;
   loading?: boolean;
+  onSave?: (patch: Partial<Product>) => Promise<void>;
+  onEditing?: (editing: boolean) => void;
 }) {
   return (
     <aside className={`ob-aside ${kind === "product" || kind === "idea" ? "ob-aside-entry" : ""}`}>
@@ -56,22 +61,13 @@ export function OnboardingAside({
             <p className="ob-aside-small">You’ll review it before we suggest who to focus on.</p>
           </>
         ) : kind === "about" ? (
-          <>
-            <h2>{product?.name || name || "Your product"}</h2>
-            {loading ? (
-              <div className="ob-brief-skeleton" aria-hidden="true">
-                <span />
-                <span />
-              </div>
-            ) : (
-              <dl className="ob-brief">
-                <dt>What you sell</dt>
-                <dd>{product?.sell || "Not specified yet"}</dd>
-                <dt>The problem</dt>
-                <dd>{product?.problem || "Not specified yet"}</dd>
-              </dl>
-            )}
-          </>
+          <BusinessOverview
+            product={product}
+            name={name}
+            loading={loading}
+            onSave={onSave}
+            onEditing={onEditing}
+          />
         ) : (
           <>
             <h2>

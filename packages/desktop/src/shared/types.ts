@@ -19,12 +19,23 @@ export interface Product {
   logo?: string;
   /** Up to 3 brand colors from the site, primary first. */
   colors?: string[];
+  audience?: Audience;
+  progress?: BusinessProgress;
+  marketplace?: boolean;
+  confirmedFields?: string[];
+  /** Legacy funding/model answers: retained for compatibility, not used as progress. */
   model?: BusinessModel;
   stage?: Stage;
   /** Known competitors or today's way; sharpens the ICP and the price guess. */
   competitors?: string;
 }
 
+export type Audience = "Businesses" | "Consumers" | "Both";
+export type BusinessProgress =
+  | "Exploring an idea"
+  | "Preparing to launch"
+  | "Looking for first customers"
+  | "Already serving customers";
 export type BusinessModel = "B2B" | "B2C" | "B2B2C" | "Marketplace";
 export type Stage = "Idea" | "Pre-seed" | "Seed" | "Series A+";
 

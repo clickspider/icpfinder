@@ -20,12 +20,12 @@ describe("written idea brief", () => {
       price: "",
       competitors: "",
       different: "",
-      model: undefined,
-      stage: "Idea",
+      audience: undefined,
+      progress: undefined,
       siteText: "A planner for gardeners.",
     });
   });
-  it("ignores malformed optional fields and validates business model", () => {
+  it("ignores malformed optional fields and validates business audience", () => {
     const product = productFromIdea("An idea", {
       sell: "A product",
       name: 42,
@@ -37,7 +37,9 @@ describe("written idea brief", () => {
     expect(product.price).toBe("");
     expect(product.competitors).toBe("");
     expect(product.model).toBeUndefined();
-    expect(productFromIdea("An idea", { sell: "A product", model: "b2b" }).model).toBe("B2B");
+    expect(productFromIdea("An idea", { sell: "A product", audience: "businesses" }).audience).toBe(
+      "Businesses"
+    );
   });
   it("rejects unusable AI output so the user can retry without losing the description", () => {
     for (const output of [null, [], "question?", {}, { sell: 42 }])

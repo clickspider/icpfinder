@@ -1,3 +1,4 @@
+import { AUDIENCES, PROGRESS } from "../../shared/business-overview";
 // SPDX-License-Identifier: MIT
 //
 // Blocking setup: the shortest path to a sharp first ICP, then the hunt.
@@ -6,7 +7,7 @@
 
 import { useRef, useState } from "react";
 import { icpPresentation } from "../../shared/onboarding";
-import type { BusinessModel, Stage as StageT, State } from "../../shared/types";
+import type { State } from "../../shared/types";
 import { DUO } from "./glass";
 import { IcpReveal } from "./IcpReveal";
 import { AppBrand, OnboardingAside } from "./OnboardingFrame";
@@ -15,14 +16,6 @@ import { api, Spinner } from "./ui";
 
 type Step = "welcome" | "product" | "about" | "icp";
 const ORDER: Step[] = ["welcome", "product", "about", "icp"];
-const MODELS: BusinessModel[] = ["B2B", "B2C", "B2B2C", "Marketplace"];
-const MODEL_SUB: Record<BusinessModel, string> = {
-  B2B: "companies",
-  B2C: "people",
-  B2B2C: "via companies",
-  Marketplace: "two sides",
-};
-const STAGES: StageT[] = ["Idea", "Pre-seed", "Seed", "Series A+"];
 const clean = (e: unknown) =>
   e instanceof Error
     ? e.message.replace(/^Error invoking remote method '\w+': (Error: )?/, "")
@@ -52,6 +45,8 @@ export const Wizard = ({
   const [briefReady, setBriefReady] = useState(Boolean(ws) && !preview?.busy);
   const [error, setError] = useState<string | null>(null);
 
+  const [editingOverview, setEditingOverview] = useState(false);
+  const [savingOverview, setSavingOverview] = useState(false);
   const [connection, setConnection] = useState(false);
   const authorized = useRef(false);
   const pendingAction = useRef<(() => Promise<void>) | null>(null);
@@ -90,15 +85,32 @@ export const Wizard = ({
     mode === "site"
       ? run("Reading your site…", () => api().readProduct(url), "about")
       : run("Building your product brief…", () => api().ideaFinish(description), "about");
-  const updateProduct = (patch: Partial<NonNullable<typeof product>>) => {
-    if (preview)
-      return onState({
-        ...state,
-        workspaces: state.workspaces.map((w) =>
-          w.id === state.activeId ? { ...w, product: { ...w.product, ...patch } } : w
-        ),
-      });
-    void api().updateProduct(patch).then(onState);
+  const updateProduct = async (patch: Partial<NonNullable<typeof product>>) => {
+    const confirmedFields = [
+      ...new Set([
+        ...(product?.confirmedFields ?? []),
+        ...Object.keys(patch).filter((k) => k !== "confirmedFields"),
+        ...(patch.confirmedFields ?? []),
+      ]),
+    ];
+    const update = { ...patch, confirmedFields };
+    setSavingOverview(true);
+    setError(null);
+    try {
+      if (preview)
+        onState({
+          ...state,
+          workspaces: state.workspaces.map((w) =>
+            w.id === state.activeId ? { ...w, product: { ...w.product, ...update } } : w
+          ),
+        });
+      else onState(await api().updateProduct(update));
+    } catch (e) {
+      setError(clean(e));
+      throw e;
+    } finally {
+      setSavingOverview(false);
+    }
   };
   const next = () => {
     if (preview) return;
@@ -120,6 +132,9 @@ export const Wizard = ({
   };
   const canNext =
     !busy &&
+    !savingOverview &&
+    !editingOverview &&
+    (step !== "about" || !briefReady || Boolean(product?.audience && product?.progress)) &&
     (step !== "product" ||
       (mode === "site" ? url.trim().includes(".") : Boolean(description.trim())));
 
@@ -238,57 +253,65 @@ export const Wizard = ({
 
               {step === "about" && (
                 <>
-                  <h1 className="ob-h1">
-                    How do you <em>sell?</em>
-                  </h1>
-                  {!briefReady && busy && (
+                  <h1 className="ob-h1">How do you sell?</h1>
+                  {!briefReady && busy ? (
                     <div className="ob-loading" role="status">
                       <Spinner />
-                      {busy}
+                      Reading your business…
                     </div>
-                  )}
-                  <div className="ob-lab">Business model</div>
-                  <div className="ob-grid">
-                    {MODELS.map((m) => (
-                      <button
-                        key={m}
-                        type="button"
-                        className={`btn ob-opt ${product?.model === m ? "on" : ""}`}
-                        disabled={!briefReady || Boolean(busy)}
-                        aria-pressed={product?.model === m}
-                        onClick={() => updateProduct({ model: m })}
-                      >
-                        {DUO[m]?.(34)}
-                        {m}
-                        <span
-                          style={{
-                            fontSize: 11,
-                            color: "var(--faint)",
-                            fontWeight: 400,
-                            marginTop: -4,
-                          }}
+                  ) : briefReady ? (
+                    <p className="ob-sub">
+                      Review your business details.
+                    </p>
+                  ) : null}
+                  <fieldset
+                    className="ob-question"
+                    disabled={!briefReady || Boolean(busy) || savingOverview || editingOverview}
+                  >
+                    <legend>Who do you sell to?</legend>
+                    {product?.audience && !product.confirmedFields?.includes("audience") && (
+                      <p className="ob-suggested-answer">
+                        Suggested from what you shared — change it if needed.
+                      </p>
+                    )}
+                    <div className="ob-grid ob-audiences">
+                      {AUDIENCES.map((audience) => (
+                        <button
+                          key={audience}
+                          type="button"
+                          className={`btn ob-opt ${product?.audience === audience ? "on" : ""}`}
+                          aria-pressed={product?.audience === audience}
+                          onClick={() => void updateProduct({ audience }).catch(() => {})}
                         >
-                          {MODEL_SUB[m]}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                  <div className="ob-lab">Stage</div>
-                  <div className="ob-grid">
-                    {STAGES.map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        className={`btn ob-opt ${product?.stage === s ? "on" : ""}`}
-                        disabled={!briefReady || Boolean(busy)}
-                        aria-pressed={product?.stage === s}
-                        onClick={() => updateProduct({ stage: s })}
-                      >
-                        {DUO[s]?.(34)}
-                        {s}
-                      </button>
-                    ))}
-                  </div>
+                          {audience}
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
+                  <fieldset
+                    className="ob-question"
+                    disabled={!briefReady || Boolean(busy) || savingOverview || editingOverview}
+                  >
+                    <legend>Where is your business today?</legend>
+                    {product?.progress && !product.confirmedFields?.includes("progress") && (
+                      <p className="ob-suggested-answer">
+                        Suggested from what you shared — change it if needed.
+                      </p>
+                    )}
+                    <div className="ob-grid">
+                      {PROGRESS.map((progress) => (
+                        <button
+                          key={progress}
+                          type="button"
+                          className={`btn ob-opt ${product?.progress === progress ? "on" : ""}`}
+                          aria-pressed={product?.progress === progress}
+                          onClick={() => void updateProduct({ progress }).catch(() => {})}
+                        >
+                          {progress}
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
                 </>
               )}
 
@@ -309,7 +332,7 @@ export const Wizard = ({
                 <button
                   type="button"
                   className="ghost btn"
-                  disabled={Boolean(busy)}
+                  disabled={Boolean(busy) || savingOverview || editingOverview}
                   onClick={() => setStep(ORDER[idx - 1] ?? "welcome")}
                 >
                   Back
@@ -354,6 +377,8 @@ export const Wizard = ({
             product={briefReady ? product : undefined}
             name={mode === "site" ? url : "Your idea"}
             loading={step === "about" && !briefReady}
+            onSave={step === "about" ? updateProduct : undefined}
+            onEditing={setEditingOverview}
           />
         </div>
       )}

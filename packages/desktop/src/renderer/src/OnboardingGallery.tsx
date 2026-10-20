@@ -16,8 +16,9 @@ const product = {
   price: "$19 / month",
   competitors: "",
   siteText: "Invoicing for indie SaaS founders.",
-  model: "B2B" as const,
-  stage: "Pre-seed" as const,
+  audience: "Businesses" as const,
+  progress: "Already serving customers" as const,
+  marketplace: false,
 };
 const line = (text: string) => ({ text, why: "", source: "your product" });
 const profiles: Icp[] = (

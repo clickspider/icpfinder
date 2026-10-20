@@ -1,4 +1,4 @@
-import { productStage } from "../shared/onboarding";
+import { inferredBusiness } from "../shared/business-overview";
 import type { Product } from "../shared/types";
 
 export const IDEA_MAX_LENGTH = 12000;
@@ -25,10 +25,7 @@ export function productFromIdea(description: string, value: unknown): Product {
     different: text("different"),
     price: text("price"),
     competitors: text("competitors"),
-    model: (["B2B", "B2C", "B2B2C", "Marketplace"] as const).find(
-      (model) => model.toLowerCase() === text("model").toLowerCase()
-    ),
-    stage: productStage(text("stage"), description) ?? "Idea",
+    ...inferredBusiness(fields),
     siteText: description,
     readAt: new Date().toISOString(),
   };

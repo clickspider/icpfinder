@@ -10,7 +10,9 @@ describe("onboarding presentation", () => {
     expect(productStage("", "We've raised a seed round.")).toBe("Seed");
     expect(productStage("", "Tools for seed-stage companies.")).toBeUndefined();
     expect(productStage("", "Pricing starts at $19.")).toBeUndefined();
-    expect(productFromIdea("We raised a seed round.", { sell: "Invoicing" }).stage).toBe("Seed");
+    expect(
+      productFromIdea("We raised a seed round.", { sell: "Invoicing" }).progress
+    ).toBeUndefined();
   });
   it("elevates company type and keeps role and headcount distinct", () => {
     const icp = customIcp(
