@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { IcpDraft } from "../../shared/types";
-import { DUO, Marble } from "./glass";
+import { DUO } from "./glass";
 import { Mark } from "./ui";
 import "./icp-reveal-preview.css";
 
@@ -135,7 +135,6 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live?: LiveRev
         role={live ? undefined : "tabpanel"}
         aria-labelledby={live ? undefined : `ir-${tab}-tab`}
       >
-        <Marble />
         {tab === "finding" ? (
           <section className="ir-discovery" aria-label="Finding your ICPs">
             <div className="ir-orbit" aria-hidden="true">
