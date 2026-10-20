@@ -176,10 +176,21 @@ main,
 
 .nx-hero {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 56px;
-  align-items: center;
+  grid-template-columns: 1fr;
+  gap: 48px;
+  justify-items: center;
+  text-align: center;
   padding: 56px 0 72px;
+}
+.nx-hero .nx-lede {
+  margin-left: auto;
+  margin-right: auto;
+}
+.nx-hero .nx-ctas {
+  justify-content: center;
+}
+.nx-hero h1 {
+  max-width: 900px;
 }
 .nx-kicker {
   font-size: 13px;
@@ -230,17 +241,17 @@ main,
 .nx-film {
   padding: 10px;
   border-radius: 28px;
-  justify-self: center;
   width: 100%;
-  max-width: 420px;
+  max-width: 1080px;
 }
 .nx-film video {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 5;
+  height: auto;
+  aspect-ratio: 16 / 9;
   border-radius: 20px;
-  background: #fff0f3;
-  object-fit: cover;
+  background: #14b8a6;
+  object-fit: contain;
 }
 
 .nx-section {
@@ -503,9 +514,15 @@ main,
 
 @media (max-width: 860px) {
   .nx-hero {
-    grid-template-columns: 1fr;
-    gap: 36px;
+    gap: 32px;
     padding-top: 24px;
+  }
+  .nx-film {
+    padding: 6px;
+    border-radius: 18px;
+  }
+  .nx-film video {
+    border-radius: 13px;
   }
   .nx-steps,
   .nx-fit,
