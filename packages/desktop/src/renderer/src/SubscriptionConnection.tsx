@@ -209,7 +209,7 @@ export function SubscriptionConnection({
             <Glass className="sp-connect-card">
               {!statuses && error ? (
                 <ConnectionErrorCard
-                  name="your AI provider"
+                  name="AI provider"
                   failure="temporary"
                   statusCheck
                   busy={busy}
@@ -290,7 +290,7 @@ export function SubscriptionConnection({
                 <div className="sp-status-card">
                   {provider && <ProviderMark provider={provider} size={40} />}
                   <h2>Sign-in cancelled</h2>
-                  <p>Your product is still here. Try again whenever you’re ready.</p>
+                  <p>We’ve kept what you shared. Try again whenever you’re ready.</p>
                   {button("Try signing in again", () => void connect())}
                   <button
                     type="button"
@@ -309,8 +309,8 @@ export function SubscriptionConnection({
                 <div className="sp-status-card">
                   <span className="sp-confirmed">✓</span>
                   <h2>You’re connected.</h2>
-                  <p>{name} is ready to help you find your buyers.</p>
-                  {button("Continue to my product", () => void connect(), !connected)}
+                  <p>IcpFinder is ready to use your {name} account.</p>
+                  {button("Continue", () => void connect(), !connected)}
                   {!connected && (
                     <button
                       type="button"

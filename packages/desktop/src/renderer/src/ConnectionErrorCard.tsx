@@ -8,6 +8,7 @@ export function ConnectionErrorCard({
   name,
   busy = false,
   statusCheck = false,
+  sessionExpired = false,
   onChoose,
   onRetry,
 }: {
@@ -16,21 +17,28 @@ export function ConnectionErrorCard({
   name: string;
   busy?: boolean;
   statusCheck?: boolean;
+  sessionExpired?: boolean;
   onChoose: () => void;
   onRetry: () => void;
 }) {
   return (
     <div className="sp-status-card" role="alert">
       {provider && <ProviderMark provider={provider} size={40} />}
-      <h2>We couldn’t connect to {name}</h2>
+      <h2>
+        {statusCheck
+          ? `We couldn’t check your ${name} connection.`
+          : `We couldn’t connect to ${name}`}
+      </h2>
       <p>
         {statusCheck
-          ? "We couldn’t check your sign-in status. Try checking again, or choose a provider to sign in."
+          ? "Try again, or choose another provider to continue."
           : failure === "component"
             ? `IcpFinder can’t find or start the software it needs to connect to ${name}. You can use another provider to continue.`
             : failure === "signin"
-              ? `Your ${name} sign-in didn’t complete or is no longer valid. Sign in again to continue.`
-              : `The connection to ${name} couldn’t complete. Try again in a moment.`}
+              ? sessionExpired
+                ? `Your ${name} session has expired. Sign in again to continue.`
+                : `We couldn’t complete your ${name} sign-in. Please sign in again to continue.`
+              : `We couldn’t reach ${name}. Try again in a moment.`}
       </p>
       {failure !== "component" && (
         <button type="button" className="sp-continue" disabled={busy} onClick={onRetry}>

@@ -101,10 +101,13 @@ export function SubscriptionDesignPreview({ onExit }: { onExit: () => void }) {
       title: "Connect your Grok account",
       text: "Enter this code on the sign-in page in your browser.",
     },
-    success: { title: "You’re connected.", text: `${name} is ready to help you find your buyers.` },
+    success: {
+      title: "You’re connected.",
+      text: `IcpFinder is ready to use your ${name} account.`,
+    },
     cancelled: {
       title: "Sign-in cancelled",
-      text: "Your product is still here. Try again whenever you’re ready.",
+      text: "We’ve kept what you shared. Try again whenever you’re ready.",
     },
     error: {
       title: "We couldn’t connect",
@@ -136,6 +139,7 @@ export function SubscriptionDesignPreview({ onExit }: { onExit: () => void }) {
               : "signin"
         }
         statusCheck={screen === "unavailable"}
+        sessionExpired={screen === "expired"}
         onChoose={() => go("empty")}
         onRetry={screen === "unavailable" ? () => go("checking") : begin}
       />
@@ -161,7 +165,7 @@ export function SubscriptionDesignPreview({ onExit }: { onExit: () => void }) {
           </>
         )}
         {screen === "success" &&
-          primary("Continue to my product", () =>
+          primary("Continue", () =>
             setNotice("Preview only: your product research would begin now.")
           )}
         {screen === "cancelled" && (
