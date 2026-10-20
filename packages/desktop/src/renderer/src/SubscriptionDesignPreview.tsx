@@ -1,8 +1,8 @@
 import { useState } from "react";
 import type { ProviderId } from "../../shared/subscriptions";
-import { Glass, Marble } from "./glass";
+import { Glass } from "./glass";
+import { AppBrand, OnboardingAside } from "./OnboardingFrame";
 import { ProviderMark } from "./ProviderMark";
-import { Mark } from "./ui";
 import "./subscription-preview.css";
 
 const PROVIDERS: Array<{ id: ProviderId; name: string }> = [
@@ -208,12 +208,8 @@ export function SubscriptionDesignPreview({ onExit }: { onExit: () => void }) {
         className={`sp-canvas sp-${known ? "recommended" : "choice"}`}
       >
         <section className="sp-sidebar">
-          <div className="sp-brand">
-            <Mark size={28} radius={9} />
-            <span>IcpFinder</span>
-          </div>
+          <AppBrand />
           <div className="sp-sidebar-body">
-            <span className="sp-eyebrow">LET’S GET TO KNOW YOUR PRODUCT</span>
             <h1>
               Bring the AI
               <br />
@@ -264,46 +260,7 @@ export function SubscriptionDesignPreview({ onExit }: { onExit: () => void }) {
           </div>
           <div className="sp-back">← Your product is saved</div>
         </section>
-        <Marble>
-          <div className="sp-stage">
-            <div className="sp-stage-caption">YOUR NEXT CHAPTER</div>
-            <Glass className="sp-product-paper">
-              <div className="sp-paper-header">
-                <span className="sp-site-icon">↗</span>
-                <span>yourproduct.com</span>
-                <span className="sp-saved">Saved ✓</span>
-              </div>
-              <h2>
-                Good ideas deserve
-                <br />
-                <em>their first customers.</em>
-              </h2>
-              <div className="sp-paper-rule" />
-              <div className="sp-paper-step">
-                <span>01</span>
-                <div>
-                  <b>Get to know your product</b>
-                  <p>What it does. Who it helps.</p>
-                </div>
-              </div>
-              <div className="sp-paper-step sp-future">
-                <span>02</span>
-                <div>
-                  <b>Find your people</b>
-                  <p>Real companies. Reasons they fit.</p>
-                </div>
-              </div>
-              <div className="sp-paper-step sp-future">
-                <span>03</span>
-                <div>
-                  <b>Make your first move</b>
-                  <p>A relevant reason to say hello.</p>
-                </div>
-              </div>
-            </Glass>
-            <p className="sp-stage-note">Your product. Your AI. Your next customer.</p>
-          </div>
-        </Marble>
+        <OnboardingAside kind="ai" name={"yourproduct.com"} />
       </main>
       <footer className="sp-preview-footer">
         <span>Preview only · no accounts are changed</span>

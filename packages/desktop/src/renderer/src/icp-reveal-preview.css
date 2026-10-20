@@ -527,3 +527,6 @@
 .ir-live { height: 100%; width: 100%; }
 .ir-live .ir-stage { padding-top: 12px; padding-bottom: 24px; }
 .ir-preview button:disabled { opacity: .55; cursor: default; }
+
+.ir-live-toolbar { height:84px; min-height:84px; padding:28px 38px; display:flex; align-items:center; justify-content:flex-end; }
+@media (max-width:1000px) { .ir-live-toolbar { padding-inline:30px; } }

@@ -6,9 +6,10 @@ import {
   suggestedProvider,
 } from "../../shared/subscriptions";
 import type { State } from "../../shared/types";
-import { Glass, Marble } from "./glass";
+import { Glass } from "./glass";
+import { AppBrand, OnboardingAside } from "./OnboardingFrame";
 import { ProviderMark } from "./ProviderMark";
-import { api, cleanError, Mark } from "./ui";
+import { api, cleanError } from "./ui";
 import "./subscription-preview.css";
 
 const PROVIDERS: Array<{ id: ProviderId; name: string }> = [
@@ -23,15 +24,19 @@ export function SubscriptionConnection({
   onState,
   onContinue,
   onBack,
+  previewStatuses,
 }: {
+  previewStatuses?: SubscriptionStatus[];
   state: State;
   product: string;
   onState: (state: State) => void;
   onContinue: () => Promise<void> | void;
   onBack: () => void;
 }) {
-  const [statuses, setStatuses] = useState<SubscriptionStatus[] | null>(null);
-  const [provider, setProvider] = useState<ProviderId | null>(null);
+  const [statuses, setStatuses] = useState<SubscriptionStatus[] | null>(previewStatuses ?? null);
+  const [provider, setProvider] = useState<ProviderId | null>(
+    previewStatuses ? suggestedProvider(previewStatuses) : null
+  );
   const [attempt, setAttempt] = useState<LoginAttempt | null>(null);
   const [busy, setBusy] = useState(false);
   const [expired, setExpired] = useState(false);
@@ -49,16 +54,19 @@ export function SubscriptionConnection({
   const waiting = attempt?.status === "pending";
   const success = attempt?.status === "complete";
 
-  const refresh = useCallback(async (suggest = false) => {
-    const result = await api().subscriptionStatus();
-    if (!live.current) return;
-    setStatuses(result);
-    if (suggest) {
-      setProvider(
-        suggestedProvider(result, preferred.current.provider, preferred.current.confirmed)
-      );
-    }
-  }, []);
+  const refresh = useCallback(
+    async (suggest = false) => {
+      const result = previewStatuses ?? (await api().subscriptionStatus());
+      if (!live.current) return;
+      setStatuses(result);
+      if (suggest) {
+        setProvider(
+          suggestedProvider(result, preferred.current.provider, preferred.current.confirmed)
+        );
+      }
+    },
+    [previewStatuses]
+  );
   useEffect(() => {
     live.current = true;
     void refresh(true).catch((e) => {
@@ -125,6 +133,10 @@ export function SubscriptionConnection({
   };
   const connect = () =>
     act(async () => {
+      if (previewStatuses) {
+        await onContinue();
+        return;
+      }
       if (!provider) return;
       if (connected) {
         // Recheck before allowing any AI request, including after a session expired elsewhere.
@@ -185,12 +197,8 @@ export function SubscriptionConnection({
     <div className="sp-preview sp-production">
       <main className={`sp-canvas sp-${connected ? "recommended" : "choice"}`}>
         <section className="sp-sidebar">
-          <div className="sp-brand drag">
-            <Mark size={28} radius={9} />
-            <span>IcpFinder</span>
-          </div>
+          <AppBrand />
           <div className="sp-sidebar-body">
-            <span className="sp-eyebrow">LET’S GET TO KNOW YOUR PRODUCT</span>
             <h1>
               Bring the AI
               <br />
@@ -387,46 +395,7 @@ export function SubscriptionConnection({
             ← Back to your product
           </button>
         </section>
-        <Marble>
-          <div className="sp-stage">
-            <div className="sp-stage-caption">YOUR NEXT CHAPTER</div>
-            <Glass className="sp-product-paper">
-              <div className="sp-paper-header">
-                <span className="sp-site-icon">↗</span>
-                <span className="sp-product-title">{product || "Your product"}</span>
-                <span className="sp-saved">Ready ✓</span>
-              </div>
-              <h2>
-                Good ideas deserve
-                <br />
-                <em>their first customers.</em>
-              </h2>
-              <div className="sp-paper-rule" />
-              <div className="sp-paper-step">
-                <span>01</span>
-                <div>
-                  <b>Get to know your product</b>
-                  <p>What it does. Who it helps.</p>
-                </div>
-              </div>
-              <div className="sp-paper-step sp-future">
-                <span>02</span>
-                <div>
-                  <b>Find your people</b>
-                  <p>Real companies. Reasons they fit.</p>
-                </div>
-              </div>
-              <div className="sp-paper-step sp-future">
-                <span>03</span>
-                <div>
-                  <b>Make your first move</b>
-                  <p>A relevant reason to say hello.</p>
-                </div>
-              </div>
-            </Glass>
-            <p className="sp-stage-note">Your product. Your AI. Your next customer.</p>
-          </div>
-        </Marble>
+        <OnboardingAside kind="ai" name={product} />
       </main>
     </div>
   );

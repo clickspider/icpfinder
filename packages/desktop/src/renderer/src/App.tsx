@@ -12,6 +12,7 @@ import { IcpRevealPreview } from "./IcpReveal";
 import { IcpView } from "./IcpView";
 import { MatchingView } from "./Matching";
 import { NetworkView } from "./Network";
+import { OnboardingGallery } from "./OnboardingGallery";
 import { ProductView } from "./ProductView";
 import { Sidebar } from "./Sidebar";
 import { SubscriptionDesignPreview } from "./SubscriptionDesignPreview";
@@ -38,6 +39,9 @@ export const App = () => {
   );
   const [icpPreview, setIcpPreview] = useState(() =>
     new URLSearchParams(window.location.search).has("icp-preview")
+  );
+  const [onboardingReview, setOnboardingReview] = useState(() =>
+    new URLSearchParams(window.location.search).has("onboarding-review")
   );
   const [toast, setToast] = useState<string | null>(null);
 
@@ -93,6 +97,7 @@ export const App = () => {
   );
 
   if (!state) return null;
+  if (onboardingReview) return <OnboardingGallery onExit={() => setOnboardingReview(false)} />;
   if (icpPreview) return <IcpRevealPreview onExit={() => setIcpPreview(false)} />;
   if (designPreview) return <SubscriptionDesignPreview onExit={() => setDesignPreview(false)} />;
   const ws = state.workspaces.find((w) => w.id === state.activeId);

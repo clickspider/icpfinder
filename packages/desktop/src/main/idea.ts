@@ -1,3 +1,4 @@
+import { productStage } from "../shared/onboarding";
 import type { Product } from "../shared/types";
 
 export const IDEA_MAX_LENGTH = 12000;
@@ -27,7 +28,7 @@ export function productFromIdea(description: string, value: unknown): Product {
     model: (["B2B", "B2C", "B2B2C", "Marketplace"] as const).find(
       (model) => model.toLowerCase() === text("model").toLowerCase()
     ),
-    stage: "Idea",
+    stage: productStage(text("stage"), description) ?? "Idea",
     siteText: description,
     readAt: new Date().toISOString(),
   };

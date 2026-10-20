@@ -574,7 +574,7 @@
   }
 }
 
-.sp-production .sp-sidebar { padding-top: 48px; }
+.sp-production .sp-sidebar { padding-top: 28px; }
 .sp-product-back { text-align: left; }
 .sp-product-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sp-connection-error { font-size: 12px; line-height: 1.6; color: #a32742; margin: 18px 0 0; }
@@ -596,3 +596,6 @@
 }
 .idea-writing::placeholder { color: var(--faint); }
 .idea-writing:focus-visible { outline: none; box-shadow: inset 0 -2px 0 #e0244a55; }
+/* One brand position and sidebar width across the onboarding flow. */
+.sp-sidebar { flex-basis:480px; padding:28px 38px 30px; }
+@media (max-width:1000px) { .sp-sidebar { flex-basis:440px; padding-inline:30px; } }

@@ -1,0 +1,46 @@
+.app-brand { display:flex; align-items:center; gap:9px; font-size:13px; font-weight:600; letter-spacing:-.3px; flex-shrink:0; height:28px; }
+.ob-shell { display:flex; height:100%; background:#fff; width:100%; }
+.ob-sidebar { flex:0 0 480px; width:480px; padding:28px 38px 30px; display:flex; flex-direction:column; min-height:0; gap:0; overflow:auto; }
+.ob-body { display:flex; flex-direction:column; gap:18px; margin:auto 0; padding:40px 0; flex-shrink:0; }
+.ob-body .ob-h1 { font-size:38px; letter-spacing:-1.4px; line-height:1.12; }
+.ob-body .ob-sub { font-size:14px; line-height:1.7; }
+.ob-aside { flex:1; min-width:0; margin:14px 14px 14px 0; border-radius:20px; background:radial-gradient(ellipse at 12% 85%,#ff8fa61a,transparent 70%),radial-gradient(ellipse at 95% 15%,#ffb08a1a,transparent 65%),#fff5f6; display:flex; align-items:center; justify-content:center; padding:48px; overflow:auto; }
+.ob-aside-inner { width:min(420px,100%); margin:auto; }
+.ob-aside h2 { font-size:32px; letter-spacing:-1px; line-height:1.2; font-weight:550; margin:0; overflow-wrap:anywhere; }
+.ob-aside-copy { font-size:16px; color:#84776f; line-height:1.8; margin:24px 0; }
+.ob-aside-small { font-size:13px; color:#978981; line-height:1.7; }
+.ob-aside-rule { height:1px; background:#dfd8d2; margin:32px 0; }
+.ob-steps { list-style:none; padding:0; margin:36px 0 0; counter-reset:steps; }
+.ob-steps li { padding:22px 0 22px 38px; position:relative; border-top:1px solid #e4ddd7; counter-increment:steps; }
+.ob-steps li::before { content:counter(steps,decimal-leading-zero); position:absolute; left:0; top:25px; font-size:11px; color:#b4a194; }
+.ob-steps b { font-size:15px; font-weight:550; }
+.ob-steps p { font-size:13px; line-height:1.6; color:#8e8077; margin:7px 0 0; }
+.ob-brief { margin:30px 0 0; }
+.ob-brief dt { font-size:11px; color:#9a8980; margin-top:25px; }
+.ob-brief dd { font-size:15px; line-height:1.7; margin:8px 0 0; color:#70635b; }
+.ob-loading { display:flex; gap:10px; align-items:center; color:#8e757e; font-size:13px; line-height:1.6; }
+.ob-brief-skeleton { display:grid; gap:22px; margin-top:32px; }
+.ob-brief-skeleton span { height:48px; background:#e9e3dd; border-radius:8px; animation:ob-pulse 2s ease-in-out infinite; }
+.ob-brief-skeleton span:last-child { width:65%; }
+.ob-body .ob-opt:disabled { opacity:.4; cursor:default; }
+.ob-surface-wash .ob-aside { background:radial-gradient(ellipse at 12% 85%,#ff8fa61a,transparent 70%),radial-gradient(ellipse at 95% 15%,#ffb08a1a,transparent 65%),#fff5f6; }
+@keyframes ob-pulse { 50% { opacity:.45; } }
+@media (prefers-reduced-motion:reduce) { .ob-brief-skeleton span { animation:none; } }
+@media (max-width:1000px) { .ob-sidebar { flex-basis:440px; width:440px; padding-inline:30px; } .ob-aside { padding:30px; } .ob-aside h2 { font-size:27px; } }
+
+/* Original marble colors only: pink #ff8fa6, coral #ff6f61,
+   peach #ffb08a and the original pale base #fff5f6. Intensity varies. */
+.ob-surface-wash .ob-aside { --tint-pink: #ff8fa61a; --tint-coral: #ff6f6108; --tint-peach: #ffb08a1a; }
+.ob-surface-balanced .ob-aside { --tint-pink: #ff8fa633; --tint-coral: #ff6f6112; --tint-peach: #ffb08a33; }
+.ob-surface-rich .ob-aside { --tint-pink: #ff8fa650; --tint-coral: #ff6f6124; --tint-peach: #ffb08a50; }
+.ob-aside {
+  background: radial-gradient(ellipse at 12% 85%, var(--tint-pink, #ff8fa650), transparent 70%),
+    radial-gradient(ellipse at 0% 100%, var(--tint-coral, #ff6f6124), transparent 60%),
+    radial-gradient(ellipse at 95% 15%, var(--tint-peach, #ffb08a50), transparent 65%), #fff5f6;
+}
+.ob-aside-copy, .ob-brief dd { color:#7d6c74; }
+.ob-aside-small, .ob-steps p, .ob-brief dt { color:#8a727d; }
+.ob-steps li { border-color:#ba6c8324; }
+.ob-steps li::before { color:#ac929b; }
+.ob-aside-rule { background:#ba6c8324; }
+
