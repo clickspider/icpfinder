@@ -5,8 +5,8 @@ import { type FormEvent, useState } from "react";
 import { OPTIONS } from "../../lib/apply-options";
 import { Logo } from "../brand/Logo";
 
-/** Local file in dev; set to the Blob URL when the film is published. */
-const FILM = process.env.NEXT_PUBLIC_NEXT_FILM_URL || "/next/film.mp4";
+/** Launch film A, re-encoded for the web (864x1080, faststart). */
+const FILM = "/next/icpfinder-film-a.mp4";
 
 const Icon = ({ d }: { d: string }) => (
   <svg
