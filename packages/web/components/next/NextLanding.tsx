@@ -6,7 +6,7 @@ import { OPTIONS } from "../../lib/apply-options";
 import { Logo } from "../brand/Logo";
 
 /** Launch film (new onboarding), re-encoded for the web (864x1080, faststart). */
-const FILM = "/next/icpfinder-film-d.mp4";
+const FILM = "/next/icpfinder-film-e.mp4";
 
 const Icon = ({ d }: { d: string }) => (
   <svg
@@ -41,7 +41,7 @@ const STEPS = [
     img: "hunt",
     icon: "M11 4a7 7 0 100 14 7 7 0 000-14z M21 21l-5-5",
     title: "Hunts real companies",
-    body: "Claude searches the web for companies that match. A fact only counts when two websites prove it. You approve every fit.",
+    body: "Claude searches the web for companies that match. Every fact is backed by live sources you can click. You approve every fit.",
   },
   {
     img: "opener",
