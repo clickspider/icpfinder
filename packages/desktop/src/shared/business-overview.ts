@@ -12,7 +12,6 @@ export const OVERVIEW_FIELDS = [
   ["sell", "What you offer"],
   ["problem", "The problem you solve"],
   ["different", "What makes your business different"],
-  ["price", "Pricing"],
   ["competitors", "Alternatives customers use"],
 ] as const;
 export function inferredBusiness(value: Record<string, unknown>) {
@@ -38,7 +37,6 @@ export function sellerSummary(p: Product): string {
     value("sell", "What they offer", p.sell),
     value("problem", "Problem solved", p.problem),
     value("different", "Differentiation", p.different),
-    value("price", "Pricing", p.price),
     value("competitors", "Alternatives", p.competitors),
     value("audience", "Who this business sells to", p.audience),
     value("progress", "This business's current progress", p.progress),

@@ -283,6 +283,9 @@ export const Wizard = ({
                           aria-pressed={product?.audience === audience}
                           onClick={() => void updateProduct({ audience }).catch(() => {})}
                         >
+                          {DUO[{ Businesses: "B2B", Consumers: "B2C", Both: "B2B2C" }[audience]]?.(
+                            34
+                          )}
                           {audience}
                         </button>
                       ))}
@@ -307,6 +310,14 @@ export const Wizard = ({
                           aria-pressed={product?.progress === progress}
                           onClick={() => void updateProduct({ progress }).catch(() => {})}
                         >
+                          {DUO[
+                            {
+                              "Exploring an idea": "Idea",
+                              "Preparing to launch": "Pre-seed",
+                              "Looking for first customers": "buyer",
+                              "Already serving customers": "company",
+                            }[progress]
+                          ]?.(34)}
                           {progress}
                         </button>
                       ))}

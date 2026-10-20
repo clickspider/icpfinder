@@ -28,7 +28,9 @@ export function OnboardingAside({
   onEditing?: (editing: boolean) => void;
 }) {
   return (
-    <aside className={`ob-aside ${kind === "product" || kind === "idea" ? "ob-aside-entry" : ""}`}>
+    <aside
+      className={`ob-aside ${kind === "product" || kind === "idea" ? "ob-aside-entry" : ""} ${kind === "about" ? "ob-aside-overview" : ""}`}
+    >
       <div className="ob-aside-inner">
         {kind === "welcome" ? (
           <>

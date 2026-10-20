@@ -16,6 +16,7 @@ export function BusinessOverview({
   onEditing?: (editing: boolean) => void;
 }) {
   const [draft, setDraft] = useState<Product | null>(null);
+  const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   if (loading || !product)
@@ -35,6 +36,7 @@ export function BusinessOverview({
   );
   const close = () => {
     setDraft(null);
+    setEditing(false);
     setError("");
     onEditing?.(false);
   };
@@ -65,6 +67,53 @@ export function BusinessOverview({
   };
   return (
     <>
+      <fieldset className="ob-overview-mode" aria-label="Overview mode">
+        <button
+          type="button"
+          aria-label="View overview"
+          title="View overview"
+          aria-pressed={!editing}
+          disabled={saving}
+          onClick={() => setEditing(false)}
+        >
+          <svg
+            width="19"
+            height="19"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            aria-hidden="true"
+          >
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          aria-label="Edit overview"
+          title="Edit overview"
+          aria-pressed={editing}
+          disabled={saving || !onSave}
+          onClick={() => {
+            if (!draft) setDraft({ ...product, marketplace: marketplaceOf(product) });
+            setEditing(true);
+            onEditing?.(true);
+          }}
+        >
+          <svg
+            width="19"
+            height="19"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            aria-hidden="true"
+          >
+            <path d="m15 5 4 4M4 20l5-1L20 8a2.8 2.8 0 0 0-4-4L5 15l-1 5Z" />
+          </svg>
+        </button>
+      </fieldset>
       <h2>{product.name || "Your business"}</h2>
       <dl className="ob-brief ob-overview">
         {fields.map(([key, label]) => (
@@ -76,7 +125,7 @@ export function BusinessOverview({
               )}
             </dt>
             <dd>
-              {draft ? (
+              {editing && draft ? (
                 <textarea
                   id={`overview-${key}`}
                   className="field"
@@ -100,7 +149,7 @@ export function BusinessOverview({
               )}
           </dt>
           <dd>
-            {draft ? (
+            {editing && draft ? (
               <select
                 id="overview-marketplace"
                 className="field"
@@ -150,19 +199,7 @@ export function BusinessOverview({
               Cancel
             </button>
           </>
-        ) : (
-          <button
-            type="button"
-            className="btn ghost"
-            disabled={!onSave}
-            onClick={() => {
-              setDraft({ ...product, marketplace: marketplaceOf(product) });
-              onEditing?.(true);
-            }}
-          >
-            Edit overview
-          </button>
-        )}
+        ) : null}
       </div>
     </>
   );

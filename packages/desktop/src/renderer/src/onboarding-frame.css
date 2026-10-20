@@ -71,3 +71,11 @@
 .ob-overview dd { font-size:14px; margin-top:5px; }
 .ob-overview textarea { width:100%; resize:vertical; font:inherit; min-height:40px; }
 .ob-overview-actions { display:flex; gap:10px; margin-top:24px; }
+
+.ob-question .ob-opt { min-height:98px; gap:10px; }
+.ob-aside-overview { position:relative; padding-top:76px; }
+.ob-overview-mode { position:absolute; top:22px; right:24px; display:flex; gap:3px; padding:4px; background:#ffffff80; border:1px solid #ffffff90; border-radius:11px; }
+.ob-overview-mode button { display:grid; place-items:center; width:36px; height:34px; border:0; border-radius:7px; background:transparent; color:#917784; cursor:pointer; }
+.ob-overview-mode button[aria-pressed=true] { background:white; color:#b82b50; box-shadow:0 1px 5px #58213112; }
+.ob-overview-mode button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.ob-overview-mode button:disabled { opacity:.45; cursor:default; }
