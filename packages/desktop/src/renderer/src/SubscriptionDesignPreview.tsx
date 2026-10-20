@@ -215,21 +215,11 @@ export function SubscriptionDesignPreview({ onExit }: { onExit: () => void }) {
               <br />
               <em>you already use.</em>
             </h1>
-            <p className="sp-intro">
-              Connect a familiar account to explore your site
-              <br className="sp-wide-break" /> and find the people who need your product.
-            </p>
+            <p className="sp-intro">Choose which provider powers IcpFinder.</p>
             <Glass className="sp-connect-card">
               {known || chooser ? (
                 <>
-                  {known ? (
-                    <>
-                      <div className="sp-card-label">READY ON THIS MAC</div>
-                      {account}
-                    </>
-                  ) : (
-                    alternatives
-                  )}
+                  {known ? account : alternatives}
                   {primary(
                     known
                       ? `Continue with ${name}`
@@ -241,11 +231,9 @@ export function SubscriptionDesignPreview({ onExit }: { onExit: () => void }) {
                       : begin,
                     screen === "empty"
                   )}
-                  <p className="sp-footnote">
-                    {known
-                      ? "Already signed in. You’re ready to go."
-                      : "Sign in in your browser, then come right back."}
-                  </p>
+                  {!known && (
+                    <p className="sp-footnote">Sign in in your browser, then come right back.</p>
+                  )}
                   {known && (
                     <>
                       <p className="sp-alternatives-label">Or choose another provider</p>
@@ -258,9 +246,15 @@ export function SubscriptionDesignPreview({ onExit }: { onExit: () => void }) {
               )}
             </Glass>
           </div>
-          <div className="sp-back">← Your product is saved</div>
+          <button
+            type="button"
+            className="sp-link sp-product-back"
+            onClick={() => setNotice("Preview only: return to your business details.")}
+          >
+            Back
+          </button>
         </section>
-        <OnboardingAside kind="ai" name={"yourproduct.com"} />
+        <OnboardingAside kind="ai" name="invoicestudio.example" />
       </main>
       <footer className="sp-preview-footer">
         <span>Preview only · no accounts are changed</span>
