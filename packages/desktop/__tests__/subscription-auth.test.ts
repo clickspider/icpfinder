@@ -321,3 +321,50 @@ describe("auth edge cases", () => {
     expect(await auth.xaiToken()).toBe("new");
   });
 });
+
+describe("connection recovery classification", () => {
+  it("identifies missing bundled executables as component failures", async () => {
+    const { auth } = await setup({ resolveCli: async () => null });
+    expect((await auth.status()).find((s) => s.provider === "claude")).toMatchObject({
+      installed: false,
+      failure: "component",
+    });
+    const attempt = await auth.begin("claude");
+    await vi.waitFor(() =>
+      expect(auth.loginState(attempt.id)).toMatchObject({ status: "failed", failure: "component" })
+    );
+  });
+  it("identifies executables that cannot start as component failures", async () => {
+    const { auth } = await setup({
+      resolveCli: async () => "/nonexistent/icpfinder-test-cli",
+      runCli: undefined,
+    });
+    expect((await auth.status()).find((s) => s.provider === "codex")).toMatchObject({
+      failure: "component",
+    });
+    const attempt = await auth.begin("codex");
+    await vi.waitFor(() =>
+      expect(auth.loginState(attempt.id)).toMatchObject({ status: "failed", failure: "component" })
+    );
+  });
+  it("distinguishes network failure from rejected sign-in", async () => {
+    const network = await setup({
+      fetch: vi.fn().mockRejectedValue(new TypeError("fetch failed")),
+    });
+    const attempt = await network.auth.begin("xai");
+    await vi.waitFor(() =>
+      expect(network.auth.loginState(attempt.id)).toMatchObject({
+        status: "failed",
+        failure: "temporary",
+      })
+    );
+    const signin = await setup({ runCli: async () => ({ code: 1, output: "" }) });
+    const rejected = await signin.auth.begin("claude");
+    await vi.waitFor(() =>
+      expect(signin.auth.loginState(rejected.id)).toMatchObject({
+        status: "failed",
+        failure: "signin",
+      })
+    );
+  });
+});

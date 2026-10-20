@@ -1,9 +1,9 @@
 import { useState } from "react";
 import type { ProviderId } from "../../shared/subscriptions";
+import { ConnectionErrorCard } from "./ConnectionErrorCard";
 import { Glass } from "./glass";
 import { AppBrand, OnboardingAside } from "./OnboardingFrame";
 import { ProviderMark } from "./ProviderMark";
-import { ProviderUnavailable } from "./ProviderUnavailable";
 import "./subscription-preview.css";
 
 const PROVIDERS: Array<{ id: ProviderId; name: string }> = [
@@ -20,10 +20,11 @@ const STATES = [
   { id: "device", title: "Device code" },
   { id: "success", title: "Connected" },
   { id: "cancelled", title: "Cancelled" },
-  { id: "error", title: "Sign-in error" },
-  { id: "expired", title: "Session expired" },
-  { id: "missing", title: "Provider unavailable" },
-  { id: "unavailable", title: "Status unavailable" },
+  { id: "error", title: "Connection error · sign-in" },
+  { id: "temporary", title: "Connection error · temporary" },
+  { id: "expired", title: "Connection error · expired" },
+  { id: "missing", title: "Connection error · app" },
+  { id: "unavailable", title: "Connection error · status" },
 ] as const;
 type PreviewState = (typeof STATES)[number]["id"];
 
@@ -85,7 +86,7 @@ export function SubscriptionDesignPreview({ onExit }: { onExit: () => void }) {
     </div>
   );
   const details: Record<
-    Exclude<PreviewState, "known" | "empty" | "selected" | "missing">,
+    Exclude<PreviewState, "known" | "empty" | "selected" | "missing" | "temporary">,
     { title: string; text: string }
   > = {
     checking: {
@@ -119,22 +120,27 @@ export function SubscriptionDesignPreview({ onExit }: { onExit: () => void }) {
     },
   };
   const statusCard =
-    screen === "missing" ? (
-      <ProviderUnavailable
+    screen === "missing" ||
+    screen === "error" ||
+    screen === "expired" ||
+    screen === "temporary" ||
+    screen === "unavailable" ? (
+      <ConnectionErrorCard
         provider={provider}
         name={name}
-        onChoose={() => go("empty")}
-        onRetry={() =>
-          setNotice(
-            "Preview only: availability would be checked again. This does not repair the app."
-          )
+        failure={
+          screen === "missing"
+            ? "component"
+            : screen === "temporary" || screen === "unavailable"
+              ? "temporary"
+              : "signin"
         }
+        statusCheck={screen === "unavailable"}
+        onChoose={() => go("empty")}
+        onRetry={screen === "unavailable" ? () => go("checking") : begin}
       />
     ) : !known && !chooser ? (
-      <div
-        className="sp-status-card"
-        role={screen === "error" || screen === "unavailable" ? "alert" : "status"}
-      >
+      <div className="sp-status-card" role="status">
         {screen === "checking" ? (
           <span className="sp-status-spinner" aria-hidden="true" />
         ) : screen === "success" ? (
@@ -158,16 +164,10 @@ export function SubscriptionDesignPreview({ onExit }: { onExit: () => void }) {
           primary("Continue to my product", () =>
             setNotice("Preview only: your product research would begin now.")
           )}
-        {(screen === "cancelled" || screen === "error" || screen === "expired") && (
+        {screen === "cancelled" && (
           <>
-            {primary(screen === "expired" ? `Reconnect ${name}` : "Try signing in again", begin)}
+            {primary("Try signing in again", begin)}
             {secondary("Choose another provider", () => go("empty"))}
-          </>
-        )}
-        {screen === "unavailable" && (
-          <>
-            {primary("Check again", () => go("checking"))}
-            {secondary("Choose a provider", () => go("empty"))}
           </>
         )}
       </div>

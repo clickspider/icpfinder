@@ -4,7 +4,12 @@ import { randomUUID } from "node:crypto";
 import { constants, renameSync, rmSync } from "node:fs";
 import { mkdir, open, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { LoginAttempt, ProviderId, SubscriptionStatus } from "../shared/subscriptions";
+import type {
+  ConnectionFailure,
+  LoginAttempt,
+  ProviderId,
+  SubscriptionStatus,
+} from "../shared/subscriptions";
 import { resolveCli, subscriptionEnv } from "./cli";
 
 const CLIENT = "b1a00492-073a-47ea-816f-4c329264a828";
@@ -29,6 +34,11 @@ export interface SubscriptionAuthOptions {
   timeoutMs?: number;
 }
 
+class ConnectionError extends Error {
+  constructor(readonly failure: ConnectionFailure) {
+    super(failure);
+  }
+}
 const runCli: CliRunner = (binary, args, signal, onOutput) =>
   new Promise((resolve, reject) => {
     const child = spawn(binary, args, {
@@ -43,7 +53,7 @@ const runCli: CliRunner = (binary, args, signal, onOutput) =>
     };
     child.stdout.on("data", collect);
     child.stderr.on("data", collect);
-    child.on("error", () => reject(new Error("CLI could not start.")));
+    child.on("error", () => reject(new ConnectionError("component")));
     child.on("close", (code) => resolve({ code: code ?? 1, output }));
   });
 
@@ -107,7 +117,7 @@ export class SubscriptionAuth {
           }
         }
         const binary = await this.resolver(provider);
-        if (!binary) return { provider, installed: false, connected: false };
+        if (!binary) return { provider, installed: false, connected: false, failure: "component" };
         try {
           const result = await this.runner(
             binary,
@@ -130,10 +140,11 @@ export class SubscriptionAuth {
                 : "ChatGPT account"
               : undefined,
           };
-        } catch {
+        } catch (error) {
           return {
             provider,
             installed: true,
+            failure: error instanceof ConnectionError ? error.failure : "temporary",
             connected: false,
             error: "Could not check sign-in. Try again.",
           };
@@ -186,7 +197,7 @@ export class SubscriptionAuth {
       else {
         const binary = await this.resolver(attempt.provider);
         controller.signal.throwIfAborted();
-        if (!binary) throw new Error("missing");
+        if (!binary) throw new ConnectionError("component");
         const result = await this.runner(
           binary,
           attempt.provider === "claude" ? ["auth", "login", "--claudeai"] : ["login"],
@@ -210,12 +221,18 @@ export class SubscriptionAuth {
       }
       controller.signal.throwIfAborted();
       if (attempt.status === "pending") attempt.status = "complete";
-    } catch {
+    } catch (error) {
       if (attempt.status === "pending") {
+        attempt.failure =
+          error instanceof ConnectionError
+            ? error.failure
+            : controller.signal.aborted
+              ? "temporary"
+              : "signin";
         attempt.status = "failed";
         attempt.error = controller.signal.aborted
           ? "Sign-in timed out. Try again."
-          : "Sign-in could not complete. Check your subscription and try again.";
+          : "Sign-in could not complete. Please try again.";
       }
     } finally {
       clearTimeout(timer);
@@ -236,6 +253,8 @@ export class SubscriptionAuth {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams(params),
       signal: AbortSignal.any([signal, AbortSignal.timeout(25000)]),
+    }).catch(() => {
+      throw new ConnectionError("temporary");
     });
     const text = await response.text();
     if (text.length > 65536) throw new Error("Invalid provider response.");

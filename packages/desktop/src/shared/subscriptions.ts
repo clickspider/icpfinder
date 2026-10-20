@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+export type ConnectionFailure = "signin" | "temporary" | "component";
 export type ProviderId = "claude" | "codex" | "xai";
 export interface SubscriptionStatus {
   provider: ProviderId;
@@ -6,6 +7,7 @@ export interface SubscriptionStatus {
   connected: boolean;
   label?: string;
   error?: string;
+  failure?: ConnectionFailure;
 }
 export interface LoginAttempt {
   id: string;
@@ -14,6 +16,7 @@ export interface LoginAttempt {
   url?: string;
   code?: string;
   error?: string;
+  failure?: ConnectionFailure;
 }
 
 /** Only suggest a connected account; ambiguous accounts require an explicit choice. */

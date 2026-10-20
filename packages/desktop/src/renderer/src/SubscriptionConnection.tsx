@@ -6,10 +6,10 @@ import {
   suggestedProvider,
 } from "../../shared/subscriptions";
 import type { State } from "../../shared/types";
+import { ConnectionErrorCard } from "./ConnectionErrorCard";
 import { Glass } from "./glass";
 import { AppBrand, OnboardingAside } from "./OnboardingFrame";
 import { ProviderMark } from "./ProviderMark";
-import { ProviderUnavailable } from "./ProviderUnavailable";
 import { api, cleanError } from "./ui";
 import "./subscription-preview.css";
 
@@ -207,7 +207,20 @@ export function SubscriptionConnection({
             </h1>
             <p className="sp-intro">Choose which provider powers IcpFinder.</p>
             <Glass className="sp-connect-card">
-              {!statuses ? (
+              {!statuses && error ? (
+                <ConnectionErrorCard
+                  name="your AI provider"
+                  failure="temporary"
+                  statusCheck
+                  busy={busy}
+                  onRetry={() => void act(() => refresh(true))}
+                  onChoose={() => {
+                    setStatuses([]);
+                    setProvider(null);
+                    setError("");
+                  }}
+                />
+              ) : !statuses ? (
                 <div className="sp-status-card">
                   {!error && <span className="sp-status-spinner" aria-hidden="true" />}
                   <h2>{error ? "Couldn’t check your accounts" : "Checking your accounts…"}</h2>
@@ -244,18 +257,28 @@ export function SubscriptionConnection({
                     Cancel sign-in
                   </button>
                 </div>
-              ) : selected && !selected.installed ? (
-                <ProviderUnavailable
-                  provider={selected.provider}
+              ) : provider &&
+                attempt?.status !== "cancelled" &&
+                (selected?.installed === false ||
+                  selected?.failure ||
+                  expired ||
+                  attempt?.status === "failed") ? (
+                <ConnectionErrorCard
+                  provider={provider}
                   name={name}
-                  busy={busy}
-                  onRetry={() =>
-                    void act(async () => {
-                      setAttempt(null);
-                      setExpired(false);
-                      await refresh();
-                    })
+                  failure={
+                    selected?.installed === false || selected?.failure === "component"
+                      ? "component"
+                      : (attempt?.failure ?? selected?.failure ?? "signin")
                   }
+                  busy={busy}
+                  statusCheck={selected?.failure === "temporary" && !attempt}
+                  onRetry={() => {
+                    setAttempt(null);
+                    setExpired(false);
+                    if (selected?.failure === "temporary" && !attempt) void act(() => refresh());
+                    else void connect();
+                  }}
                   onChoose={() => {
                     setProvider(null);
                     setAttempt(null);
@@ -263,38 +286,11 @@ export function SubscriptionConnection({
                     setError("");
                   }}
                 />
-              ) : expired ? (
+              ) : attempt?.status === "cancelled" ? (
                 <div className="sp-status-card">
                   {provider && <ProviderMark provider={provider} size={40} />}
-                  <h2>Let’s reconnect</h2>
-                  <p>
-                    Your {name} session has expired. Sign in again to pick up where you left off.
-                  </p>
-                  {button(`Reconnect ${name}`, () => void connect())}
-                  <button
-                    type="button"
-                    className="sp-link"
-                    disabled={busy}
-                    onClick={() => {
-                      setProvider(null);
-                      setExpired(false);
-                      setError("");
-                    }}
-                  >
-                    Choose another provider
-                  </button>
-                </div>
-              ) : attempt?.status === "failed" || attempt?.status === "cancelled" ? (
-                <div className="sp-status-card">
-                  {provider && <ProviderMark provider={provider} size={40} />}
-                  <h2>
-                    {attempt.status === "cancelled" ? "Sign-in cancelled" : "We couldn’t connect"}
-                  </h2>
-                  <p>
-                    {attempt.status === "cancelled"
-                      ? "Your product is still here. Try again whenever you’re ready."
-                      : "The connection failed. Please try signing in again."}
-                  </p>
+                  <h2>Sign-in cancelled</h2>
+                  <p>Your product is still here. Try again whenever you’re ready.</p>
                   {button("Try signing in again", () => void connect())}
                   <button
                     type="button"
@@ -361,11 +357,14 @@ export function SubscriptionConnection({
                   )}
                 </>
               )}
-              {statuses && (error || selected?.error) && (
-                <p className="sp-connection-error" role="alert">
-                  {error || selected?.error}
-                </p>
-              )}
+              {statuses &&
+                attempt?.status !== "failed" &&
+                !selected?.failure &&
+                (error || selected?.error) && (
+                  <p className="sp-connection-error" role="alert">
+                    {error || selected?.error}
+                  </p>
+                )}
             </Glass>
           </div>
           <button
