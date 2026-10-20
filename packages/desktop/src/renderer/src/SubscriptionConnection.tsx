@@ -204,10 +204,7 @@ export function SubscriptionConnection({
               <br />
               <em>you already use.</em>
             </h1>
-            <p className="sp-intro">
-              Connect a familiar account to explore your product
-              <br /> and find the people who need it.
-            </p>
+            <p className="sp-intro">Choose which provider powers IcpFinder.</p>
             <Glass className="sp-connect-card">
               {!statuses ? (
                 <div className="sp-status-card">
@@ -339,7 +336,6 @@ export function SubscriptionConnection({
                 <>
                   {connected ? (
                     <>
-                      <div className="sp-card-label">READY ON THIS MAC</div>
                       <div className="sp-account">
                         {provider && <ProviderMark provider={provider} size={40} />}
                         <div>
@@ -361,11 +357,9 @@ export function SubscriptionConnection({
                     () => void connect(),
                     !provider
                   )}
-                  <p className="sp-footnote">
-                    {connected
-                      ? "Already signed in. You’re ready to go."
-                      : "Sign in in your browser, then come right back."}
-                  </p>
+                  {!connected && (
+                    <p className="sp-footnote">Sign in in your browser, then come right back.</p>
+                  )}
                   {connected && (
                     <>
                       <p className="sp-alternatives-label">Or choose another provider</p>
@@ -392,7 +386,7 @@ export function SubscriptionConnection({
               })
             }
           >
-            ← Back to your product
+            Back
           </button>
         </section>
         <OnboardingAside kind="ai" name={product} />

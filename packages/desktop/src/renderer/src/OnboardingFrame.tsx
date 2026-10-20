@@ -49,10 +49,11 @@ export function OnboardingAside({
           <>
             <h2 className="ob-product-name">{name || "Your idea"}</h2>
             <p className="ob-aside-copy">
-              Next, your AI will read what you shared and put together your product brief.
+              Once you continue, we’ll use what you shared to put together a short overview of your
+              business.
             </p>
             <div className="ob-aside-rule" />
-            <p className="ob-aside-small">You’ll review the details before we find your ICPs.</p>
+            <p className="ob-aside-small">You’ll review it before we suggest who to focus on.</p>
           </>
         ) : kind === "about" ? (
           <>
