@@ -44,7 +44,7 @@ export const Wizard = ({
     preview?.step ?? (ws?.icps.length ? "icp" : ws ? "about" : "welcome")
   );
   const [mode, setMode] = useState<"site" | "idea">(preview?.mode ?? "site");
-  const [url, setUrl] = useState(ws?.product.url ?? "");
+  const [url, setUrl] = useState(preview?.step === "product" ? "" : (ws?.product.url ?? ""));
   const [description, setDescription] = useState(
     ws?.product.url ? "" : (ws?.product.siteText ?? "")
   );
@@ -114,7 +114,7 @@ export const Wizard = ({
 
   const cta: Record<Step, string> = {
     welcome: "Let’s get started",
-    product: mode === "site" ? "Read my site" : "Continue",
+    product: "Continue",
     about: !briefReady ? (busy ? "Preparing your brief…" : "Try again") : "Find my ICPs",
     icp: "Looks right, hunt ↑",
   };
@@ -179,7 +179,15 @@ export const Wizard = ({
               {step === "product" && (
                 <>
                   <h1 className="ob-h1">
-                    What are you <em>building?</em>
+                    {mode === "site" ? (
+                      <>
+                        Tell us about your <em>business.</em>
+                      </>
+                    ) : (
+                      <>
+                        What are you <em>building?</em>
+                      </>
+                    )}
                   </h1>
                   <div className="ob-seg" role="tablist">
                     <button
@@ -198,18 +206,19 @@ export const Wizard = ({
                       className={mode === "idea" ? "on" : ""}
                       onClick={() => setMode("idea")}
                     >
-                      {DUO.chat?.(16)} Just an idea
+                      {DUO.chat?.(16)} I’ll describe it
                     </button>
                   </div>
                   {mode === "site" ? (
                     <>
                       <p className="ob-sub">
-                        Paste the site. Your AI reads it and fills in the rest.
+                        Start with your website. We’ll take a look so you don’t have to explain
+                        everything from scratch.
                       </p>
                       <input
                         className="field"
                         aria-label="Website"
-                        placeholder="yourproduct.com"
+                        placeholder="https://yourbusiness.com"
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && canNext && next()}

@@ -74,20 +74,18 @@ export function OnboardingAside({
         ) : (
           <>
             <h2>
-              {kind === "idea"
-                ? "Start with what you know."
-                : "Your product is the starting point."}
+              {kind === "idea" ? "Start with what you know." : "A little context goes a long way."}
             </h2>
             <p className="ob-aside-copy">
               {kind === "idea"
                 ? "What does it do? Who might need it? What gets easier for them?"
-                : "We’ll read what you sell, the problem it solves, and who it could help."}
+                : "We’ll use your website to understand what you sell, the problem it solves, and who could benefit."}
             </p>
             <div className="ob-aside-rule" />
             <p className="ob-aside-small">
               {kind === "idea"
                 ? "A rough description is enough. You can refine it later."
-                : "You’ll have a chance to review the details."}
+                : "You’ll have a chance to review the details before we suggest customer profiles."}
             </p>
           </>
         )}
