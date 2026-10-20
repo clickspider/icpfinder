@@ -83,3 +83,25 @@
 .ob-sidebar:has(.ob-question) > .ob-body { flex:1; min-height:0; overflow:auto; margin:0; padding:24px 0; }
 .ob-sidebar:has(.ob-question) > .ob-body > * { flex-shrink:0; }
 .ob-sidebar:has(.ob-question) > .ob-body + div { flex-shrink:0; padding-top:14px; }
+
+.ob-aside-overview:has(.ob-flip-scene) { padding:0; background:transparent; overflow:visible; }
+.ob-aside-overview:has(.ob-flip-scene) > .ob-aside-inner { width:100%; height:100%; }
+.ob-flip-scene { position:relative; height:100%; perspective:1600px; }
+.ob-flip-scene .ob-overview-mode { z-index:3; margin:0; }
+.ob-flip-shell { position:relative; width:100%; height:100%; transform-style:preserve-3d; transition:transform 520ms cubic-bezier(.2,.75,.2,1); }
+.ob-flip-shell.is-editing { transform:rotateY(180deg); }
+.ob-flip-face { position:absolute; inset:0; border-radius:20px; backface-visibility:hidden; -webkit-backface-visibility:hidden; overflow:auto; padding:86px 48px 42px; display:flex; flex-direction:column; }
+.ob-flip-view { background:radial-gradient(ellipse at 12% 85%,#ff8fa650,transparent 70%),radial-gradient(ellipse at 0% 100%,#ff6f6124,transparent 60%),radial-gradient(ellipse at 95% 15%,#ffb08a50,transparent 65%),#fff5f6; }
+.ob-flip-edit { transform:rotateY(180deg); background:#fcfafb; border:1px solid #eee5e9; }
+.ob-flip-content { width:min(440px,100%); margin:auto; flex-shrink:0; }
+.ob-overview-form h2 { font-size:27px; }
+.ob-form-help { font-size:14px; color:#8a727d; margin:10px 0 28px; }
+.ob-form-field { display:flex; flex-direction:column; gap:9px; margin-top:20px; }
+.ob-form-field label { font-size:13px; font-weight:500; color:#65545d; }
+.ob-form-field input,.ob-form-field textarea,.ob-form-field select { width:100%; border:1px solid #dfd5da; border-radius:10px; padding:12px 14px; background:white; color:var(--ink); font:inherit; font-size:14px; line-height:1.6; }
+.ob-form-field textarea { resize:vertical; min-height:96px; }
+.ob-form-field :is(input,textarea,select):focus { outline:2px solid #e0244a22; border-color:#c88096; }
+.ob-overview-form .ob-overview-actions { margin-top:28px; align-items:center; }
+.ob-overview-form .ob-cta { font-size:14px; padding:12px 20px; }
+@media (prefers-reduced-motion:reduce) { .ob-flip-shell { transition:none; } }
+@media (max-width:1000px) { .ob-flip-face { padding-inline:28px; } }

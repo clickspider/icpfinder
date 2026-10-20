@@ -65,8 +65,19 @@ export function BusinessOverview({
       setSaving(false);
     }
   };
+  const structure =
+    marketplaceOf(product) === undefined
+      ? "Not specified"
+      : marketplaceOf(product)
+        ? "Marketplace connecting buyers and sellers"
+        : "Not a marketplace";
+  const beginEdit = () => {
+    if (!draft) setDraft({ ...product, marketplace: marketplaceOf(product) });
+    setEditing(true);
+    onEditing?.(true);
+  };
   return (
-    <>
+    <div className="ob-flip-scene">
       <fieldset className="ob-overview-mode" aria-label="Overview mode">
         <button
           type="button"
@@ -74,7 +85,10 @@ export function BusinessOverview({
           title="View overview"
           aria-pressed={!editing}
           disabled={saving}
-          onClick={() => setEditing(false)}
+          onClick={() => {
+            setEditing(false);
+            onEditing?.(false);
+          }}
         >
           <svg
             width="19"
@@ -95,11 +109,7 @@ export function BusinessOverview({
           title="Edit overview"
           aria-pressed={editing}
           disabled={saving || !onSave}
-          onClick={() => {
-            if (!draft) setDraft({ ...product, marketplace: marketplaceOf(product) });
-            setEditing(true);
-            onEditing?.(true);
-          }}
+          onClick={beginEdit}
         >
           <svg
             width="19"
@@ -114,54 +124,92 @@ export function BusinessOverview({
           </svg>
         </button>
       </fieldset>
-      <h2>{product.name || "Your business"}</h2>
-      <dl className="ob-brief ob-overview">
-        {fields.map(([key, label]) => (
-          <div key={key}>
-            <dt>
-              <label htmlFor={`overview-${key}`}>{label}</label>
-              {!product.confirmedFields?.includes(key) && product[key] && (
-                <span className="ob-suggestion">Suggested</span>
-              )}
-            </dt>
-            <dd>
-              {editing && draft ? (
-                <textarea
-                  id={`overview-${key}`}
-                  className="field"
-                  rows={key === "name" ? 1 : 2}
-                  value={shown[key] ?? ""}
-                  disabled={saving}
-                  onChange={(e) => setDraft({ ...draft, [key]: e.target.value })}
-                />
-              ) : (
-                product[key] || "Not provided"
-              )}
-            </dd>
+      <div className={`ob-flip-shell ${editing ? "is-editing" : ""}`}>
+        <section
+          className="ob-flip-face ob-flip-view"
+          aria-hidden={editing}
+          ref={(el) => {
+            if (el) el.inert = editing;
+          }}
+        >
+          <div className="ob-flip-content">
+            <h2>{product.name || "Your business"}</h2>
+            <dl className="ob-brief ob-overview">
+              {fields.map(([key, label]) => (
+                <div key={key}>
+                  <dt>
+                    {label}
+                    {!product.confirmedFields?.includes(key) && product[key] && (
+                      <span className="ob-suggestion">Suggested</span>
+                    )}
+                  </dt>
+                  <dd>{product[key] || "Not provided"}</dd>
+                </div>
+              ))}
+              <div>
+                <dt>
+                  Business structure
+                  {marketplaceOf(product) !== undefined &&
+                    !product.confirmedFields?.includes("marketplace") && (
+                      <span className="ob-suggestion">Suggested</span>
+                    )}
+                </dt>
+                <dd>{structure}</dd>
+              </div>
+            </dl>
           </div>
-        ))}
-        <div>
-          <dt>
-            <label htmlFor="overview-marketplace">Business structure</label>
-            {marketplaceOf(product) !== undefined &&
-              !product.confirmedFields?.includes("marketplace") && (
-                <span className="ob-suggestion">Suggested</span>
-              )}
-          </dt>
-          <dd>
-            {editing && draft ? (
+        </section>
+        <section
+          className="ob-flip-face ob-flip-edit"
+          aria-hidden={!editing}
+          ref={(el) => {
+            if (el) el.inert = !editing;
+          }}
+        >
+          <form
+            className="ob-flip-content ob-overview-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void save();
+            }}
+          >
+            <h2>Edit overview</h2>
+            <p className="ob-form-help">Make it sound like your business.</p>
+            {fields.map(([key, label]) => (
+              <div className="ob-form-field" key={key}>
+                <label htmlFor={`overview-${key}`}>{label}</label>
+                {key === "name" ? (
+                  <input
+                    id={`overview-${key}`}
+                    value={shown[key] ?? ""}
+                    disabled={saving}
+                    onChange={(e) => draft && setDraft({ ...draft, [key]: e.target.value })}
+                  />
+                ) : (
+                  <textarea
+                    id={`overview-${key}`}
+                    rows={3}
+                    value={shown[key] ?? ""}
+                    disabled={saving}
+                    onChange={(e) => draft && setDraft({ ...draft, [key]: e.target.value })}
+                  />
+                )}
+              </div>
+            ))}
+            <div className="ob-form-field">
+              <label htmlFor="overview-marketplace">Business structure</label>
               <select
                 id="overview-marketplace"
-                className="field"
                 disabled={saving}
                 value={
-                  marketplaceOf(draft) === undefined
+                  marketplaceOf(shown) === undefined
                     ? "unknown"
-                    : marketplaceOf(draft)
+                    : marketplaceOf(shown)
                       ? "yes"
                       : "no"
                 }
                 onChange={(e) =>
+                  draft &&
                   setDraft({
                     ...draft,
                     model: undefined,
@@ -174,33 +222,23 @@ export function BusinessOverview({
                 <option value="yes">Marketplace connecting buyers and sellers</option>
                 <option value="no">Not a marketplace</option>
               </select>
-            ) : marketplaceOf(product) === undefined ? (
-              "Not specified"
-            ) : marketplaceOf(product) ? (
-              "Marketplace connecting buyers and sellers"
-            ) : (
-              "Not a marketplace"
+            </div>
+            {error && (
+              <p className="error" role="alert">
+                {error}
+              </p>
             )}
-          </dd>
-        </div>
-      </dl>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      <div className="ob-overview-actions">
-        {draft ? (
-          <>
-            <button type="button" className="btn" disabled={saving} onClick={() => void save()}>
-              {saving ? "Saving…" : "Save changes"}
-            </button>
-            <button type="button" className="btn ghost" disabled={saving} onClick={close}>
-              Cancel
-            </button>
-          </>
-        ) : null}
+            <div className="ob-overview-actions">
+              <button type="submit" className="ob-cta" disabled={saving}>
+                {saving ? "Saving…" : "Save changes"}
+              </button>
+              <button type="button" className="btn ghost" disabled={saving} onClick={close}>
+                Cancel
+              </button>
+            </div>
+          </form>
+        </section>
       </div>
-    </>
+    </div>
   );
 }
