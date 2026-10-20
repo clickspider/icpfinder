@@ -17,6 +17,7 @@
     },
     "@icpfinder/web#build": {
       "dependsOn": ["@icpfinder/core#build", "@icpfinder/providers#build"],
+      "cache": false,
       "outputs": [".next/**"],
       "env": [
         "DATABASE_URL",
