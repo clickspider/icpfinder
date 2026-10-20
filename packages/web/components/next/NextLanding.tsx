@@ -60,6 +60,31 @@ const QUESTIONS: Array<[Field, string]> = [
   ["agent", "Do you use Claude Code or Codex?"],
 ];
 
+/** Thin line icons, the same style as the Mac app. */
+const OPTION_ICONS: Record<string, string> = {
+  founder:
+    "M12 3c3 2 5 6 5 10l-2 3H9l-2-3c0-4 2-8 5-10z M12 9a1.5 1.5 0 100 3 1.5 1.5 0 000-3z M9 16l-2 4 M15 16l2 4",
+  solo: "M8 8l-4 4 4 4 M16 8l4 4-4 4 M13.5 5l-3 14",
+  employee: "M4 21V7l8-4 8 4v14 M9 21v-5h6v5 M8 10h1 M15 10h1 M8 13h1 M15 13h1",
+  agency:
+    "M9 11a3 3 0 100-6 3 3 0 000 6z M3 20a6 6 0 0112 0 M17 11a3 3 0 100-6 M21 20a6 6 0 00-4-5.7",
+  other: "M12 3a9 9 0 100 18 9 9 0 000-18z M8 12h.01 M12 12h.01 M16 12h.01",
+  none: "M12 11a4 4 0 100-8 4 4 0 000 8z M4 21a8 8 0 0116 0",
+  small:
+    "M9 11a3 3 0 100-6 3 3 0 000 6z M3 20a6 6 0 0112 0 M17 11a3 3 0 100-6 M21 20a6 6 0 00-4-5.7",
+  team: "M3 17l6-6 4 4 8-8 M15 7h6v6",
+  idea: "M9 18h6 M10 21h4 M12 3a6 6 0 00-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0012 3z",
+  live: "M12 21a9 9 0 100-18 9 9 0 000 18z M3 12h18 M12 3a14 14 0 010 18 M12 3a14 14 0 000 18",
+  paying: "M3 7h18v10H3z M3 10h18 M7 14h3",
+  scaling: "M3 20h18 M6 16v-4 M11 16V9 M16 16V5",
+  lt1: "M12 21a9 9 0 100-18 9 9 0 000 18z M12 7v5l3 2",
+  y1to3: "M4 5h16v15H4z M4 9h16 M8 3v4 M16 3v4",
+  gt3: "M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z",
+  daily: "M5 12l5 5L20 7",
+  sometimes: "M4 12a8 8 0 0114-5.3 M20 12a8 8 0 01-14 5.3 M18 3v4h-4 M6 21v-4h4",
+  no: "M12 21a9 9 0 100-18 9 9 0 000 18z M8 12h8",
+};
+
 function ApplyForm() {
   const [state, setState] = useState<
     "idle" | "sending" | "error" | "priority" | "review" | "later"
@@ -128,7 +153,10 @@ function ApplyForm() {
             {Object.entries(OPTIONS[field]).map(([value, label]) => (
               <label key={value} className="nx-chip">
                 <input type="radio" name={field} value={value} required />
-                <span>{label}</span>
+                <span>
+                  <Icon d={OPTION_ICONS[value] ?? ""} />
+                  {label}
+                </span>
               </label>
             ))}
           </div>

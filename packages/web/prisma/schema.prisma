@@ -62,6 +62,8 @@ model Application {
   firstWeek  String
   score      Int
   tier       String
+  /// Set when Daniel clicks Invite on /next/admin and the email went out.
+  invitedAt  DateTime?
 
   @@index([tier, createdAt])
 }

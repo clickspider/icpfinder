@@ -5,7 +5,7 @@
 // shipping experience. Answers are scored here so review starts sorted;
 // nobody is auto-rejected, the tier only orders the list.
 
-import { appendFile, mkdir } from "node:fs/promises";
+import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { OPTIONS } from "./apply-options";
 import { getPrisma } from "./prisma";
 
@@ -102,4 +102,69 @@ export async function saveApplication(a: ApplicationInput): Promise<Tier> {
     );
   }
   return tier;
+}
+
+export interface ApplicationRow extends ApplicationInput {
+  id: string;
+  createdAt: string;
+  score: number;
+  tier: Tier;
+  invitedAt: string | null;
+}
+
+const LOCAL = ".data/applications.jsonl";
+const readLocal = async (): Promise<ApplicationRow[]> => {
+  const text = await readFile(LOCAL, "utf8").catch(() => "");
+  const byEmail = new Map<string, ApplicationRow>();
+  for (const line of text.split("\n").filter(Boolean)) {
+    const r = JSON.parse(line);
+    byEmail.set(r.email, { invitedAt: null, ...r, id: r.email, createdAt: r.createdAt ?? r.at });
+  }
+  return [...byEmail.values()];
+};
+
+const TIER_ORDER: Record<Tier, number> = { priority: 0, review: 1, later: 2 };
+
+/** All applications, best tier first, then highest score, then newest. */
+export async function listApplications(): Promise<ApplicationRow[]> {
+  const prisma = getPrisma();
+  const rows: ApplicationRow[] = prisma
+    ? (await prisma.application.findMany()).map((r) => ({
+        ...(r as unknown as ApplicationRow),
+        createdAt: r.createdAt.toISOString(),
+        invitedAt: r.invitedAt?.toISOString() ?? null,
+      }))
+    : await readLocal();
+  return rows.sort(
+    (a, b) =>
+      TIER_ORDER[a.tier] - TIER_ORDER[b.tier] ||
+      b.score - a.score ||
+      b.createdAt.localeCompare(a.createdAt)
+  );
+}
+
+export async function markInvited(id: string): Promise<ApplicationRow | null> {
+  const prisma = getPrisma();
+  const now = new Date();
+  if (prisma) {
+    const r = await prisma.application
+      .update({ where: { id }, data: { invitedAt: now } })
+      .catch(() => null);
+    return r
+      ? ({ ...(r as unknown as ApplicationRow), invitedAt: now.toISOString() } as ApplicationRow)
+      : null;
+  }
+  const rows = await readLocal();
+  const row = rows.find((r) => r.id === id);
+  if (!row) return null;
+  row.invitedAt = now.toISOString();
+  await writeFile(
+    LOCAL,
+    `${rows.map((r) => JSON.stringify({ ...r, at: r.createdAt })).join("\n")}\n`
+  );
+  return row;
+}
+
+export async function findApplication(id: string): Promise<ApplicationRow | null> {
+  return (await listApplications()).find((r) => r.id === id) ?? null;
 }

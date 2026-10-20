@@ -5,6 +5,7 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 import { parseApplication, saveApplication } from "@/lib/applications";
+import { appliedEmail, sendEmail } from "@/lib/beta-email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,7 +17,12 @@ export async function POST(req: NextRequest) {
   const input = parseApplication(body);
   if (typeof input === "string") return NextResponse.json({ error: input }, { status: 400 });
   try {
-    return NextResponse.json({ tier: await saveApplication(input) });
+    const tier = await saveApplication(input);
+    // The application is saved either way; a failed email is only logged.
+    await sendEmail(input.email, appliedEmail(input.name)).catch((err) =>
+      console.error("[apply] email", err)
+    );
+    return NextResponse.json({ tier });
   } catch (err) {
     console.error("[apply] save failed", err);
     return NextResponse.json({ error: "Could not save. Try again in a minute." }, { status: 500 });
