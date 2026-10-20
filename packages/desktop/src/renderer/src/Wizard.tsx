@@ -207,14 +207,17 @@ export const Wizard = ({
                         Start with your website. We’ll take a look so you don’t have to explain
                         everything from scratch.
                       </p>
-                      <input
-                        className="field"
-                        aria-label="Website"
-                        placeholder="https://yourbusiness.com"
-                        value={url}
-                        onChange={(e) => setUrl(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && canNext && next()}
-                      />
+                      <div className="ob-website-entry">
+                        <label htmlFor="business-website">Your website</label>
+                        <input
+                          id="business-website"
+                          className="field"
+                          placeholder="https://yourbusiness.com"
+                          value={url}
+                          onChange={(e) => setUrl(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && canNext && next()}
+                        />
+                      </div>
                     </>
                   ) : (
                     <>
