@@ -9,7 +9,7 @@ const SAMPLES = [
     title: "Indie SaaS founders",
     tag: "Founder-led · 1–5 people",
     buyer: "The founder who still handles billing",
-    fit: "Less time chasing invoices. More time building.",
+    fit: "Keep invoicing from eating into the time founders need to build and sell.",
     signal: "Launching paid plans or adding their first customers",
     skip: "Already happy with fully automated billing",
     icon: "buyer",
@@ -18,7 +18,7 @@ const SAMPLES = [
     title: "Small SaaS teams",
     tag: "Growing teams · 6–20 people",
     buyer: "The founder or first operations hire",
-    fit: "Keep invoicing consistent as the business grows.",
+    fit: "Handle more complex billing without adding more manual work for operations.",
     signal: "Hiring for operations or selling larger contracts",
     skip: "Needs a full enterprise finance platform",
     icon: "company",
@@ -27,7 +27,7 @@ const SAMPLES = [
     title: "Independent software studios",
     tag: "Small studios · 2–10 people",
     buyer: "The owner managing projects and payments",
-    fit: "One less administrative task between client projects.",
+    fit: "Spend less time following up on client payments across projects and retainers.",
     signal: "Taking on more clients or recurring retainers",
     skip: "Only sells through a marketplace that handles payments",
     icon: "site",
@@ -162,9 +162,11 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live?: LiveRev
         ) : (
           <section className="ir-results">
             <h1>
-              We’d start with <em>these people.</em>
+              Here’s where <em>we’d start.</em>
             </h1>
-            <p className="ir-intro">All these ICPs will be in your dashboard, ready to refine.</p>
+            <p className="ir-intro">
+              A few customer groups that could benefit from what you offer.
+            </p>
             <section
               className={`ir-cards ir-cards-${tab}`}
               aria-label="Your ideal customer profiles"
@@ -179,7 +181,7 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live?: LiveRev
                   <p className="ir-card-fit">{sample.fit}</p>
                   <div className="ir-card-detail ir-buyer">
                     <span>
-                      <i aria-hidden="true">{DUO.buyer?.(16)}</i>WHO YOU’RE LOOKING FOR
+                      <i aria-hidden="true">{DUO.buyer?.(16)}</i>WHO TO TALK TO
                     </span>
                     <p>{sample.buyer}</p>
                   </div>
@@ -191,7 +193,7 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live?: LiveRev
                   </div>
                   <div className="ir-card-detail ir-skip">
                     <span>
-                      <i aria-hidden="true">{DUO.skip?.(16)}</i>SKIP IF
+                      <i aria-hidden="true">{DUO.skip?.(16)}</i>MAY NOT BE A FIT IF
                     </span>
                     <p>{sample.skip}</p>
                   </div>
@@ -218,7 +220,7 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live?: LiveRev
                     setEditing(false);
                     if (!live)
                       setNotice(
-                        "Your ICP is added to this preview. AI refinement will happen in the real flow."
+                        "Your profile is added to this preview. You can edit it in the dashboard."
                       );
                   } catch (error) {
                     setSaveError(error instanceof Error ? error.message : String(error));
@@ -227,17 +229,17 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live?: LiveRev
                   }
                 }}
               >
-                <h2>Add your own ICP</h2>
-                <p>Rough details are enough. We’ll help refine your ICP before hunting.</p>
+                <h2>Add a profile</h2>
+                <p>Rough details are enough. You can edit this profile in your dashboard.</p>
                 <div className="ir-editor-fields">
                   {(
                     [
-                      ["title", "ICP name", "e.g. Freelance product designers"],
-                      ["tag", "Team type & size", "e.g. Independent · 1–3 people"],
-                      ["fit", "Why your product helps", "What gets easier for them?"],
-                      ["buyer", "Who you’re looking for", "Who would decide to buy?"],
+                      ["title", "Profile name", "e.g. Freelance product designers"],
+                      ["tag", "Profile characteristics", "What makes this group distinct?"],
+                      ["fit", "How this group could benefit", "What gets easier for them?"],
+                      ["buyer", "Who to talk to", "Who would decide to buy?"],
                       ["signal", "A reason to reach out", "What might make now a good time?"],
-                      ["skip", "Skip if", "What would make them a poor fit?"],
+                      ["skip", "May not be a fit if", "What would make them a poor fit?"],
                     ] as const
                   ).map(([key, label, placeholder]) => (
                     <label key={key} htmlFor={`ir-${key}`}>
@@ -271,7 +273,7 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live?: LiveRev
                     Cancel
                   </button>
                   <button type="submit" className="ir-hunt" disabled={saving}>
-                    {saving ? "Adding…" : "Add ICP"}
+                    {saving ? "Adding…" : "Add profile"}
                   </button>
                 </div>
               </form>
@@ -281,7 +283,9 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live?: LiveRev
                 {live.error}
               </p>
             )}
-            <p className="ir-hunt-note">Next: we’ll find real companies and check why they fit.</p>
+            <p className="ir-hunt-note">
+              All these profiles will be in your dashboard. You can edit them there anytime.
+            </p>
             <div className="ir-actions">
               <button
                 type="button"
@@ -289,7 +293,7 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live?: LiveRev
                 disabled={Boolean(live?.busy) || saving}
                 onClick={() => setEditing(!editing)}
               >
-                {editing ? "Close form" : "Add your own"}
+                {editing ? "Close form" : "Add a profile"}
               </button>
               <button
                 type="button"
@@ -299,11 +303,11 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live?: LiveRev
                   live
                     ? live.onStart()
                     : setNotice(
-                        `Preview only: the hunt would start for all ${samples.length} ICPs${samples.length > SAMPLES.length ? ", after refining your added profiles" : ""}.`
+                        `Preview only: all ${samples.length} profiles would be saved to your dashboard. No search starts.`
                       )
                 }
               >
-                {live?.busy || "Start hunting"} <span aria-hidden="true">↗</span>
+                {live?.busy || "Go to my dashboard"} <span aria-hidden="true">↗</span>
               </button>
             </div>
           </section>

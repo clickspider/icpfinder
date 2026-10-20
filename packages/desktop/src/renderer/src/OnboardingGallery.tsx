@@ -48,7 +48,11 @@ const profiles: Icp[] = (
   industry: company,
   size: size,
   pain: "Less time chasing invoices. More time building.",
-  sellingAngle: "Less time chasing invoices. More time building.",
+  sellingAngle: [
+    "Keep invoicing from eating into the time founders need to build and sell.",
+    "Handle more complex billing without adding more manual work for operations.",
+    "Spend less time following up on client payments across projects and retainers.",
+  ][index],
   signals: [signal],
   objections: [],
   art: index,
