@@ -23,7 +23,7 @@ export function OnboardingAside({
   loading?: boolean;
 }) {
   return (
-    <aside className="ob-aside">
+    <aside className={`ob-aside ${kind === "product" || kind === "idea" ? "ob-aside-entry" : ""}`}>
       <div className="ob-aside-inner">
         {kind === "welcome" ? (
           <>

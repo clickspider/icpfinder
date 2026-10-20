@@ -46,3 +46,13 @@
 
 .ob-welcome-action { display:flex; flex-direction:column; align-items:center; gap:10px; }
 .ob-time-estimate { font-size:12px; color:var(--faint); }
+
+/* Keep both business-entry tabs on the same rows. */
+.ob-body:has(> .ob-seg) { display:grid; grid-template-rows:auto auto minmax(72px,auto) 210px; }
+.ob-body:has(> .ob-seg) > .field { align-self:start; }
+.ob-body:has(> .ob-seg) > .idea-writing { height:210px; }
+.ob-website-entry { display:flex; flex-direction:column; gap:10px; align-self:start; }
+.ob-website-entry label { font-size:13px; color:var(--muted); }
+.ob-aside-entry .ob-aside-inner { min-height:300px; }
+.ob-aside-entry h2 { min-height:77px; }
+.ob-aside-entry .ob-aside-copy { min-height:87px; }

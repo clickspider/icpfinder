@@ -583,11 +583,11 @@
   flex: 1;
   min-height: 210px;
   width: 100%;
-  resize: vertical;
-  border: 1px solid #decfd5;
-  border-radius: 14px;
-  background: #fffafb;
-  padding: 18px 20px;
+  resize: none;
+  border: 1px solid #eee7e9;
+  border-radius: 8px;
+  background: transparent;
+  padding: 14px 16px;
   color: var(--ink);
   font: inherit;
   font-size: 16px;
@@ -596,8 +596,8 @@
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 .idea-writing::placeholder { color: #9b858e; }
-.idea-writing:hover:not(:disabled) { border-color: #c5a4b0; }
-.idea-writing:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px #e0244a12; background: #fff; }
+.idea-writing:hover:not(:disabled) { border-color: #d8c7cd; }
+.idea-writing:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px #e0244a08; background: #fff; }
 /* One brand position and sidebar width across the onboarding flow. */
 .sp-sidebar { flex-basis:480px; padding:28px 38px 30px; }
 @media (max-width:1000px) { .sp-sidebar { flex-basis:440px; padding-inline:30px; } }
