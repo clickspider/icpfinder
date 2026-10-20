@@ -88,6 +88,25 @@ describe("buildProviders — stub + provider selection", () => {
   });
 });
 
+describe("ICPFINDER_LLM=claude-cli (self-host on Claude subscription)", () => {
+  it("uses claude-cli, operator pays nothing for the LLM side", () => {
+    const { llm, mode, operatorPaidSides } = buildProviders({
+      env: { ICPFINDER_LLM: "claude-cli", GEMINI_API_KEY: "op-key" },
+    });
+    expect(llm.name).toBe("claude-cli");
+    expect(mode).toBe("operator");
+    expect(operatorPaidSides).toEqual([]);
+  });
+
+  it("a user Gemini key still wins", () => {
+    const { llm } = buildProviders({
+      userGeminiKey: "user-key",
+      env: { ICPFINDER_LLM: "claude-cli" },
+    });
+    expect(llm.name).toBe("gemini");
+  });
+});
+
 describe("byokProvidersHeader", () => {
   it("renders comma-joined values", () => {
     expect(byokProvidersHeader([])).toBe("none");

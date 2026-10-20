@@ -6,6 +6,7 @@ export default defineConfig({
     "src/hunter.ts",
     "src/gemini.ts",
     "src/fake.ts",
+    "src/claude-cli.ts",
   ],
   format: ["esm"],
   dts: true,
