@@ -127,7 +127,7 @@ export const Wizard = ({
   const cta: Record<Step, string> = {
     welcome: "Let’s get started",
     product: "Continue",
-    about: !briefReady ? (busy ? "Preparing your brief…" : "Try again") : "Find my ICPs",
+    about: !briefReady ? (busy ? "Preparing your overview…" : "Try again") : "Let’s find out",
     icp: "Looks right, hunt ↑",
   };
   const canNext =
@@ -253,15 +253,15 @@ export const Wizard = ({
 
               {step === "about" && (
                 <>
-                  <h1 className="ob-h1">How do you sell?</h1>
+                  <h1 className="ob-h1">Let’s find your focus</h1>
                   {!briefReady && busy ? (
                     <div className="ob-loading" role="status">
                       <Spinner />
-                      Reading your business…
+                      Getting to know your business…
                     </div>
                   ) : briefReady ? (
                     <p className="ob-sub">
-                      Review your business details.
+                      Check the overview, then tell us a bit about how your business works.
                     </p>
                   ) : null}
                   <fieldset
