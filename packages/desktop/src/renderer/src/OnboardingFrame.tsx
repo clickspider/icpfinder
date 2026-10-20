@@ -78,7 +78,7 @@ export function OnboardingAside({
             </h2>
             <p className="ob-aside-copy">
               {kind === "idea"
-                ? "What does it do? Who might need it? What gets easier for them?"
+                ? "You don’t need to have your ideal customer figured out. That’s what we’re here to explore."
                 : "We’ll use your website to understand what you sell, the problem it solves, and who could benefit."}
             </p>
             <div className="ob-aside-rule" />

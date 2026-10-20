@@ -179,15 +179,7 @@ export const Wizard = ({
               {step === "product" && (
                 <>
                   <h1 className="ob-h1">
-                    {mode === "site" ? (
-                      <>
-                        Tell us about your <em>business.</em>
-                      </>
-                    ) : (
-                      <>
-                        What are you <em>building?</em>
-                      </>
-                    )}
+                    Tell us about your <em>business.</em>
                   </h1>
                   <div className="ob-seg" role="tablist">
                     <button
@@ -227,14 +219,14 @@ export const Wizard = ({
                   ) : (
                     <>
                       <p className="ob-sub" id="idea-description-hint">
-                        What does it do, who is it for, and what problem does it solve? Write as
-                        much or as little as you have.
+                        Describe what you offer and the problem it helps solve. A few sentences is
+                        enough to get started.
                       </p>
                       <textarea
                         className="idea-writing"
-                        aria-label="Describe your idea"
+                        aria-label="Describe your business"
                         aria-describedby="idea-description-hint"
-                        placeholder="e.g. An AI invoicing tool for indie SaaS founders"
+                        placeholder="e.g. We make invoicing software that helps small teams spend less time chasing payments."
                         value={description}
                         maxLength={12000}
                         disabled={Boolean(busy)}
