@@ -34,9 +34,9 @@ const SAMPLES = [
   },
 ].map((profile, index) => ({ ...profile, id: `sample-${index}` }));
 const PHRASES = [
-  "Understanding what makes your product useful",
-  "Connecting customer needs to what you offer",
-  "Looking for a reason they would buy now",
+  "Considering who could benefit most",
+  "Exploring what could make them a good fit",
+  "Shaping your suggested customer profiles",
 ];
 
 type Profile = IcpDraft & { icon: string; id: string };
@@ -149,13 +149,9 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live?: LiveRev
               </div>
             </div>
             <h1>
-              Finding your <em>ICPs.</em>
+              Discovering who <em>you could help.</em>
             </h1>
-            <p className="ir-intro">
-              Not everyone is your customer.
-              <br />
-              Let’s find the people who have a reason to be.
-            </p>
+            <p className="ir-intro">A few promising directions, built around what you do.</p>
             <div className="ir-working" role="status">
               <span className="ir-working-dot" />
               <span key={phase} className="ir-phase">
