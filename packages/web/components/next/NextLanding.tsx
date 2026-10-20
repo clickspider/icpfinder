@@ -5,8 +5,12 @@ import { type FormEvent, useState } from "react";
 import { OPTIONS } from "../../lib/apply-options";
 import { Logo } from "../brand/Logo";
 
-/** Launch film (new onboarding), re-encoded for the web (864x1080, faststart). */
-const FILM = "/next/icpfinder-film-e.mp4";
+/** Launch film, 16:9. 720p for phones, 1080p elsewhere; both faststart so playback starts at once. */
+const FILM = {
+  hd: "/next/icpfinder-film-1080.mp4",
+  sd: "/next/icpfinder-film-720.mp4",
+  poster: "/next/film-poster.jpg",
+};
 
 const Icon = ({ d }: { d: string }) => (
   <svg
@@ -230,7 +234,10 @@ export function NextLanding() {
           </div>
           <div className="nx-film nx-glass">
             {/* biome-ignore lint/a11y/useMediaCaption: every spoken line is on screen as text. */}
-            <video src={FILM} poster="/next/poster.jpg" controls playsInline preload="metadata" />
+            <video poster={FILM.poster} controls playsInline preload="metadata">
+              <source src={FILM.sd} type="video/mp4" media="(max-width: 820px)" />
+              <source src={FILM.hd} type="video/mp4" />
+            </video>
           </div>
         </section>
 
