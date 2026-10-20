@@ -13,7 +13,7 @@ const globalForPrisma = globalThis as unknown as {
  * else null. Lazy: never constructs Prisma in environments where no
  * URL is present (which would throw on import).
  */
-const getPrisma = (): PrismaClient | null => {
+export const getPrisma = (): PrismaClient | null => {
   if (!process.env.DATABASE_URL) return null;
   if (!globalForPrisma.prisma) {
     globalForPrisma.prisma = new PrismaClient({

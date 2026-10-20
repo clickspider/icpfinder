@@ -44,3 +44,26 @@ model Event {
 
   @@index([runId, createdAt])
 }
+
+/// Beta application from icpfinder.dev/next. `tier` is computed on submit
+/// from the answers (see lib/applications.ts) so review starts sorted.
+model Application {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  email      String   @unique
+  name       String
+  productUrl String
+  profileUrl String
+  role       String
+  salesTeam  String
+  stage      String
+  years      String
+  agent      String
+  firstWeek  String
+  score      Int
+  tier       String
+  /// Set when Daniel clicks Invite on /next/admin and the email went out.
+  invitedAt  DateTime?
+
+  @@index([tier, createdAt])
+}

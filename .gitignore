@@ -15,3 +15,6 @@ content/
 private/
 .notes/
 .env*.local
+
+# local beta applications (next dev without a database)
+packages/web/.data/
