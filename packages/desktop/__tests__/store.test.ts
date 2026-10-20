@@ -48,4 +48,20 @@ describe("store", () => {
   it("updateActive throws without an active workspace", () => {
     expect(() => updateActive(emptyState(), () => {})).toThrow("No active workspace");
   });
+
+  it("defaults old saves to Claude without changing their chosen model", () => {
+    const f = tmp();
+    writeFileSync(f, JSON.stringify({ settings: { model: "opus" } }));
+    expect(loadState(f).settings).toMatchObject({ provider: "claude", model: "opus" });
+  });
+
+  it("preserves subscription provider and separate model preferences across restart", () => {
+    const f = tmp();
+    const state = emptyState();
+    state.settings.provider = "codex";
+    state.settings.model = "";
+    state.settings.providerModels = { claude: "opus", codex: "", xai: "grok-4.7" };
+    saveState(f, state);
+    expect(loadState(f).settings).toEqual(state.settings);
+  });
 });

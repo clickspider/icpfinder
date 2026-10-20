@@ -117,7 +117,7 @@ const Table = ({
 
 export const UsageView = ({ state }: { state: State }) => {
   const [days, setDays] = useState(7);
-  const [provider, setProvider] = useState<Provider>("claude");
+  const [provider, setProvider] = useState<Provider>(state.settings.provider ?? "claude");
   // Products to show; empty = all of them.
   const [picked, setPicked] = useState<string[]>([]);
   const [plan, setPlan] = useState<PlanUsage | null>(null);
@@ -168,7 +168,7 @@ export const UsageView = ({ state }: { state: State }) => {
           </p>
         </div>
         <div className="nodrag" style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-          <div className="ob-seg" style={{ width: 190 }}>
+          <div className="ob-seg" style={{ width: 250 }}>
             <button
               type="button"
               className={provider === "claude" ? "on" : ""}
@@ -182,6 +182,13 @@ export const UsageView = ({ state }: { state: State }) => {
               onClick={() => setProvider("codex")}
             >
               <ToolLogo name="codex" size={13} radius={3} /> Codex
+            </button>
+            <button
+              type="button"
+              className={provider === "xai" ? "on" : ""}
+              onClick={() => setProvider("xai")}
+            >
+              Grok
             </button>
           </div>
           <div className="ob-seg" style={{ width: 230 }}>
@@ -245,13 +252,11 @@ export const UsageView = ({ state }: { state: State }) => {
         style={{ padding: 18, display: "flex", flexDirection: "column", gap: 12 }}
       >
         <div style={{ display: "flex", alignItems: "baseline" }}>
-          <div className="lbl">Your {provider === "claude" ? "Claude" : "Codex"} plan</div>
+          <div className="lbl">
+            Your {provider === "claude" ? "Claude" : provider === "codex" ? "Codex" : "Grok"} plan
+          </div>
           <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--muted)" }}>
-            {plan
-              ? `${plan.plan} · as Claude Code reports it`
-              : provider === "claude"
-                ? "Reading…"
-                : ""}
+            {plan ? `${plan.plan} · as Claude Code reports it` : ""}
           </span>
         </div>
         {plan?.windows.map((w) => (
@@ -272,8 +277,10 @@ export const UsageView = ({ state }: { state: State }) => {
             </div>
           </div>
         ))}
-        {provider === "codex" && (
-          <div style={{ fontSize: 13, color: "var(--muted)" }}>Codex is not used yet.</div>
+        {!plan?.windows.length && (
+          <div style={{ fontSize: 13, color: "var(--muted)" }}>
+            Plan limits are unavailable here. Recorded IcpFinder usage is shown below.
+          </div>
         )}
       </section>
 

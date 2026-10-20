@@ -6,32 +6,30 @@
 
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { isProvider } from "../shared/provider-models";
 import type { State, Workspace } from "../shared/types";
 
 export const emptyState = (): State => ({
   workspaces: [],
   activeId: null,
   settings: {
+    provider: "claude",
     hunterKey: "",
     windowDays: 120,
     dropTime: "06:00",
     askBeforeEmail: true,
-    model: "claude-sonnet-5-5",
+    model: "sonnet",
     sources: { hn: true, reddit: false, x: false, linkedin: false, fallback: true },
   },
   contacts: [],
 });
 
 /** Old saves used CLI aliases; the app now names the exact model and version. */
-const ALIAS: Record<string, string> = {
-  sonnet: "claude-sonnet-5-5",
-  opus: "claude-opus-5-5",
-  haiku: "claude-haiku-5-5",
-};
 const migrate = (s: State["settings"]): State["settings"] => ({
   ...s,
+  provider: isProvider(s.provider) ? s.provider : "claude",
   sources: { ...emptyState().settings.sources, ...s.sources },
-  model: ALIAS[s.model] ?? s.model,
+  model: s.model,
 });
 
 export const loadState = (file: string): State => {

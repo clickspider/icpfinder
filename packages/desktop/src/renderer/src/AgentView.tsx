@@ -182,7 +182,7 @@ export const AgentView = ({
                 }}
               />
               <ToolLogo name="claude" size={16} radius={4} />
-              Claude is driving · live
+              Your AI is driving · live
             </>
           )}
           {run?.url && (
@@ -230,7 +230,7 @@ export const AgentView = ({
           <div style={{ padding: "14px 16px 6px" }}>
             <div className="lbl">Task</div>
             <div style={{ marginTop: 4, fontSize: 13, lineHeight: 1.45, color: "var(--ink-2)" }}>
-              {run?.goal ?? run?.task ?? task ?? "Tell Claude what to do below."}
+              {run?.goal ?? run?.task ?? task ?? "Tell your AI what to do below."}
             </div>
           </div>
           <div
@@ -277,7 +277,7 @@ export const AgentView = ({
               }}
             >
               <div className="lbl" style={{ color: "var(--accent)" }}>
-                Claude needs your OK
+                Your AI needs your OK
               </div>
               <div style={{ marginTop: 6, fontWeight: 600, lineHeight: 1.4 }}>{run.ask.action}</div>
               {run.ask.preview && (
@@ -357,7 +357,7 @@ export const AgentView = ({
                 style={{ flex: 1, height: 40 }}
                 onClick={() => void api().agentStop()}
               >
-                Stop Claude
+                Stop agent
               </button>
             ) : (
               <>
@@ -366,12 +366,12 @@ export const AgentView = ({
                   style={{ height: 40, fontSize: 13 }}
                   placeholder={
                     run
-                      ? "Reply to Claude, it keeps the task"
-                      : "Tell Claude what to do in the browser"
+                      ? "Reply to your AI, it keeps the task"
+                      : "Tell your AI what to do in the browser"
                   }
                   value={custom}
                   onChange={(e) => setCustom(e.target.value)}
-                  aria-label="Task for Claude"
+                  aria-label="Task for browser agent"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && custom.trim()) {
                       void (

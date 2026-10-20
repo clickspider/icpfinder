@@ -3,7 +3,7 @@
 // What IcpFinder itself used from the founder's AI plan. Generic on purpose:
 // every provider (Claude Code today, Codex later) reports the same shape.
 
-export type Provider = "claude" | "codex";
+export type Provider = "claude" | "codex" | "xai";
 
 export interface UsageTotals {
   calls: number;

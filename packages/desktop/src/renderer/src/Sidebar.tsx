@@ -289,6 +289,7 @@ export const Sidebar = ({
             "Researching…"
           ) : (
             <ModelPicker
+              provider={state.settings.provider ?? "claude"}
               value={state.settings.model}
               onChange={(m) => void api().saveSettings({ model: m }).then(onState)}
               size={14}

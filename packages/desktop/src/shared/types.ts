@@ -54,32 +54,6 @@ export interface Contact {
   url?: string;
 }
 
-export interface IdeaMsg {
-  role: "agent" | "you";
-  text: string;
-  /** Length in seconds when the message was a voice note. */
-  voice?: number;
-}
-
-/** What the idea chat knows so far; all six filled = enough to start. */
-export interface IdeaBrief {
-  what: string;
-  problem: string;
-  who: string;
-  different: string;
-  pays: string;
-  model: string;
-  /** What people use today instead (named tools or the manual way). */
-  competitors: string;
-}
-
-export interface IdeaState {
-  messages: IdeaMsg[];
-  brief: IdeaBrief;
-  name: string;
-  quick: string[];
-}
-
 /** candidate = found and scored, waiting for the founder to approve its fit. */
 export type CompanyStatus = "candidate" | "queued" | "researching" | "done" | "failed";
 
@@ -203,6 +177,9 @@ export interface Workspace {
 }
 
 export interface Settings {
+  provider?: import("./subscriptions").ProviderId;
+  providerConfirmed?: boolean;
+  providerModels?: Partial<Record<import("./subscriptions").ProviderId, string>>;
   hunterKey: string;
   windowDays: number;
   dropTime: string;
@@ -251,13 +228,18 @@ export interface AiTool {
 export interface IcpApi {
   getState(): Promise<State>;
   detectAi(): Promise<AiTool[]>;
+  subscriptionStatus(): Promise<import("./subscriptions").SubscriptionStatus[]>;
+  beginSubscriptionLogin(
+    provider: import("./subscriptions").ProviderId
+  ): Promise<import("./subscriptions").LoginAttempt>;
+  subscriptionLoginState(id: string): Promise<import("./subscriptions").LoginAttempt>;
+  cancelSubscriptionLogin(id: string): Promise<void>;
+  verifySubscription(): Promise<string>;
   readProduct(url: string): Promise<State>;
   updateProduct(patch: Partial<Product>): Promise<State>;
   findIcps(feedback?: string): Promise<State>;
   saveScoring(patch: Partial<import("./scoring").Scoring> | null): Promise<State>;
-  ideaTurn(idea: IdeaState): Promise<IdeaState>;
-  ideaFinish(idea: IdeaState): Promise<State>;
-  transcribe(audio: ArrayBuffer): Promise<string>;
+  ideaFinish(description: string): Promise<State>;
   updateCard(
     icpId: string,
     key: "buyer" | "company" | "trigger" | "skip",

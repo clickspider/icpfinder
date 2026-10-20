@@ -619,7 +619,7 @@ export const IcpView = ({
             <Snap
               kind="start"
               title="Ready to hunt"
-              text="Claude finds companies that fit."
+              text="Your AI finds companies that fit."
               cta="Hunt this ICP"
               onCta={hunt}
             />

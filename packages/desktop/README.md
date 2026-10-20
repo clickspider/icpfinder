@@ -1,26 +1,48 @@
 # IcpFinder for macOS
 
-Find your ICPs and prove why now. Every fact is checked on 2 websites, and all AI runs on the Claude Code login you already have. No API keys.
+Find your ICPs and research companies using your Claude, ChatGPT/Codex, or eligible xAI/Grok subscription.
 
-## Run it
+## Run locally
 
-You need [Claude Code](https://code.claude.com) installed and signed in (`claude` in Terminal).
+From the repository root:
 
 ```bash
 bun install
-cd packages/desktop
-bun run dev
+bun run dev:desktop
 ```
 
-## How it works
+The desktop opens with its original welcome screen. Enter your website or a written idea description, then connect an AI account before research starts. A single connected account is suggested; otherwise the three providers receive equal treatment with none preselected. Choosing an account enables Continue. Back and Cancel preserve your product input. Account settings and **Test connection** remain available in **Connectors**. The idea path is a writing page with one Continue action, not a chat: the selected AI builds a brief from that single description, leaving unspecified details blank.
 
-1. **Setup wizard (blocking):** your product's website becomes a workspace. IcpFinder reads it, you confirm the read, and it finds 3 ICPs.
-2. **ICP launcher:** the sidebar lists your ICPs. Picking one sets the main screen: its pain, signals, and the companies found.
-3. **Research:** each company is researched in the background, one at a time. Claude finds sources; code opens every page and checks the quote. A fact is *proven* only with 2+ websites.
-4. **Your product page:** edit what IcpFinder knows about your product and re-check your ICPs.
+- **Claude:** the app bundles a pinned native Claude runtime. No separate Claude Code installation, Node.js, or npm is required by the end user. It starts `claude auth login --claudeai` and recognizes an existing subscription login. Research runs through the bundled executable with the selected model.
+- **ChatGPT / Codex:** the app bundles a pinned native Codex runtime. No separate CLI installation is required. It starts `codex login` and recognizes an existing ChatGPT login. Research uses Codex's default model, read-only sandbox, and web search when requested. API-key login does not qualify.
+- **xAI / Grok:** no CLI is needed. Approve the device code in your browser using an eligible Grok account. The app stores encrypted OAuth credentials locally and refreshes them as needed. Access to the chosen Grok model and web search depends on your account's entitlements. Provider denial is shown directly; the app never substitutes an API key or another account.
 
-Data lives in `~/Library/Application Support/IcpFinder/icpfinder.json`. Set `ICPFINDER_DATA_DIR` to use another folder.
+Claude and Codex account changes also affect those CLIs on this Mac. Their CLI credential stores remain owned by those tools. xAI credentials are encrypted using Electron safeStorage and kept separately from workspace JSON. The app refuses to save xAI credentials if secure storage is unavailable. Sign-in can be cancelled and retried.
+
+Research, light classification, and the in-app browser agent use the selected provider. The browser agent retains its ask-before-send step. Gmail drafts through Claude's Gmail connector and the external **Claude in Chrome** integration require Claude; Codex/xAI use IcpFinder's embedded browser for social pages. Subscription selection cannot change during active workspace research or browser work. Usage is attributed to the selected provider; unavailable plan limits are not estimated.
+
+## Data
+
+Workspace data lives in `~/Library/Application Support/IcpFinder/icpfinder.json`. Set `ICPFINDER_DATA_DIR` to use another folder. xAI sign-in lives in `subscription-xai.enc` in that folder; do not include it in bug reports. Temporary AI working files use its `ai-runtime` subfolder.
+
+The original Next.js web app remains separate; these sign-in controls are in the Electron desktop app.
+
+## Validation
+
+```bash
+bun run --filter @icpfinder/desktop test
+bun run --filter @icpfinder/desktop typecheck
+bun run --filter @icpfinder/desktop build
+```
+
+Tests simulate provider failures, token refresh/cancellation races, and browser execution. They do not log in to anyone's account. A live connection check requires the user's provider consent and an eligible subscription.
 
 ## Credits
 
-The ICP and hunting method borrows ideas, rewritten in our own words, from [gtmskills.com](https://www.gtmskills.com/) (MIT, by Swan and its authors): yes/no gates with a named public source (icp-matrix-builder), one gate change per refinement round and "table stakes" pruning (icp-builder), tiered sources with root-domain dedupe (market-finder), and observable "why now" signals (website-to-signals).
+Subscription authentication design references [OpenBot](https://github.com/CopilotKit/openbot), notably its official CLI sign-in approach and xAI device authorization implementation. The ICP and hunting method borrows ideas, rewritten in our own words, from [gtmskills.com](https://www.gtmskills.com/) (MIT, by Swan and its authors).
+
+## Bundled runtimes and design preview
+
+The first `dev` or `build` downloads the pinned official macOS runtime archives, verifies their SHA-512 checksums, and caches them under ignored `resources/runtime/<arch>/`. Later runs use the cache. The packaging hook prepares the target architecture and copies both runtimes outside the app ASAR. A fresh development build needs registry access; end users do not download tools during sign-in. Both Apple Silicon and Intel package checksums are pinned in `scripts/prepare-runtime.mjs`.
+
+The reviewed state gallery remains available by adding `?state-preview=1` to the renderer URL. It is not the startup screen and never runs authentication or AI calls. The old “install Claude Code” gallery fixture has been replaced with a bundled-runtime recovery state.

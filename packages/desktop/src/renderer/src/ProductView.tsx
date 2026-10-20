@@ -146,7 +146,7 @@ export const ProductView = ({ ws, onState }: { ws: Workspace; onState: (s: State
                 lineHeight: 1.5,
               }}
             >
-              <div style={{ fontWeight: 600, color: "#8a5300" }}>⚠ Pauses Claude</div>
+              <div style={{ fontWeight: 600, color: "#8a5300" }}>⚠ Pauses AI work</div>
               <div style={{ marginTop: 4, color: "var(--ink-2)" }}>
                 Stops {warn}. Approved research resumes after.
               </div>

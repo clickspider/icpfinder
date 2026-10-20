@@ -2,8 +2,9 @@
 //
 // IcpFinder main process: window, IPC, and a one-at-a-time research queue.
 
+import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { app, BrowserWindow, dialog, ipcMain, session, shell } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, safeStorage, session, shell } from "electron";
 import {
   type CompanyFacts,
   companiesForLinkedIn,
@@ -11,6 +12,7 @@ import {
   companiesToSearch,
   normCompany,
 } from "../shared/people";
+import { defaultModel, isProvider } from "../shared/provider-models";
 import { type Scoring, score, scoringOf } from "../shared/scoring";
 import type {
   ActionId,
@@ -18,7 +20,6 @@ import type {
   HuntStepKind,
   IcpCard,
   IcpCriteria,
-  IdeaState,
   Product,
   Settings,
   State,
@@ -26,21 +27,22 @@ import type {
 } from "../shared/types";
 import { BrowserAgent } from "./agent";
 import { openLogin } from "./browse";
+import { resolveCli } from "./cli";
 import {
   classifyCompanies,
   companyLogo,
+  configureSubscriptions,
+  createLlm,
   detectAi,
   findIcps,
   huntSteps,
-  ideaProduct,
-  ideaReady,
-  ideaTurn,
   isPaused,
   jobs,
   linkedinFacts,
   parseConnections,
   pauseWorkspace,
   profileForIcp,
+  readIdea,
   readProduct,
   refineCriteria,
   regateIcp,
@@ -48,10 +50,10 @@ import {
   resumeWorkspace,
   runCompanyAction,
   setModel,
+  setProvider,
   setSources,
   sharpenIcps,
   sourceCompanies,
-  transcribe,
   verifyHunter,
   warmFor,
   watchCompany,
@@ -61,7 +63,10 @@ import { initLocalUsage, localWeight } from "./localUsage";
 import { dockProgress, initNotify, notify } from "./notify";
 import { readClaudePlan, windowStart } from "./plan";
 import { activeWorkspace, loadState, saveState, updateActive } from "./store";
+import { SubscriptionAuth } from "./subscription-auth";
 import { appWeight, initUsage, withTask } from "./usage";
+
+let accounts: SubscriptionAuth;
 
 const file = (): string => join(app.getPath("userData"), "icpfinder.json");
 let state: State;
@@ -424,8 +429,6 @@ const TASK_OF: Record<string, string> = {
   ideaFinish: "Setup",
   recalibrate: "Setup",
   updateCard: "Setup",
-  ideaTurn: "Idea chat",
-  transcribe: "Idea chat",
   huntIcp: "Hunting",
   finishSetup: "Hunting",
   approveCompany: "Research",
@@ -440,6 +443,24 @@ const TASK_OF: Record<string, string> = {
 const handlers: Record<string, (...args: never[]) => unknown> = {
   getState: () => state,
   detectAi: () => detectAi(),
+  subscriptionStatus: () => accounts.status(),
+  beginSubscriptionLogin: (provider: unknown) => {
+    if (!isProvider(provider)) throw new Error("Unknown subscription provider.");
+    if (state.workspaces.some((ws) => Object.values(busyWork(ws)).some(Boolean)))
+      throw new Error("Wait for active work to finish before changing accounts.");
+    return accounts.begin(provider);
+  },
+  subscriptionLoginState: (id: string) => accounts.loginState(id),
+  cancelSubscriptionLogin: (id: string) => accounts.cancel(id),
+  verifySubscription: async () => {
+    const result = await (await createLlm()).generate({
+      system: "You are testing a subscription connection. Reply with OK only.",
+      prompt: "Connection check.",
+      timeoutMs: 60000,
+    });
+    if (!result.text.trim()) throw new Error("The provider returned no answer.");
+    return "Your subscription answered successfully.";
+  },
   readProduct: async (url: string) => {
     const product = await readProduct(url);
     // Same site as a workspace you already have: open that one, never a copy.
@@ -503,8 +524,32 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
     return commit();
   },
   saveSettings: (patch: Partial<Settings>) => {
-    state.settings = { ...state.settings, ...patch };
-    setModel(state.settings.model);
+    if (patch.provider !== undefined && !isProvider(patch.provider))
+      throw new Error("Unknown subscription provider.");
+    if (state.workspaces.some((ws) => Object.values(busyWork(ws)).some(Boolean))) {
+      if (patch.provider !== undefined || patch.model !== undefined)
+        throw new Error(
+          "Wait for active work to finish before changing AI subscriptions or models."
+        );
+    }
+    const provider = patch.provider ?? state.settings.provider ?? "claude";
+    const previous = state.settings.provider ?? "claude";
+    const models = { ...state.settings.providerModels, [previous]: state.settings.model };
+    const model =
+      patch.model ??
+      (provider === previous ? state.settings.model : (models[provider] ?? defaultModel(provider)));
+    if (typeof model !== "string" || model.length > 120 || /[\r\n]/.test(model))
+      throw new Error("Invalid model name.");
+    state.settings = {
+      ...state.settings,
+      ...patch,
+      providerConfirmed: patch.provider !== undefined || state.settings.providerConfirmed === true,
+      provider,
+      model,
+      providerModels: { ...models, [provider]: model },
+    };
+    setProvider(provider);
+    setModel(model);
     setSources(state.settings.sources);
     return commit();
   },
@@ -517,11 +562,9 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
     if (first) void huntIcp(first.id);
     return state;
   },
-  ideaTurn: (idea: IdeaState) => ideaTurn(idea),
-  /** The idea chat is complete: it becomes this workspace's product, like a read site. */
-  ideaFinish: (idea: IdeaState) => {
-    if (!ideaReady(idea)) throw new Error("A few answers are still missing.");
-    const product = ideaProduct(idea);
+  /** A written description becomes a product after account connection. */
+  ideaFinish: async (description: string) => {
+    const product = await readIdea(description);
     let ws = activeWorkspace(state);
     if (!ws || ws.setupDone) {
       ws = {
@@ -536,7 +579,6 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
     } else ws.product = product;
     return commit();
   },
-  transcribe: (audio: ArrayBuffer) => transcribe(audio, [join(app.getPath("userData"), "models")]),
   updateCard: (icpId: string, key: keyof Omit<IcpCard, "edited">, text: string) => {
     const icp = activeWorkspace(state)?.icps.find((i) => i.id === icpId);
     if (!icp?.card || !text.trim()) return state;
@@ -627,6 +669,7 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
   },
   /** Plan limits as Claude Code reports them (no tokens used). */
   planUsage: async () => {
+    if ((state.settings.provider ?? "claude") !== "claude") return null;
     const plan = await readClaudePlan((await which("claude")) ?? "claude");
     if (!plan) return plan;
     // Split each window: IcpFinder's own runs vs everything else Claude Code ran on this Mac.
@@ -818,12 +861,16 @@ const createWindow = (): void => {
       win?.webContents.send("agent", r);
       if (r && r.status !== lastAgentStatus) {
         if (r.status === "waiting")
-          notify("Claude needs your OK", r.ask?.action ?? "", { kind: "agent" });
+          notify("Your AI needs your OK", r.ask?.action ?? "", { kind: "agent" });
         if (r.status === "done") notify("Browser task done", r.goal ?? r.task, { kind: "agent" });
         lastAgentStatus = r.status;
       }
     },
-    async () => (await detectAi()).find((t) => t.name === "Claude Code")?.path ?? "claude"
+    async () => {
+      const bin = await resolveCli("claude");
+      if (!bin) throw new Error("Claude Code is no longer installed.");
+      return bin;
+    }
   );
   if (process.env.ELECTRON_RENDERER_URL) void win.loadURL(process.env.ELECTRON_RENDERER_URL);
   else void win.loadFile(join(__dirname, "../renderer/index.html"));
@@ -840,12 +887,21 @@ if (process.env.ICPFINDER_DATA_DIR) app.setPath("userData", process.env.ICPFINDE
 
 app.whenReady().then(() => {
   state = loadState(file());
+  const runtimeDirectory = join(app.getPath("userData"), "ai-runtime");
+  mkdirSync(runtimeDirectory, { recursive: true, mode: 0o700 });
+  accounts = new SubscriptionAuth({
+    root: app.getPath("userData"),
+    openExternal: (url) => shell.openExternal(url),
+    encryptionAvailable: () => safeStorage.isEncryptionAvailable(),
+    encrypt: (value) => safeStorage.encryptString(value.toString("utf8")),
+    decrypt: (value) => Buffer.from(safeStorage.decryptString(value), "utf8"),
+  });
+  configureSubscriptions(accounts, runtimeDirectory);
+  setProvider(state.settings.provider ?? "claude");
   setModel(state.settings.model);
   setSources(state.settings.sources);
-  // The app window may use the mic (voice notes in the idea chat); nothing else.
-  session.defaultSession.setPermissionRequestHandler((wc, permission, ok) =>
-    ok(permission === "media" && wc.getURL().includes("index.html"))
-  );
+  // Onboarding is writing-only; the app does not request device permissions.
+  session.defaultSession.setPermissionRequestHandler((_wc, _permission, ok) => ok(false));
   initUsage(
     state.usage ?? [],
     (rows) => {

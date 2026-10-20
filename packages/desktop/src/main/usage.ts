@@ -54,7 +54,7 @@ export const recordUsage = (provider: Provider, u: CliUsage): void => {
   const delta = { calls: 1, ...u };
   if (hit) Object.assign(hit, add(hit, delta));
   else rows.push({ day, ws, task, provider, model, ...add(emptyTotals(), delta) });
-  recent.push({ at: Date.now(), w: weightOf(model, u) });
+  if (provider === "claude") recent.push({ at: Date.now(), w: weightOf(model, u) });
   recent = recent.filter((r) => r.at >= Date.now() - 8 * 86_400_000);
   saveRecent(recent);
   const cut = new Date(Date.now() - 90 * 86_400_000).toISOString().slice(0, 10);

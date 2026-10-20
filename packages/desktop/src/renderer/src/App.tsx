@@ -13,6 +13,7 @@ import { MatchingView } from "./Matching";
 import { NetworkView } from "./Network";
 import { ProductView } from "./ProductView";
 import { Sidebar } from "./Sidebar";
+import { SubscriptionDesignPreview } from "./SubscriptionDesignPreview";
 import { UsageView } from "./Usage";
 import { api, cleanError } from "./ui";
 import { Wizard } from "./Wizard";
@@ -31,6 +32,9 @@ export const App = () => {
   const [state, setState] = useState<State | null>(null);
   const [view, setView] = useState<View | null>(null);
 
+  const [designPreview, setDesignPreview] = useState(() =>
+    new URLSearchParams(window.location.search).has("state-preview")
+  );
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
@@ -48,7 +52,7 @@ export const App = () => {
         else if (t.kind === "agent")
           setView((v) => ({
             kind: "agent",
-            title: "Claude in your browser",
+            title: "AI in your browser",
             back: v ?? { kind: "product" },
           }));
       }),
@@ -85,6 +89,7 @@ export const App = () => {
   );
 
   if (!state) return null;
+  if (designPreview) return <SubscriptionDesignPreview onExit={() => setDesignPreview(false)} />;
   const ws = state.workspaces.find((w) => w.id === state.activeId);
   if (!ws?.setupDone)
     return (

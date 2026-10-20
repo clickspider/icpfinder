@@ -27,6 +27,9 @@ export interface ClaudeCliOptions {
   onSpawn?: (child: ChildProcess) => void;
   /** Called after each run with what it used (tokens, cache, cost), for a usage meter. */
   onUsage?: (u: CliUsage) => void;
+  /** Explicit subprocess environment for desktop subscription isolation. */
+  env?: NodeJS.ProcessEnv;
+  cwd?: string;
 }
 
 /** What one Claude Code run used, read from its JSON result. */
@@ -94,6 +97,8 @@ export class ClaudeCliLlmProvider implements LlmProvider {
   private readonly timeoutMs: number;
   private readonly onSpawn: ((child: ChildProcess) => void) | undefined;
   private readonly onUsage: ((u: CliUsage) => void) | undefined;
+  private readonly env: NodeJS.ProcessEnv | undefined;
+  private readonly cwd: string | undefined;
 
   constructor(opts: ClaudeCliOptions = {}) {
     this.bin = opts.bin || "claude";
@@ -101,6 +106,8 @@ export class ClaudeCliLlmProvider implements LlmProvider {
     this.timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.onSpawn = opts.onSpawn;
     this.onUsage = opts.onUsage;
+    this.env = opts.env;
+    this.cwd = opts.cwd;
   }
 
   async generate(input: GenerateInput): Promise<GenerateResult> {
@@ -140,8 +147,8 @@ export class ClaudeCliLlmProvider implements LlmProvider {
   private run(args: string[], stdin: string, timeoutMs: number): Promise<string> {
     return new Promise((resolve, reject) => {
       // Strip API keys so the CLI always uses the subscription login.
-      const { ANTHROPIC_API_KEY: _a, ANTHROPIC_AUTH_TOKEN: _b, ...env } = process.env;
-      const child = spawn(this.bin, args, { env, stdio: ["pipe", "pipe", "pipe"] });
+      const { ANTHROPIC_API_KEY: _a, ANTHROPIC_AUTH_TOKEN: _b, ...env } = this.env ?? process.env;
+      const child = spawn(this.bin, args, { env, cwd: this.cwd, stdio: ["pipe", "pipe", "pipe"] });
       this.onSpawn?.(child);
       let out = "";
       let err = "";

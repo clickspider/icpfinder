@@ -1,9 +1,11 @@
+import { PROVIDER_MODELS, PROVIDER_NAMES } from "../../shared/provider-models";
+import type { ProviderId } from "../../shared/subscriptions";
 // SPDX-License-Identifier: MIT
 //
 // Small shared pieces: the living stage, ICP art, proof helpers.
 
 import type { AccountResearch, Finding, FindingKind } from "@icpfinder/core";
-import { type CSSProperties, type ReactNode, useEffect, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { IcpApi } from "../../shared/types";
 import claudeLogo from "./assets/claude.png";
 import codexLogo from "./assets/codex.png";
@@ -433,80 +435,38 @@ export const MODELS: Array<{ id: string; name: string; version: string; hint: st
   { id: "claude-haiku-5-5", name: "Haiku", version: "5.5", hint: "Fastest · lightest" },
 ];
 
-/** Claude's logo plus the exact model and version it runs on; a glass menu to switch. */
+/** The selected provider's model; Codex can choose its subscription default. */
 export const ModelPicker = ({
   value,
   onChange,
+  provider = "claude",
   size = 16,
 }: {
   value: string;
   onChange: (id: string) => void;
+  provider?: ProviderId;
   size?: number;
-}) => {
-  const [open, setOpen] = useState(false);
-  const cur = MODELS.find((m) => m.id === value) ?? MODELS[0];
-  useEffect(() => {
-    if (!open) return;
-    const close = () => setOpen(false);
-    window.addEventListener("click", close);
-    return () => window.removeEventListener("click", close);
-  }, [open]);
-  return (
-    <span className="mp">
-      <button
-        type="button"
-        className="mp-btn"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen(!open);
-        }}
-      >
-        <ToolLogo name="claude" size={size} radius={4} />
-        {cur?.name} <span className="mp-ver">{cur?.version}</span>
-        <svg
-          width="9"
-          height="9"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinecap="round"
-          aria-hidden="true"
-        >
-          <path d="M6 9l6 6 6-6" />
-        </svg>
-      </button>
-      {open && (
-        <div className="mp-menu glass pop" role="menu">
-          {MODELS.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              role="menuitemradio"
-              aria-checked={m.id === cur?.id}
-              className={`mp-item ${m.id === cur?.id ? "on" : ""}`}
-              onClick={() => {
-                onChange(m.id);
-                setOpen(false);
-              }}
-            >
-              <ToolLogo name="claude" size={22} radius={6} />
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span className="mp-name">
-                  Claude {m.name} <span className="mp-ver">{m.version}</span>
-                </span>
-                <span className="mp-hint">{m.hint}</span>
-              </span>
-              {m.id === cur?.id && <span className="mp-check">✓</span>}
-            </button>
-          ))}
-        </div>
+}) => (
+  <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: size }}>
+    {PROVIDER_NAMES[provider]}
+    <select
+      aria-label="AI model"
+      className="field"
+      style={{ width: "auto", padding: "5px 8px" }}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    >
+      {!PROVIDER_MODELS[provider].some((model) => model.id === value) && (
+        <option value={value}>{value || "Default"}</option>
       )}
-    </span>
-  );
-};
+      {PROVIDER_MODELS[provider].map((model) => (
+        <option key={model.id} value={model.id}>
+          {model.name}
+        </option>
+      ))}
+    </select>
+  </label>
+);
 
 /** "Snap" state: something came back empty or failed. An icon, two short lines, one way out. */
 export const Snap = ({
@@ -577,13 +537,12 @@ export const Snap = ({
 /** Turn raw errors into one short line a founder understands. */
 export const friendly = (msg: string): string => {
   const m = msg.replace(/^Error invoking remote method '\w+': (Error: )?/, "");
-  if (/log ?in|not authenticated|unauthorized/i.test(m))
-    return "Sign in to Claude Code first, then try again.";
-  if (/timed out/i.test(m)) return "Claude took too long. Try again.";
+  if (/log ?in|not authenticated|unauthorized/i.test(m)) return m.slice(0, 240);
+  if (/timed out/i.test(m)) return "The AI request took too long. Try again.";
   if (/claude -p exited|claude CLI/i.test(m)) return "Claude did not answer. Try again.";
   if (/fetch failed|ENOTFOUND|ECONNRESET|network/i.test(m))
     return "No connection to the web. Check your internet.";
-  if (/JSON|Unexpected token/i.test(m)) return "Claude's answer came back broken. Try again.";
+  if (/JSON|Unexpected token/i.test(m)) return "The AI answer came back broken. Try again.";
   return m.slice(0, 140);
 };
 
