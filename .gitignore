@@ -15,3 +15,7 @@ content/
 private/
 .notes/
 .env*.local
+
+# local beta applications (next dev without a database)
+packages/web/.data/
+packages/web/public/next/film.mp4
