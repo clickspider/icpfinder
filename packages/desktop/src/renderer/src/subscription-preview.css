@@ -581,21 +581,23 @@
 
 .idea-writing {
   flex: 1;
-  min-height: 180px;
+  min-height: 210px;
   width: 100%;
-  resize: none;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  padding: 12px 0;
+  resize: vertical;
+  border: 1px solid #decfd5;
+  border-radius: 14px;
+  background: #fffafb;
+  padding: 18px 20px;
   color: var(--ink);
   font: inherit;
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.75;
-  outline: none;
+  cursor: text;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
-.idea-writing::placeholder { color: var(--faint); }
-.idea-writing:focus-visible { outline: none; box-shadow: inset 0 -2px 0 #e0244a55; }
+.idea-writing::placeholder { color: #9b858e; }
+.idea-writing:hover:not(:disabled) { border-color: #c5a4b0; }
+.idea-writing:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px #e0244a12; background: #fff; }
 /* One brand position and sidebar width across the onboarding flow. */
 .sp-sidebar { flex-basis:480px; padding:28px 38px 30px; }
 @media (max-width:1000px) { .sp-sidebar { flex-basis:440px; padding-inline:30px; } }
