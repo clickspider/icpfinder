@@ -1,3 +1,4 @@
+import { ProfileEditor } from "./ProfileEditor";
 // SPDX-License-Identifier: MIT
 //
 // Main screen in the context of one ICP: who exactly (as short gates), and the
@@ -570,6 +571,7 @@ export const IcpView = ({
           )}
         </button>
       </header>
+      <ProfileEditor key={icp.id} icp={icp} onState={onState} />
 
       <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
         <section className="panel" style={{ flex: 1.6, overflow: "hidden" }} aria-label="Companies">

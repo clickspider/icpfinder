@@ -26,7 +26,7 @@ describe("onboarding presentation", () => {
       },
       0
     );
-    expect(icpPresentation(icp)).toMatchObject({
+    expect(icpPresentation({ ...icp, profileKind: undefined })).toMatchObject({
       title: "Early B2B SaaS",
       tag: "1–10 people",
       buyer: "Founder",
@@ -45,6 +45,6 @@ describe("onboarding presentation", () => {
       0
     );
     icp.industry = "Software studios";
-    expect(icpPresentation(icp).title).toBe("Software studios");
+    expect(icpPresentation({ ...icp, profileKind: undefined }).title).toBe("Software studios");
   });
 });

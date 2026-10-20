@@ -117,11 +117,15 @@ export const Wizard = ({
     if (step === "welcome") return setStep("product");
     if (step === "product" || (step === "about" && !briefReady)) return void readBrief();
     if (step === "about") return void run("Finding your ICPs…", () => api().findIcps(), "icp");
-    if (step === "icp" && icp)
-      return void run(
-        ws?.icps.some((i) => i.card?.edited) ? "Refining your ICP…" : "Starting the hunt…",
-        () => api().finishSetup()
-      );
+    if (step === "icp" && icp) {
+      setBusy("Opening your dashboard…");
+      setError(null);
+      void api()
+        .finishSetup()
+        .then(onState)
+        .catch((e) => setError(clean(e)))
+        .finally(() => setBusy(null));
+    }
   };
 
   const cta: Record<Step, string> = {
@@ -167,7 +171,10 @@ export const Wizard = ({
             error,
             profiles: (ws?.icps ?? []).map((profile, index) => ({
               ...icpPresentation(profile),
-              icon: ["buyer", "company", "site"][index % 3] ?? "buyer",
+              icon:
+                profile.profileKind === "consumer"
+                  ? "buyer"
+                  : (["buyer", "company", "site"][index % 3] ?? "buyer"),
             })),
             onAdd: async (draft) => {
               if (!preview) onState(await api().addIcp(draft));

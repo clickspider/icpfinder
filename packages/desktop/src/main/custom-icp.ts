@@ -2,7 +2,11 @@ import { randomUUID } from "node:crypto";
 import type { Icp, IcpDraft, Product } from "../shared/types";
 
 /** Preserve the founder's words; derive research checks only when they continue. */
-export function customIcp(value: unknown, art: number): Icp {
+export function customIcp(
+  value: unknown,
+  art: number,
+  profileKind: "business" | "consumer" = "business"
+): Icp {
   if (!value || typeof value !== "object" || Array.isArray(value))
     throw new Error("Fill in your ICP details.");
   const draft = {} as IcpDraft;
@@ -16,6 +20,8 @@ export function customIcp(value: unknown, art: number): Icp {
   return {
     id: `icp_${randomUUID()}`,
     name: draft.title,
+    profileKind,
+    characteristics: draft.tag,
     industry: draft.tag,
     size: "",
     pain: draft.fit,

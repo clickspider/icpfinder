@@ -21,6 +21,7 @@ const api: IcpApi = {
   verifyHunter: call("verifyHunter") as IcpApi["verifyHunter"],
   findIcps: call("findIcps") as IcpApi["findIcps"],
   addIcp: call("addIcp") as IcpApi["addIcp"],
+  updateProfile: call("updateProfile") as IcpApi["updateProfile"],
   saveScoring: call("saveScoring") as IcpApi["saveScoring"],
   ideaFinish: call("ideaFinish") as IcpApi["ideaFinish"],
   updateCard: call("updateCard") as IcpApi["updateCard"],

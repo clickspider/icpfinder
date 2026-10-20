@@ -1,4 +1,5 @@
 import { BUSINESS_INFERENCE, inferredBusiness, sellerSummary } from "../shared/business-overview";
+import { PROFILE_GUIDANCE, parseSuggestedProfiles } from "./suggested-profiles";
 // SPDX-License-Identifier: MIT
 //
 // Engine bridge: everything that calls the AI or the web. All AI goes through
@@ -8,8 +9,7 @@ import { BUSINESS_INFERENCE, inferredBusiness, sellerSummary } from "../shared/b
 import { AsyncLocalStorage } from "node:async_hooks";
 import { type ChildProcess, execFile } from "node:child_process";
 import { promisify } from "node:util";
-import type { Archetype } from "@icpfinder/core";
-import { generateArchetypes, htmlToText, researchAccount, safeFetch } from "@icpfinder/core";
+import { htmlToText, researchAccount, safeFetch } from "@icpfinder/core";
 import { HunterEmailProvider, type LlmProvider, parseCliResult } from "@icpfinder/providers";
 import {
   type CompanyFacts,
@@ -256,46 +256,16 @@ export const readProduct = async (rawUrl: string): Promise<Product> => {
   };
 };
 
-const toIcp = (a: Archetype, i: number): Icp => ({
-  id: `icp_${Date.now().toString(36)}_${i}`,
-  name: clean(a.role) || clean(a.industry),
-  industry: clean(a.industry),
-  size: a.companySize,
-  pain: a.pain,
-  reasoning: a.reasoning,
-  sellingAngle: a.sellingAngle,
-  signals: a.buyingSignals,
-  objections: a.objections ?? [],
-  art: i,
-  hunted: false,
-  companies: a.exampleCompanies.map(
-    (c): Company => ({
-      domain: c.domain,
-      name: c.name,
-      hint: c.whyNow?.replace(/^likely:\s*/i, ""),
-      status: "queued",
-    })
-  ),
-});
-
-// "Founder & CEO doing founder-led sales" → "Founder & CEO"; "Developer Tools / Indie SaaS (B2B)" → "Developer Tools"
-const clean = (t: string): string =>
-  t.split(/\s+doing\s+|\s+who\s+|\s*[/(,;]\s*/)[0]?.trim() ?? t.trim();
-
-/** Step "Your ICPs": 3 buyer types with example companies, from the product read. */
+/** Suggest customer groups, without researching companies or contacts. */
 export const findIcps = async (p: Product, feedback?: string): Promise<Icp[]> => {
-  const fb = feedback?.trim()
-    ? `\n\nThe founder saw an earlier list and said: "${feedback.trim()}". Follow this feedback.`
-    : "";
-  const seed = `${sellerSummary(p)}\n\nFrom the website:\n${p.siteText.slice(0, 3_000)}${fb}`;
-  const { archetypes } = await generateArchetypes({
-    llm: await llm(),
-    seed,
-    limit: 3,
+  const result = await (await llm()).generate({
+    system: PROFILE_GUIDANCE,
+    prompt: `${sellerSummary(p)}\n\nOriginal source, subordinate to reviewed corrections:\n${p.siteText.slice(0, 3000)}${feedback?.trim() ? `\nUser feedback: ${feedback.trim()}` : ""}`,
+    format: "json",
     grounding: false,
     timeoutMs: 240_000,
   });
-  return archetypes.map(toIcp);
+  return parseSuggestedProfiles(json<unknown>(result.text), p);
 };
 
 /** Research one company: proof per fact, checked by code on 2 websites. */
@@ -463,8 +433,8 @@ export const regateIcp = async (p: Product, icp: Icp): Promise<IcpCriteria | nul
   const k = icp.card;
   const res = await (await llm()).generate({
     system:
-      'You turn a founder\'s ICP card into yes/no gates a web researcher can verify. The card is the truth: every gate must follow it. mustHave = 3-5 gates, each "<fact> (source: <team page|pricing page|funding news|job posts|product site>)"; signals = 3-5 observable "need it now" triggers, the card trigger first; dealBreakers = 2-4. Output strict JSON: {"mustHave":[],"signals":[],"dealBreakers":[]}',
-    prompt: `PRODUCT: ${sellerSummary(p)}\n\nCARD:\n- Who signs: ${k.buyer.text}\n- Which company: ${k.company.text}\n- Why now: ${k.trigger.text}\n- Skip if: ${k.skip.text}`,
+      'Derive research criteria from the reviewed customer profile, without inventing observations. Use the seller overview as context. For business profiles use publicly checkable company characteristics; for consumer profiles use relevant circumstances and needs, never force company size or professional roles. mustHave: 3-5 supported positive fit criteria; signals: possible situations to investigate later, not observed intent; dealBreakers: [] because the profile fit concern is advisory, not an automatic exclusion. Output strict JSON: {"mustHave":[],"signals":[],"dealBreakers":[]}',
+    prompt: `For this later research-criteria task, derive only supported positive qualifications and possible signals. The fit concern is advisory; do not turn it into a hard exclusion.\nPRODUCT: ${sellerSummary(p)}\n\nPROFILE: ${icp.name} (${icp.profileKind ?? "business"})\nCARD:\n- Who to talk to: ${k.buyer.text}\n- Profile characteristics: ${k.company.text}\n- Why now: ${k.trigger.text}\n- May not be a fit if: ${k.skip.text}`,
     format: "json",
     timeoutMs: 120_000,
   });
@@ -475,7 +445,7 @@ export const regateIcp = async (p: Product, icp: Icp): Promise<IcpCriteria | nul
     return {
       mustHave: list(c.mustHave),
       signals: list(c.signals),
-      dealBreakers: list(c.dealBreakers),
+      dealBreakers: icp.profileKind ? [] : list(c.dealBreakers),
     };
   } catch {
     return null;

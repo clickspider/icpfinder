@@ -119,6 +119,8 @@ export interface IcpDraft {
 }
 
 export interface Icp {
+  profileKind?: "business" | "consumer";
+  characteristics?: string;
   id: string;
   name: string;
   industry: string;
@@ -259,6 +261,7 @@ export interface IcpApi {
   updateProduct(patch: Partial<Product>): Promise<State>;
   findIcps(feedback?: string): Promise<State>;
   addIcp(draft: IcpDraft): Promise<State>;
+  updateProfile(icpId: string, draft: IcpDraft): Promise<State>;
   saveScoring(patch: Partial<import("./scoring").Scoring> | null): Promise<State>;
   ideaFinish(description: string): Promise<State>;
   updateCard(

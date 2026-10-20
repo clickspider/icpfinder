@@ -28,7 +28,7 @@ import type {
 import { BrowserAgent } from "./agent";
 import { openLogin } from "./browse";
 import { resolveCli } from "./cli";
-import { customIcp, refineCustomIcps } from "./custom-icp";
+import { customIcp } from "./custom-icp";
 import {
   classifyCompanies,
   companyLogo,
@@ -53,7 +53,6 @@ import {
   setModel,
   setProvider,
   setSources,
-  sharpenIcps,
   sourceCompanies,
   verifyHunter,
   warmFor,
@@ -332,10 +331,7 @@ const siteOf = (url: string): string => {
 
 /** Find ICPs again; ICPs with the same name keep their companies. */
 const rebuildIcps = async (ws: Workspace, feedback?: string): Promise<void> => {
-  const icps = await sharpenIcps(
-    ws.product,
-    (await findIcps(ws.product, feedback)).map((i) => ({ ...i, companies: [] }))
-  );
+  const icps = await findIcps(ws.product, feedback);
   for (const icp of icps) {
     const old = ws.icps.find((o) => o.name === icp.name);
     if (old)
@@ -432,7 +428,7 @@ const TASK_OF: Record<string, string> = {
   recalibrate: "Setup",
   updateCard: "Setup",
   huntIcp: "Hunting",
-  finishSetup: "Hunting",
+  finishSetup: "Setup",
   approveCompany: "Research",
   researchCompany: "Research",
   runAction: "Next steps",
@@ -558,19 +554,45 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
   addIcp: (draft: unknown) => {
     const ws = activeWorkspace(state);
     if (!ws) throw new Error("Add your product first");
-    ws.icps.push(customIcp(draft, ws.icps.length));
+    ws.icps.push(
+      customIcp(
+        draft,
+        ws.icps.length,
+        ws.product.audience === "Consumers" ? "consumer" : "business"
+      )
+    );
     return commit();
   },
-  finishSetup: async (icpId?: string) => {
+  updateProfile: (icpId: string, draft: unknown) => {
+    const ws = activeWorkspace(state);
+    const icp = ws?.icps.find((i) => i.id === icpId);
+    if (!ws || !icp) throw new Error("Profile not found.");
+    if (icp.sourcing)
+      throw new Error("Wait for the current search to finish before editing this profile.");
+    const edited = customIcp(
+      draft,
+      icp.art,
+      icp.profileKind ?? (ws.product.audience === "Consumers" ? "consumer" : "business")
+    );
+    Object.assign(icp, {
+      name: edited.name,
+      characteristics: edited.characteristics,
+      profileKind: edited.profileKind,
+      industry: edited.industry,
+      size: "",
+      pain: edited.pain,
+      sellingAngle: edited.sellingAngle,
+      signals: edited.signals,
+      card: edited.card,
+    });
+    return commit();
+  },
+  finishSetup: () => {
     const ws = activeWorkspace(state);
     if (!ws) return state;
-    if (!ws.icps.length) throw new Error("Find your ICPs before starting a hunt.");
-    await refineCustomIcps(ws.product, ws.icps, regateIcp);
+    if (!ws.icps.length) throw new Error("Add a customer profile before continuing.");
     ws.setupDone = true;
-    commit();
-    const first = ws.icps.find((i) => i.id === icpId) ?? ws.icps[0];
-    if (first) void huntIcp(first.id);
-    return state;
+    return commit();
   },
   /** A written description becomes a product after account connection. */
   ideaFinish: async (description: string) => {
@@ -594,6 +616,7 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
     if (!icp?.card || !text.trim()) return state;
     icp.card[key] = { text: text.trim(), why: "Your change.", source: "you" };
     icp.card.edited = true;
+    if (key === "company") icp.characteristics = text.trim();
     return commit();
   },
   /** Pick the LinkedIn export with a file dialog. */

@@ -35,6 +35,16 @@ export function productStage(value: unknown, evidence = ""): Stage | undefined {
 }
 
 export function icpPresentation(icp: Icp) {
+  if (icp.profileKind)
+    return {
+      id: icp.id,
+      title: icp.name,
+      tag: icp.characteristics || "Customer profile",
+      buyer: icp.card?.buyer.text || icp.name,
+      fit: icp.sellingAngle || icp.pain,
+      signal: icp.card?.trigger.text || icp.signals[0] || "To be refined",
+      skip: icp.card?.skip.text || "To be refined",
+    };
   const company = icp.card?.company.text || [icp.industry, icp.size].filter(Boolean).join(" · ");
   const buyer = icp.card?.buyer.text || icp.name;
   const size =
