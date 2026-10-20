@@ -79,3 +79,7 @@
 .ob-overview-mode button[aria-pressed=true] { background:white; color:#b82b50; box-shadow:0 1px 5px #58213112; }
 .ob-overview-mode button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 .ob-overview-mode button:disabled { opacity:.45; cursor:default; }
+/* Keep navigation visible when the restored icon cards need extra room. */
+.ob-sidebar:has(.ob-question) > .ob-body { flex:1; min-height:0; overflow:auto; margin:0; padding:24px 0; }
+.ob-sidebar:has(.ob-question) > .ob-body > * { flex-shrink:0; }
+.ob-sidebar:has(.ob-question) > .ob-body + div { flex-shrink:0; padding-top:14px; }
