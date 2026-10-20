@@ -27,22 +27,21 @@ export function OnboardingAside({
       <div className="ob-aside-inner">
         {kind === "welcome" ? (
           <>
-            <h2>
-              A product.
-              <br />A few good customers.
-            </h2>
+            <h2>A little about you. A clearer idea of who to approach.</h2>
             <ol className="ob-steps">
               <li>
-                <b>Tell us what you’re building</b>
-                <p>A website or a few sentences is enough.</p>
+                <b>Tell us what you offer</b>
+                <p>Share your website or describe it in a few sentences.</p>
               </li>
               <li>
-                <b>Find the people it’s for</b>
-                <p>Clear customer profiles you can refine.</p>
+                <b>Fill in a few details</b>
+                <p>Tell us how your business works and where you are today.</p>
               </li>
               <li>
-                <b>See who fits, and why</b>
-                <p>Real companies, with evidence to review.</p>
+                <b>Discover who to focus on</b>
+                <p>
+                  Get suggested customer profiles, with roles to look for and reasons to reach out.
+                </p>
               </li>
             </ol>
           </>

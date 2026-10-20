@@ -113,7 +113,7 @@ export const Wizard = ({
   };
 
   const cta: Record<Step, string> = {
-    welcome: "Start · about 1 minute",
+    welcome: "Let’s get started",
     product: mode === "site" ? "Read my site" : "Continue",
     about: !briefReady ? (busy ? "Preparing your brief…" : "Try again") : "Find my ICPs",
     icp: "Looks right, hunt ↑",
@@ -168,13 +168,10 @@ export const Wizard = ({
               {step === "welcome" && (
                 <>
                   <h1 className="ob-h1">
-                    Find who to sell to.
-                    <br />
-                    <em>Proven</em>, not guessed.
+                    Who could be your <em>next customer?</em>
                   </h1>
                   <p className="ob-sub" style={{ fontSize: 15 }}>
-                    IcpFinder finds your buyers on the web. It only shows a fact when 2 websites
-                    prove it.
+                    You know what you offer. Let’s find the companies that need it.
                   </p>
                 </>
               )}
@@ -332,15 +329,15 @@ export const Wizard = ({
                   {busy}
                 </div>
               )}
-              <button
-                type="button"
-                className="ob-cta"
+              <div
+                className={step === "welcome" ? "ob-welcome-action" : undefined}
                 style={{ marginLeft: "auto" }}
-                disabled={!canNext}
-                onClick={next}
               >
-                {cta[step]}
-              </button>
+                <button type="button" className="ob-cta" disabled={!canNext} onClick={next}>
+                  {cta[step]}
+                </button>
+                {step === "welcome" && <span className="ob-time-estimate">About 1 minute</span>}
+              </div>
             </div>
           </section>
 
