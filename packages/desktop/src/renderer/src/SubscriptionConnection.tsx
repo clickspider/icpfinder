@@ -9,6 +9,7 @@ import type { State } from "../../shared/types";
 import { Glass } from "./glass";
 import { AppBrand, OnboardingAside } from "./OnboardingFrame";
 import { ProviderMark } from "./ProviderMark";
+import { ProviderUnavailable } from "./ProviderUnavailable";
 import { api, cleanError } from "./ui";
 import "./subscription-preview.css";
 
@@ -243,6 +244,25 @@ export function SubscriptionConnection({
                     Cancel sign-in
                   </button>
                 </div>
+              ) : selected && !selected.installed ? (
+                <ProviderUnavailable
+                  provider={selected.provider}
+                  name={name}
+                  busy={busy}
+                  onRetry={() =>
+                    void act(async () => {
+                      setAttempt(null);
+                      setExpired(false);
+                      await refresh();
+                    })
+                  }
+                  onChoose={() => {
+                    setProvider(null);
+                    setAttempt(null);
+                    setExpired(false);
+                    setError("");
+                  }}
+                />
               ) : expired ? (
                 <div className="sp-status-card">
                   {provider && <ProviderMark provider={provider} size={40} />}
@@ -304,33 +324,6 @@ export function SubscriptionConnection({
                       Check connection again
                     </button>
                   )}
-                </div>
-              ) : selected && !selected.installed ? (
-                <div className="sp-status-card">
-                  {provider && <ProviderMark provider={provider} size={40} />}
-                  <h2>Let’s get your connection ready</h2>
-                  <p>
-                    {provider === "claude"
-                      ? "The bundled Claude runtime is missing. Rebuild the local app or reinstall IcpFinder to restore it."
-                      : "The bundled Codex runtime is missing. Rebuild the local app or reinstall IcpFinder to restore it."}
-                  </p>
-                  <button
-                    type="button"
-                    className="sp-link"
-                    onClick={() => void act(() => refresh())}
-                  >
-                    Check again
-                  </button>
-                  <button
-                    type="button"
-                    className="sp-link"
-                    onClick={() => {
-                      setProvider(null);
-                      setAttempt(null);
-                    }}
-                  >
-                    Choose another provider
-                  </button>
                 </div>
               ) : (
                 <>

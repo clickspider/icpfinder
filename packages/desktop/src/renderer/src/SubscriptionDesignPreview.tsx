@@ -3,6 +3,7 @@ import type { ProviderId } from "../../shared/subscriptions";
 import { Glass } from "./glass";
 import { AppBrand, OnboardingAside } from "./OnboardingFrame";
 import { ProviderMark } from "./ProviderMark";
+import { ProviderUnavailable } from "./ProviderUnavailable";
 import "./subscription-preview.css";
 
 const PROVIDERS: Array<{ id: ProviderId; name: string }> = [
@@ -21,7 +22,7 @@ const STATES = [
   { id: "cancelled", title: "Cancelled" },
   { id: "error", title: "Sign-in error" },
   { id: "expired", title: "Session expired" },
-  { id: "missing", title: "Setup needed" },
+  { id: "missing", title: "Provider unavailable" },
   { id: "unavailable", title: "Status unavailable" },
 ] as const;
 type PreviewState = (typeof STATES)[number]["id"];
@@ -84,7 +85,7 @@ export function SubscriptionDesignPreview({ onExit }: { onExit: () => void }) {
     </div>
   );
   const details: Record<
-    Exclude<PreviewState, "known" | "empty" | "selected">,
+    Exclude<PreviewState, "known" | "empty" | "selected" | "missing">,
     { title: string; text: string }
   > = {
     checking: {
@@ -112,17 +113,24 @@ export function SubscriptionDesignPreview({ onExit }: { onExit: () => void }) {
       title: "Let’s reconnect",
       text: `Your ${name} session has expired. Sign in again to pick up where you left off.`,
     },
-    missing: {
-      title: "Let’s get your connection ready",
-      text: "The bundled Claude runtime is missing. Rebuild the local app or reinstall IcpFinder to restore it.",
-    },
     unavailable: {
       title: "Couldn’t check your accounts",
       text: "We couldn’t read the sign-in status on this Mac. Try checking again.",
     },
   };
   const statusCard =
-    !known && !chooser ? (
+    screen === "missing" ? (
+      <ProviderUnavailable
+        provider={provider}
+        name={name}
+        onChoose={() => go("empty")}
+        onRetry={() =>
+          setNotice(
+            "Preview only: availability would be checked again. This does not repair the app."
+          )
+        }
+      />
+    ) : !known && !chooser ? (
       <div
         className="sp-status-card"
         role={screen === "error" || screen === "unavailable" ? "alert" : "status"}
@@ -153,12 +161,6 @@ export function SubscriptionDesignPreview({ onExit }: { onExit: () => void }) {
         {(screen === "cancelled" || screen === "error" || screen === "expired") && (
           <>
             {primary(screen === "expired" ? `Reconnect ${name}` : "Try signing in again", begin)}
-            {secondary("Choose another provider", () => go("empty"))}
-          </>
-        )}
-        {screen === "missing" && (
-          <>
-            {secondary("Check again", () => go("checking"))}
             {secondary("Choose another provider", () => go("empty"))}
           </>
         )}
