@@ -5,8 +5,8 @@ import { type FormEvent, useState } from "react";
 import { OPTIONS } from "../../lib/apply-options";
 import { Logo } from "../brand/Logo";
 
-/** Launch film A, re-encoded for the web (864x1080, faststart). */
-const FILM = "/next/icpfinder-film-a.mp4";
+/** Launch film (new onboarding), re-encoded for the web (864x1080, faststart). */
+const FILM = "/next/icpfinder-film-d.mp4";
 
 const Icon = ({ d }: { d: string }) => (
   <svg
@@ -29,19 +29,19 @@ const STEPS = [
     img: "read",
     icon: "M4 5h16v14H4z M8 9h8 M8 13h5",
     title: "Reads your product",
-    body: "Paste your site or just talk about your idea. IcpFinder writes the brief: what you sell, the problem, the price.",
+    body: "Paste your site or just tell it the idea. Claude reads it and writes the brief: what you sell, the problem, the price, how you sell.",
   },
   {
     img: "icps",
     icon: "M12 3a9 9 0 100 18 9 9 0 000-18z M12 8a4 4 0 100 8 4 4 0 000-8z",
     title: "Picks who to sell to",
-    body: "Three buyer types, each with the reason and clear yes/no checks for every company.",
+    body: "Who to hunt first: who signs, which company, why now and when to skip. Each line has its why, and you can change it.",
   },
   {
     img: "hunt",
     icon: "M11 4a7 7 0 100 14 7 7 0 000-14z M21 21l-5-5",
     title: "Hunts real companies",
-    body: "70+ facts checked on each one. A fact only counts when two websites prove it. You approve the fit.",
+    body: "Claude searches the web for companies that match. A fact only counts when two websites prove it. You approve every fit.",
   },
   {
     img: "opener",
