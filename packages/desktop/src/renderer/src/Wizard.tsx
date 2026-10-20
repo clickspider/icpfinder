@@ -7,6 +7,7 @@
 import { useRef, useState } from "react";
 import type { BusinessModel, Icp, IcpCard, Stage as StageT, State } from "../../shared/types";
 import { Doc, DUO, Glass, Marble, ProductCard } from "./glass";
+import { IcpReveal } from "./IcpReveal";
 import { SubscriptionConnection } from "./SubscriptionConnection";
 import { api, IcpArt, Mark, ProductLogo, Spinner } from "./ui";
 
@@ -26,14 +27,6 @@ const MODEL_SUB: Record<BusinessModel, string> = {
   Marketplace: "two sides",
 };
 const STAGES: StageT[] = ["Idea", "Pre-seed", "Seed", "Series A+"];
-const CARD_KEYS = ["buyer", "company", "trigger", "skip"] as const;
-const CARD_LABEL: Record<(typeof CARD_KEYS)[number], string> = {
-  buyer: "Who signs",
-  company: "Which company",
-  trigger: "Why now",
-  skip: "Skip if",
-};
-
 const clean = (e: unknown) =>
   e instanceof Error
     ? e.message.replace(/^Error invoking remote method '\w+': (Error: )?/, "")
@@ -72,9 +65,6 @@ export const Wizard = ({ state, onState }: { state: State; onState: (s: State) =
   );
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [sel, setSel] = useState<string | null>(null);
-  const [edit, setEdit] = useState<{ key: (typeof CARD_KEYS)[number]; text: string } | null>(null);
-  const [paste, setPaste] = useState<string | null>(null);
 
   const [connection, setConnection] = useState(false);
   const authorized = useRef(false);
@@ -101,16 +91,8 @@ export const Wizard = ({ state, onState }: { state: State; onState: (s: State) =
     });
 
   const product = ws?.product;
-  const icp = ws?.icps.find((i) => i.id === sel) ?? ws?.icps[0];
+  const icp = ws?.icps[0];
   const idx = ORDER.indexOf(step);
-
-  const saveCard = (k: (typeof CARD_KEYS)[number], text: string) => {
-    if (!icp) return;
-    void api()
-      .updateCard(icp.id, k, text)
-      .then(onState)
-      .then(() => setEdit(null));
-  };
 
   const next = () => {
     if (step === "welcome") return setStep("product");
@@ -120,7 +102,10 @@ export const Wizard = ({ state, onState }: { state: State; onState: (s: State) =
       return void run("Building your product brief…", () => api().ideaFinish(description), "about");
     if (step === "about") return void run("Finding your ICPs…", () => api().findIcps(), "icp");
     if (step === "icp" && icp)
-      return void run("Starting the hunt…", () => api().finishSetup(icp.id));
+      return void run(
+        ws?.icps.some((i) => i.card?.edited) ? "Refining your ICP…" : "Starting the hunt…",
+        () => api().finishSetup()
+      );
   };
 
   const cta: Record<Step, string> = {
@@ -154,282 +139,204 @@ export const Wizard = ({ state, onState }: { state: State; onState: (s: State) =
           }}
         />
       )}
-      <div style={{ display: connection ? "none" : "flex", height: "100%", background: "#fff" }}>
-        <section
-          style={{
-            width: 500,
-            padding: "22px 32px 24px 32px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 14,
-            minHeight: 0,
+      {!connection && (busy === "Finding your ICPs…" || step === "icp") ? (
+        <IcpReveal
+          onExit={() => setStep("about")}
+          live={{
+            finding: busy === "Finding your ICPs…",
+            busy,
+            error,
+            profiles: (ws?.icps ?? []).map((profile, index) => {
+              const card = cardOf(profile);
+              return {
+                id: profile.id,
+                title: profile.name,
+                tag: card.company.text,
+                fit: profile.sellingAngle || profile.pain,
+                buyer: card.buyer.text,
+                signal: card.trigger.text,
+                skip: card.skip.text,
+                icon: ["buyer", "company", "site"][index % 3] ?? "buyer",
+              };
+            }),
+            onAdd: async (draft) => {
+              onState(await api().addIcp(draft));
+            },
+            onStart: next,
           }}
-        >
-          <div className="ob-top drag">
-            {hasProducts && (
-              <button
-                type="button"
-                className="ghost btn nodrag"
-                style={{ fontSize: 12, padding: "2px 8px", marginLeft: -8 }}
-                onClick={() => void api().cancelSetup().then(onState)}
-              >
-                ← My products
-              </button>
-            )}
-            <span>
-              Setup · <b>{TITLES[step]}</b>
-            </span>
-            {idx > 0 && (
-              <span>
-                {idx} of {ORDER.length - 1}
-              </span>
-            )}
-          </div>
-
-          <div
-            key={step}
-            className="enter"
-            style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1, minHeight: 0 }}
+        />
+      ) : (
+        <div style={{ display: connection ? "none" : "flex", height: "100%", background: "#fff" }}>
+          <section
+            style={{
+              width: 500,
+              padding: "22px 32px 24px 32px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 14,
+              minHeight: 0,
+            }}
           >
-            {step === "welcome" && (
-              <>
-                <Mark size={52} radius={15} />
-                <h1 className="ob-h1" style={{ fontSize: 30 }}>
-                  Find who to sell to.
-                  <br />
-                  <em>Proven</em>, not guessed.
-                </h1>
-                <p className="ob-sub" style={{ fontSize: 15 }}>
-                  IcpFinder finds your buyers on the web. It only shows a fact when 2 websites prove
-                  it.
-                </p>
-              </>
-            )}
+            <div className="ob-top drag">
+              {hasProducts && (
+                <button
+                  type="button"
+                  className="ghost btn nodrag"
+                  style={{ fontSize: 12, padding: "2px 8px", marginLeft: -8 }}
+                  onClick={() => void api().cancelSetup().then(onState)}
+                >
+                  ← My products
+                </button>
+              )}
+              <span>
+                Setup · <b>{TITLES[step]}</b>
+              </span>
+              {idx > 0 && (
+                <span>
+                  {idx} of {ORDER.length - 1}
+                </span>
+              )}
+            </div>
 
-            {step === "product" && (
-              <>
-                <h1 className="ob-h1">
-                  What are you <em>building?</em>
-                </h1>
-                <div className="ob-seg" role="tablist">
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={mode === "site"}
-                    className={mode === "site" ? "on" : ""}
-                    onClick={() => setMode("site")}
-                  >
-                    {DUO.site?.(16)} I have a website
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={mode === "idea"}
-                    className={mode === "idea" ? "on" : ""}
-                    onClick={() => setMode("idea")}
-                  >
-                    {DUO.chat?.(16)} Just an idea
-                  </button>
-                </div>
-                {mode === "site" ? (
-                  <>
-                    <p className="ob-sub">
-                      Paste the site. Your AI reads it and fills in the rest.
-                    </p>
-                    <input
-                      className="field"
-                      aria-label="Website"
-                      placeholder="yourproduct.com"
-                      value={url}
-                      onChange={(e) => setUrl(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && canNext && next()}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <p className="ob-sub" id="idea-description-hint">
-                      What does it do, who is it for, and what problem does it solve? Write as much
-                      or as little as you have.
-                    </p>
-                    <textarea
-                      className="idea-writing"
-                      aria-label="Describe your idea"
-                      aria-describedby="idea-description-hint"
-                      placeholder="e.g. An AI invoicing tool for indie SaaS founders"
-                      value={description}
-                      maxLength={12000}
-                      disabled={Boolean(busy)}
-                      onChange={(event) => setDescription(event.target.value)}
-                    />
-                  </>
-                )}
-              </>
-            )}
+            <div
+              key={step}
+              className="enter"
+              style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1, minHeight: 0 }}
+            >
+              {step === "welcome" && (
+                <>
+                  <Mark size={52} radius={15} />
+                  <h1 className="ob-h1" style={{ fontSize: 30 }}>
+                    Find who to sell to.
+                    <br />
+                    <em>Proven</em>, not guessed.
+                  </h1>
+                  <p className="ob-sub" style={{ fontSize: 15 }}>
+                    IcpFinder finds your buyers on the web. It only shows a fact when 2 websites
+                    prove it.
+                  </p>
+                </>
+              )}
 
-            {step === "about" && product && (
-              <>
-                <h1 className="ob-h1">
-                  How do you <em>sell?</em>
-                </h1>
-                <p className="ob-sub">
-                  {product.url
-                    ? `Read from ${product.url.replace(/^https?:\/\//, "").replace(/\/$/, "")}.`
-                    : "From your idea."}{" "}
-                  Tap to change.
-                </p>
-                <div className="ob-lab">Business model</div>
-                <div className="ob-grid">
-                  {MODELS.map((m) => (
+              {step === "product" && (
+                <>
+                  <h1 className="ob-h1">
+                    What are you <em>building?</em>
+                  </h1>
+                  <div className="ob-seg" role="tablist">
                     <button
-                      key={m}
                       type="button"
-                      className={`btn ob-opt ${product.model === m ? "on" : ""}`}
-                      aria-pressed={product.model === m}
-                      onClick={() => void api().updateProduct({ model: m }).then(onState)}
+                      role="tab"
+                      aria-selected={mode === "site"}
+                      className={mode === "site" ? "on" : ""}
+                      onClick={() => setMode("site")}
                     >
-                      {DUO[m]?.(34)}
-                      {m}
-                      <span
-                        style={{
-                          fontSize: 11,
-                          color: "var(--faint)",
-                          fontWeight: 400,
-                          marginTop: -4,
-                        }}
-                      >
-                        {MODEL_SUB[m]}
-                      </span>
+                      {DUO.site?.(16)} I have a website
                     </button>
-                  ))}
-                </div>
-                <div className="ob-lab">Stage</div>
-                <div className="ob-grid">
-                  {STAGES.map((s) => (
                     <button
-                      key={s}
                       type="button"
-                      className={`btn ob-opt ${product.stage === s ? "on" : ""}`}
-                      aria-pressed={product.stage === s}
-                      onClick={() => void api().updateProduct({ stage: s }).then(onState)}
+                      role="tab"
+                      aria-selected={mode === "idea"}
+                      className={mode === "idea" ? "on" : ""}
+                      onClick={() => setMode("idea")}
                     >
-                      {DUO[s]?.(34)}
-                      {s}
+                      {DUO.chat?.(16)} Just an idea
                     </button>
-                  ))}
-                </div>
-              </>
-            )}
+                  </div>
+                  {mode === "site" ? (
+                    <>
+                      <p className="ob-sub">
+                        Paste the site. Your AI reads it and fills in the rest.
+                      </p>
+                      <input
+                        className="field"
+                        aria-label="Website"
+                        placeholder="yourproduct.com"
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && canNext && next()}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <p className="ob-sub" id="idea-description-hint">
+                        What does it do, who is it for, and what problem does it solve? Write as
+                        much or as little as you have.
+                      </p>
+                      <textarea
+                        className="idea-writing"
+                        aria-label="Describe your idea"
+                        aria-describedby="idea-description-hint"
+                        placeholder="e.g. An AI invoicing tool for indie SaaS founders"
+                        value={description}
+                        maxLength={12000}
+                        disabled={Boolean(busy)}
+                        onChange={(event) => setDescription(event.target.value)}
+                      />
+                    </>
+                  )}
+                </>
+              )}
 
-            {step === "icp" && ws && icp && (
-              <>
-                <h1 className="ob-h1">
-                  I'd hunt <em>these</em> first.
-                </h1>
-                <p className="ob-sub">Made from your product. Tap a line to change it.</p>
-                {ws.icps.length > 1 && (
-                  <div className="ob-chips">
-                    {ws.icps.map((i) => (
+              {step === "about" && product && (
+                <>
+                  <h1 className="ob-h1">
+                    How do you <em>sell?</em>
+                  </h1>
+                  <p className="ob-sub">
+                    {product.url
+                      ? `Read from ${product.url.replace(/^https?:\/\//, "").replace(/\/$/, "")}.`
+                      : "From your idea."}{" "}
+                    Tap to change.
+                  </p>
+                  <div className="ob-lab">Business model</div>
+                  <div className="ob-grid">
+                    {MODELS.map((m) => (
                       <button
-                        key={i.id}
+                        key={m}
                         type="button"
-                        className={`ob-chip ${i.id === icp.id ? "on" : ""}`}
-                        title={`${i.name} · ${i.industry}`}
-                        onClick={() => {
-                          setSel(i.id);
-                          setEdit(null);
-                        }}
+                        className={`btn ob-opt ${product.model === m ? "on" : ""}`}
+                        aria-pressed={product.model === m}
+                        onClick={() => void api().updateProduct({ model: m }).then(onState)}
                       >
-                        <IcpArt icp={i} size={16} radius={5} />
-                        {ws.icps.filter((x) => x.name === i.name).length > 1
-                          ? `${i.name} · ${i.industry.split(/[ ,]/).slice(0, 2).join(" ")}`
-                          : i.name}
+                        {DUO[m]?.(34)}
+                        {m}
+                        <span
+                          style={{
+                            fontSize: 11,
+                            color: "var(--faint)",
+                            fontWeight: 400,
+                            marginTop: -4,
+                          }}
+                        >
+                          {MODEL_SUB[m]}
+                        </span>
                       </button>
                     ))}
                   </div>
-                )}
-                <div
-                  className="scroll"
-                  style={{ display: "flex", flexDirection: "column", gap: 8, minHeight: 0 }}
-                >
-                  {CARD_KEYS.map((k) => {
-                    const l = cardOf(icp)[k];
-                    return (
-                      <div key={`${icp.id}-${k}`} className="ob-pick rise">
-                        <span className="ob-pi">{DUO[k]?.(22)}</span>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div className="ob-pl">{CARD_LABEL[k]}</div>
-                          {edit?.key === k ? (
-                            <input
-                              className="field"
-                              style={{ height: 34, fontSize: 13.5, marginTop: 4 }}
-                              // biome-ignore lint/a11y/noAutofocus: opened by the founder's click
-                              autoFocus
-                              aria-label={CARD_LABEL[k]}
-                              value={edit.text}
-                              onChange={(e) => setEdit({ key: k, text: e.target.value })}
-                              onKeyDown={(e) => {
-                                if (e.key === "Escape") setEdit(null);
-                                if (e.key === "Enter") saveCard(k, edit.text);
-                              }}
-                              onBlur={() => saveCard(k, edit.text)}
-                            />
-                          ) : (
-                            <div className="ob-pv">{l.text || "—"}</div>
-                          )}
-                          {l.why && l.source !== "you" && <div className="ob-pw">{l.why}</div>}
-                        </div>
-                        {edit?.key !== k && (
-                          <button
-                            type="button"
-                            className="ob-change"
-                            onClick={() => setEdit({ key: k, text: l.text })}
-                          >
-                            Change
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                {paste !== null && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    <textarea
-                      className="field area"
-                      style={{ padding: 10, fontSize: 13.5, minHeight: 80 }}
-                      aria-label="Your ICP"
-                      placeholder="Paste the ICP you already use"
-                      value={paste}
-                      onChange={(e) => setPaste(e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      className="ob-cta"
-                      disabled={!paste.trim() || Boolean(busy)}
-                      onClick={() =>
-                        void run("Turning your ICP into checks…", () =>
-                          api().findIcps(
-                            `Use this ICP exactly as the first ICP, and keep its words: ${paste}`
-                          )
-                        ).then(() => setPaste(null))
-                      }
-                    >
-                      Use my ICP
-                    </button>
+                  <div className="ob-lab">Stage</div>
+                  <div className="ob-grid">
+                    {STAGES.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        className={`btn ob-opt ${product.stage === s ? "on" : ""}`}
+                        aria-pressed={product.stage === s}
+                        onClick={() => void api().updateProduct({ stage: s }).then(onState)}
+                      >
+                        {DUO[s]?.(34)}
+                        {s}
+                      </button>
+                    ))}
                   </div>
-                )}
-              </>
-            )}
+                </>
+              )}
 
-            {error && <p className="error">{error}</p>}
-          </div>
+              {error && <p className="error">{error}</p>}
+            </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {step === "icp" && paste === null ? (
-              <button type="button" className="ghost btn" onClick={() => setPaste("")}>
-                Paste my own ICP
-              </button>
-            ) : (
-              idx > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {idx > 0 && (
                 <button
                   type="button"
                   className="ghost btn"
@@ -438,38 +345,38 @@ export const Wizard = ({ state, onState }: { state: State; onState: (s: State) =
                 >
                   Back
                 </button>
-              )
-            )}
-            {busy && busy !== "thinking" && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  color: "var(--muted)",
-                  fontSize: 13,
-                }}
+              )}
+              {busy && busy !== "thinking" && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    color: "var(--muted)",
+                    fontSize: 13,
+                  }}
+                >
+                  <Spinner />
+                  {busy}
+                </div>
+              )}
+              <button
+                type="button"
+                className="ob-cta"
+                style={{ marginLeft: "auto" }}
+                disabled={!canNext}
+                onClick={next}
               >
-                <Spinner />
-                {busy}
-              </div>
-            )}
-            <button
-              type="button"
-              className="ob-cta"
-              style={{ marginLeft: "auto" }}
-              disabled={!canNext}
-              onClick={next}
-            >
-              {cta[step]}
-            </button>
-          </div>
-        </section>
+                {cta[step]}
+              </button>
+            </div>
+          </section>
 
-        <Marble>
-          <StageContent step={step} state={state} mode={mode} url={url} busy={busy} icp={icp} />
-        </Marble>
-      </div>
+          <Marble>
+            <StageContent step={step} state={state} mode={mode} url={url} busy={busy} icp={icp} />
+          </Marble>
+        </div>
+      )}
     </>
   );
 };

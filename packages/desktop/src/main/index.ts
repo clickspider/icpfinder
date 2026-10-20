@@ -28,6 +28,7 @@ import type {
 import { BrowserAgent } from "./agent";
 import { openLogin } from "./browse";
 import { resolveCli } from "./cli";
+import { customIcp, refineCustomIcps } from "./custom-icp";
 import {
   classifyCompanies,
   companyLogo,
@@ -426,6 +427,7 @@ const updateDock = (): void => {
 const TASK_OF: Record<string, string> = {
   readProduct: "Setup",
   findIcps: "Setup",
+  addIcp: "Setup",
   ideaFinish: "Setup",
   recalibrate: "Setup",
   updateCard: "Setup",
@@ -553,9 +555,17 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
     setSources(state.settings.sources);
     return commit();
   },
-  finishSetup: (icpId?: string) => {
+  addIcp: (draft: unknown) => {
+    const ws = activeWorkspace(state);
+    if (!ws) throw new Error("Add your product first");
+    ws.icps.push(customIcp(draft, ws.icps.length));
+    return commit();
+  },
+  finishSetup: async (icpId?: string) => {
     const ws = activeWorkspace(state);
     if (!ws) return state;
+    if (!ws.icps.length) throw new Error("Find your ICPs before starting a hunt.");
+    await refineCustomIcps(ws.product, ws.icps, regateIcp);
     ws.setupDone = true;
     commit();
     const first = ws.icps.find((i) => i.id === icpId) ?? ws.icps[0];

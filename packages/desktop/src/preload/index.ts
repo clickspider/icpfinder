@@ -20,6 +20,7 @@ const api: IcpApi = {
   updateProduct: call("updateProduct") as IcpApi["updateProduct"],
   verifyHunter: call("verifyHunter") as IcpApi["verifyHunter"],
   findIcps: call("findIcps") as IcpApi["findIcps"],
+  addIcp: call("addIcp") as IcpApi["addIcp"],
   saveScoring: call("saveScoring") as IcpApi["saveScoring"],
   ideaFinish: call("ideaFinish") as IcpApi["ideaFinish"],
   updateCard: call("updateCard") as IcpApi["updateCard"],

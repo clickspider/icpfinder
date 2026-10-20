@@ -8,6 +8,7 @@ import type { State } from "../../shared/types";
 import { AgentView } from "./AgentView";
 import { CompanyView } from "./CompanyView";
 import { ConnectorsView } from "./Connectors";
+import { IcpRevealPreview } from "./IcpReveal";
 import { IcpView } from "./IcpView";
 import { MatchingView } from "./Matching";
 import { NetworkView } from "./Network";
@@ -34,6 +35,9 @@ export const App = () => {
 
   const [designPreview, setDesignPreview] = useState(() =>
     new URLSearchParams(window.location.search).has("state-preview")
+  );
+  const [icpPreview, setIcpPreview] = useState(() =>
+    new URLSearchParams(window.location.search).has("icp-preview")
   );
   const [toast, setToast] = useState<string | null>(null);
 
@@ -89,6 +93,7 @@ export const App = () => {
   );
 
   if (!state) return null;
+  if (icpPreview) return <IcpRevealPreview onExit={() => setIcpPreview(false)} />;
   if (designPreview) return <SubscriptionDesignPreview onExit={() => setDesignPreview(false)} />;
   const ws = state.workspaces.find((w) => w.id === state.activeId);
   if (!ws?.setupDone)

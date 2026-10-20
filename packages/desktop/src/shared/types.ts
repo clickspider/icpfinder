@@ -98,6 +98,15 @@ export interface ActionResult {
   at: string;
 }
 
+export interface IcpDraft {
+  title: string;
+  tag: string;
+  fit: string;
+  buyer: string;
+  signal: string;
+  skip: string;
+}
+
 export interface Icp {
   id: string;
   name: string;
@@ -238,6 +247,7 @@ export interface IcpApi {
   readProduct(url: string): Promise<State>;
   updateProduct(patch: Partial<Product>): Promise<State>;
   findIcps(feedback?: string): Promise<State>;
+  addIcp(draft: IcpDraft): Promise<State>;
   saveScoring(patch: Partial<import("./scoring").Scoring> | null): Promise<State>;
   ideaFinish(description: string): Promise<State>;
   updateCard(
