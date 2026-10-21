@@ -4,7 +4,16 @@
 
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { app, BrowserWindow, dialog, ipcMain, safeStorage, session, shell } from "electron";
+import {
+  app,
+  BrowserWindow,
+  clipboard,
+  dialog,
+  ipcMain,
+  safeStorage,
+  session,
+  shell,
+} from "electron";
 import {
   type CompanyFacts,
   companiesForLinkedIn,
@@ -863,6 +872,9 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
     c.reach = await findReach(c);
     c.reachAt = new Date().toISOString();
     return commit();
+  },
+  copyText: (text: string) => {
+    if (typeof text === "string") clipboard.writeText(text);
   },
   openExternal: (url: string) => {
     if (/^https:\/\//.test(url)) void shell.openExternal(url);

@@ -57,7 +57,7 @@ export function ReachCard({
   const searches = reachSearches(c.name, person, new Set(links.map((l) => l.kind)));
   const open = (url: string) => {
     if (url.startsWith("mailto:")) {
-      void navigator.clipboard.writeText(url.slice(7));
+      void api().copyText(url.slice(7));
       setCopied(url);
       return;
     }

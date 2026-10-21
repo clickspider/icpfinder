@@ -418,7 +418,7 @@ export const CompanyView = ({
       void api().runAction(icpId, c.domain, id).then(onState);
   };
   const copy = (what: string, t: string) => {
-    void navigator.clipboard.writeText(t);
+    void api().copyText(t);
     setCopied(what);
     setTimeout(() => setCopied(null), 1500);
   };
