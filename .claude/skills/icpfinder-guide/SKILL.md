@@ -124,6 +124,18 @@ Button copy must match behavior. Going to the dashboard does not automatically s
 
 This is a writing contract for generated content, not a set of static sample sentences.
 
+**How many profiles** (decided 2026-10-21, from gtmskills icp-builder and outbound-strategy): 1 to 3, never padded to three. A profile is new only with a different buyer, a different reason to buy, or a different message. The same buyer that differs only in why-now (about to launch, tried a tool, priced out of an alternative) is ONE profile, with those moments as its signals. The results page centres 1 or 2 cards at the 3-card width.
+
+**Hunting rules** (decided 2026-10-21, from gtmskills):
+- A company that SELLS what the user sells is a competitor and a hard gate (score 0, never researched). A company that only USES a competitor's tool stays a lead.
+- A hunt runs at most 2 rounds and stops early when a round adds no new strong fit; it then says the gap ("Found 1 of 3 strong fits…") instead of searching on.
+- Must-haves and signals must be visible in public data, for many companies, today. No private facts (revenue, internal tools, what someone pastes into an AI chat).
+- A signal counts only with its EVENT date, not the article date. Undated = unconfirmed. Newer signals score higher inside the window.
+- The check step looks for proof that the signal does NOT mean need (a false positive) and then does not count it.
+- The next search uses the user's approved companies as "more like these" and the rejected ones as "not like these".
+- Lean by default, for $20 Claude or Codex plans: 10 candidates per round, at most 6 web searches in the search step (no site visits there), at most 4 searches or page opens per company check, and a round stops checking once 5 strong fits are in. A timed-out AI call is never retried.
+- Equal scores: the company the user can reach (someone they know, a LinkedIn page, a found email) ranks first.
+
 Each profile needs:
 1. Relevant characteristics and a recognizable group name.
 2. A distinct explanation of how that group could benefit from this user's offer.

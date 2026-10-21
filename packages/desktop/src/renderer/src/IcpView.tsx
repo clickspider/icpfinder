@@ -209,6 +209,8 @@ const Row = ({
           <Spinner />
         ) : c.status === "done" ? (
           <span className="pill p-green">✓ {p} proven</span>
+        ) : c.status === "candidate" ? (
+          <span className="pill">Not researched</span>
         ) : (
           <span className="pill p-red">failed</span>
         )}
@@ -454,9 +456,10 @@ const WayIn = ({
             <button
               key={`${p.name}|${p.company}`}
               type="button"
-              className="btn wayin-person"
+              className={`btn wayin-person ${p.url ? "" : "nolink"}`}
+              disabled={!p.url}
               onClick={() => p.url && void api().openExternal(p.url)}
-              title={p.url ? "Open on LinkedIn" : undefined}
+              title={p.url ? `Open ${p.name} on LinkedIn` : "No profile link in your export"}
             >
               <span className="wayin-av">{initial(p.name)}</span>
               <span style={{ flex: 1, minWidth: 0 }}>
@@ -506,6 +509,10 @@ export const IcpView = ({
   const icp = ws.icps.find((i) => i.id === icpId);
   if (!icp) return null;
   const bar = scoringOf(ws.scoring).bar;
+  const reach = (c: Company) =>
+    (c.warm?.length ? 2 : 0) +
+    (c.linkedin ? 1 : 0) +
+    (c.actions?.findEmail?.status === "done" ? 1 : 0);
   const hidden =
     icp.companies.filter(
       (c) => (c.match ?? 0) > 0 && (c.match ?? 0) < bar && c.approval !== "rejected"
@@ -515,7 +522,9 @@ export const IcpView = ({
     .sort(
       (a, b) =>
         Number(b.approval === "approved") - Number(a.approval === "approved") ||
-        (b.match ?? 0) - (a.match ?? 0)
+        (b.match ?? 0) - (a.match ?? 0) ||
+        // Equal fit: the one you can reach (someone you know, a LinkedIn page, a found email) first.
+        reach(b) - reach(a)
     );
   const rejected = icp.companies.filter((c) => c.approval === "rejected").length;
   const crit = icp.criteria;
@@ -568,11 +577,15 @@ export const IcpView = ({
             </div>
           )}
         </div>
-        <button type="button" className="primary btn nodrag" disabled={icp.sourcing} onClick={hunt}>
+        <button
+          type="button"
+          className={`btn nodrag ${icp.sourcing ? "stop-btn" : "primary"}`}
+          onClick={() => (icp.sourcing ? void api().stopHunt(icp.id).then(onState) : hunt())}
+        >
           {icp.sourcing ? (
             <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
               <Spinner />
-              Hunting…
+              Stop hunting
             </span>
           ) : icp.hunted ? (
             "Find more companies"
@@ -584,7 +597,11 @@ export const IcpView = ({
       <ProfileEditor key={icp.id} icp={icp} onState={onState} />
 
       <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-        <section className="panel" style={{ flex: 1.6, overflow: "hidden" }} aria-label="Companies">
+        <section
+          className="panel"
+          style={{ flex: "1.6 1 0", minWidth: 0, overflow: "hidden" }}
+          aria-label="Companies"
+        >
           <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "14px 16px" }}>
             <h2 style={{ margin: 0, fontSize: 15 }}>Companies</h2>
             <div style={{ fontSize: 12, color: "var(--faint)" }}>
@@ -651,7 +668,7 @@ export const IcpView = ({
               title="Snap! No strong fits yet"
               text={
                 icp.lastHunt
-                  ? `Checked ${icp.lastHunt.checked} in the last search. The ICP got sharper.`
+                  ? `Checked ${icp.lastHunt.checked} in the last search. ${icp.lastHunt.gap ?? "The ICP got sharper."}`
                   : "The ICP gets sharper each round."
               }
               cta="Search again"
@@ -674,7 +691,14 @@ export const IcpView = ({
 
         <aside
           className="panel"
-          style={{ flex: 1, padding: 16, display: "flex", flexDirection: "column", gap: 12 }}
+          style={{
+            flex: "1 1 0",
+            minWidth: 0,
+            padding: 16,
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+          }}
         >
           {(shown.length > 0 || contacts.length > 0) && (
             <WayIn

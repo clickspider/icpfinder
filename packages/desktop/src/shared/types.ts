@@ -69,6 +69,8 @@ export interface Contact {
 export type CompanyStatus = "candidate" | "queued" | "researching" | "done" | "failed";
 
 export interface Company {
+  /** A LinkedIn profile or company page the founder pasted (CRM field). */
+  linkedin?: string;
   /** People the founder knows here, from their own network export. */
   warm?: Contact[];
   /** Score inputs kept so a new matching setup can re-score without new searches. */
@@ -152,7 +154,14 @@ export interface Icp {
   /** The live (or last) hunt, step by step, for the progress panel. */
   hunt?: HuntProgress;
   /** How the last hunt ended, so an empty list can say why. */
-  lastHunt?: { at: string; checked: number; passed: number; error?: string };
+  lastHunt?: {
+    at: string;
+    checked: number;
+    passed: number;
+    error?: string;
+    /** Why the hunt stopped short of the target, in plain words. */
+    gap?: string;
+  };
   companies: Company[];
 }
 
@@ -290,10 +299,13 @@ export interface IcpApi {
   updateCriteria(icpId: string, criteria: IcpCriteria): Promise<State>;
   huntIcp(icpId: string): Promise<State>;
   researchCompany(icpId: string, domain: string): Promise<State>;
+  stopHunt(icpId: string): Promise<State>;
+  stopResearch(icpId: string, domain: string): Promise<State>;
   approveCompany(icpId: string, domain: string, ok: boolean): Promise<State>;
   runAction(icpId: string, domain: string, action: ActionId): Promise<State>;
   watchNow(icpId: string, domain: string): Promise<State>;
   markSeen(icpId: string, domain: string): Promise<State>;
+  saveLinkedIn(icpId: string, domain: string, url: string | null): Promise<State>;
   openExternal(url: string): Promise<void>;
   newWorkspace(): Promise<State>;
   switchWorkspace(id: string): Promise<State>;
@@ -306,6 +318,8 @@ export interface IcpApi {
   agentAnswer(ok: boolean, reason?: string): Promise<void>;
   agentBounds(rect: { x: number; y: number; width: number; height: number } | null): Promise<void>;
   agentCurrent(): Promise<AgentRun | null>;
+  /** A small live picture of the agent's browser, as a data URL. */
+  agentThumb(): Promise<string | null>;
   onAgent(cb: (r: AgentRun | null) => void): () => void;
 }
 

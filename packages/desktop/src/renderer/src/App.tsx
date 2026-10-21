@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from "react";
 import type { State } from "../../shared/types";
-import { AgentView } from "./AgentView";
+import { AgentMini, AgentView } from "./AgentView";
 import { CompanyView } from "./CompanyView";
 import { ConnectorsView } from "./Connectors";
 import { IcpView } from "./IcpView";
@@ -32,6 +32,11 @@ export const App = () => {
   const [view, setView] = useState<View | null>(null);
 
   const [toast, setToast] = useState<string | null>(null);
+  // The live agent's screen title, so the mini window reopens the same session.
+  const [agentTitle, setAgentTitle] = useState("Claude in your browser");
+  useEffect(() => {
+    if (view?.kind === "agent") setAgentTitle(view.title);
+  }, [view]);
 
   useEffect(() => {
     void api().getState().then(setState);
@@ -169,6 +174,13 @@ export const App = () => {
           />
         )}
       </main>
+      {current?.kind !== "agent" && (
+        <AgentMini
+          onOpen={() =>
+            setView({ kind: "agent", title: agentTitle, back: current ?? { kind: "product" } })
+          }
+        />
+      )}
       {toastEl}
     </div>
   );

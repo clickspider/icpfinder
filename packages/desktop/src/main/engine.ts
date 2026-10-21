@@ -11,6 +11,7 @@ import { type ChildProcess, execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { htmlToText, researchAccount, safeFetch } from "@icpfinder/core";
 import { HunterEmailProvider, type LlmProvider, parseCliResult } from "@icpfinder/providers";
+import { emailsIn, pickEmail } from "../shared/emails";
 import {
   type CompanyFacts,
   INDUSTRIES,
@@ -79,23 +80,28 @@ export const detectAi = async (): Promise<AiTool[]> => {
 
 /** Which workspace the current async job belongs to (set with jobs.run). */
 export const jobs = new AsyncLocalStorage<string>();
+/** One hunt or research inside a workspace, so the founder can stop just that one. */
+export const jobKeys = new AsyncLocalStorage<string>();
 const children = new Map<string, Set<ChildProcess>>();
 const paused = new Set<string>();
+const keysNow = (): string[] =>
+  [jobs.getStore(), jobKeys.getStore()].filter((k): k is string => Boolean(k));
 
 export const track = (child: ChildProcess): void => {
-  const ws = jobs.getStore();
-  if (!ws) return;
-  if (paused.has(ws)) {
+  const keys = keysNow();
+  if (keys.some((k) => paused.has(k))) {
     child.kill("SIGTERM");
     return;
   }
-  const set = children.get(ws) ?? new Set();
-  set.add(child);
-  children.set(ws, set);
-  child.on("close", () => set.delete(child));
+  for (const k of keys) {
+    const set = children.get(k) ?? new Set();
+    set.add(child);
+    children.set(k, set);
+    child.on("close", () => set.delete(child));
+  }
 };
 
-/** Stop every Claude run for a workspace, and refuse new ones until resumed. */
+/** Stop every Claude run for a workspace (or one job key), and refuse new ones until resumed. */
 export const pauseWorkspace = (wsId: string): void => {
   paused.add(wsId);
   for (const controller of controllers.get(wsId) ?? []) controller.abort();
@@ -183,24 +189,24 @@ export const createLlm = async (
 
 const llm = async (lightweight = false): Promise<LlmProvider> => {
   const controller = new AbortController();
-  const ws = jobs.getStore();
+  const keys = keysNow();
   const inner = await createLlm(lightweight, controller.signal);
   return {
     name: inner.name,
     stub: false,
     generate: async (input) => {
-      if (ws && paused.has(ws)) throw new Error("AI request stopped.");
-      if (ws) {
-        const set = controllers.get(ws) ?? new Set<AbortController>();
+      if (keys.some((k) => paused.has(k))) throw new Error("AI request stopped.");
+      for (const k of keys) {
+        const set = controllers.get(k) ?? new Set<AbortController>();
         set.add(controller);
-        controllers.set(ws, set);
+        controllers.set(k, set);
       }
       try {
         return await inner.generate(input);
       } finally {
-        if (ws) {
-          controllers.get(ws)?.delete(controller);
-          if (!controllers.get(ws)?.size) controllers.delete(ws);
+        for (const k of keys) {
+          controllers.get(k)?.delete(controller);
+          if (!controllers.get(k)?.size) controllers.delete(k);
         }
       }
     },
@@ -334,6 +340,66 @@ const ACTION_PROMPTS: Record<
   },
 };
 
+const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)*\.[a-z]{2,}/i;
+
+/** Pages where companies usually show an address; legal pages must name a contact. */
+const SITE_PAGES = [
+  "",
+  "/contact",
+  "/contact-us",
+  "/about",
+  "/team",
+  "/privacy",
+  "/privacy-policy",
+  "/terms",
+  "/imprint",
+];
+
+/** Emails on the company's own site, from raw HTML (mailto links count). Stops at the first good one. */
+const siteEmail = async (
+  c: Company,
+  person?: string
+): Promise<{ email: string; page: string } | null> => {
+  const all: string[] = [];
+  let page = "";
+  for (const path of SITE_PAGES) {
+    const url = `https://${c.domain}${path}`;
+    const res = await safeFetch(url, {
+      timeoutMs: 8_000,
+      maxRedirects: 5,
+      maxBytes: 3_000_000,
+    }).catch(() => null);
+    if (!res || res.status >= 400) continue;
+    const found = emailsIn(res.body);
+    if (found.length && !page) page = url;
+    all.push(...found);
+    // Stop early once the person's own address or a direct inbox is found.
+    const best = pickEmail(all, c.domain, person);
+    if (best && !/^(support|help|info|mail|office)@/.test(best)) return { email: best, page: url };
+  }
+  const best = pickEmail(all, c.domain, person);
+  return best ? { email: best, page } : null;
+};
+
+/** The address to write to: the company's own website first (free), then Hunter if connected. */
+const findAddress = async (c: Company, hunterKey: string): Promise<string> => {
+  const person = bestPerson(c);
+  const site = await siteEmail(c, person?.name);
+  if (site) return `${site.email} · from their website (${site.page.replace(/^https:\/\//, "")})`;
+  if (!hunterKey)
+    throw new Error("No email on their website. Connect Hunter in Connectors to search more.");
+  if (!person) throw new Error("No email on their website, and no contact person found yet");
+  const [firstName, ...rest] = person.name.split(" ");
+  const res = await new HunterEmailProvider({ apiKey: hunterKey }).findEmail({
+    domain: c.domain,
+    firstName: firstName ?? person.name,
+    lastName: rest.join(" "),
+  });
+  return res.email
+    ? `${res.email} · confidence ${res.confidence}${res.score !== null ? ` (${res.score})` : ""} · ${person.name}`
+    : `No email on their website, and Hunter found none for ${person.name} at ${c.domain}.`;
+};
+
 /** Next-step actions that Claude (or Hunter) runs for one company. */
 export const runCompanyAction = async (
   ws: Workspace,
@@ -344,22 +410,13 @@ export const runCompanyAction = async (
   const person = bestPerson(c);
   if (action === "gmailDraft") {
     const email = c.actions?.email?.text ?? (await runCompanyAction(ws, c, "email", hunterKey));
-    const found = c.actions?.findEmail?.text?.match(/[\w.+-]+@[\w-]+\.[\w.-]+/)?.[0];
+    // Use the address found before; if none, look for one now (website first, then Hunter).
+    const found =
+      c.actions?.findEmail?.text?.match(EMAIL)?.[0] ??
+      (await findAddress(c, hunterKey).catch(() => "")).match(EMAIL)?.[0];
     return gmailDraft(c, email, found);
   }
-  if (action === "findEmail") {
-    if (!hunterKey) throw new Error("Connect Hunter in Connectors first");
-    if (!person) throw new Error("No contact person found yet");
-    const [firstName, ...rest] = person.name.split(" ");
-    const res = await new HunterEmailProvider({ apiKey: hunterKey }).findEmail({
-      domain: c.domain,
-      firstName: firstName ?? person.name,
-      lastName: rest.join(" "),
-    });
-    return res.email
-      ? `${res.email} · confidence ${res.confidence}${res.score !== null ? ` (${res.score})` : ""} · ${person.name}`
-      : `Hunter found no email for ${person.name} at ${c.domain}.`;
-  }
+  if (action === "findEmail") return findAddress(c, hunterKey);
   const spec = ACTION_PROMPTS[action];
   const res = await (await llm()).generate({
     system: spec.system,
@@ -433,7 +490,7 @@ export const regateIcp = async (p: Product, icp: Icp): Promise<IcpCriteria | nul
   const k = icp.card;
   const res = await (await llm()).generate({
     system:
-      'Derive research criteria from the reviewed customer profile, without inventing observations. Use the seller overview as context. For business profiles use publicly checkable company characteristics; for consumer profiles use relevant circumstances and needs, never force company size or professional roles. mustHave: 3-5 supported positive fit criteria; signals: possible situations to investigate later, not observed intent; dealBreakers: [] because the profile fit concern is advisory, not an automatic exclusion. Output strict JSON: {"mustHave":[],"signals":[],"dealBreakers":[]}',
+      'Derive research criteria from the reviewed customer profile, without inventing observations. Use the seller overview as context. For business profiles use publicly checkable company characteristics; for consumer profiles use relevant circumstances and needs, never force company size or professional roles. mustHave: 3-5 supported positive fit criteria; signals: possible situations to investigate later, not observed intent. Every mustHave and signal must be visible in public data, for many companies, today (website, team page, pricing page, job posts, launch posts, funding news, public social posts); never use private facts such as revenue, internal tools, or what someone pastes into an AI chat; dealBreakers: [] because the profile fit concern is advisory, not an automatic exclusion. Output strict JSON: {"mustHave":[],"signals":[],"dealBreakers":[]}',
     prompt: `For this later research-criteria task, derive only supported positive qualifications and possible signals. The fit concern is advisory; do not turn it into a hard exclusion.\nPRODUCT: ${sellerSummary(p)}\n\nPROFILE: ${icp.name} (${icp.profileKind ?? "business"})\nCARD:\n- Who to talk to: ${k.buyer.text}\n- Profile characteristics: ${k.company.text}\n- Why now: ${k.trigger.text}\n- May not be a fit if: ${k.skip.text}`,
     format: "json",
     timeoutMs: 120_000,
@@ -456,7 +513,7 @@ export const sharpenIcps = async (p: Product, icps: Icp[]): Promise<Icp[]> => {
   if (icps.length === 0) return icps;
   const res = await (await llm()).generate({
     system:
-      'You turn rough buyer personas into a precise ICP that a web researcher can verify. For each ICP give: mustHave = 3-5 yes/no gates, each checkable from ONE named public source, written as "<fact> (source: <team page|pricing page|funding news|job posts|product site>)", e.g. "2-20 people (source: team page)"; avoid internal facts like revenue. signals = 3-5 observable triggers that show they need the product NOW (ask: what must be true in this company for it to need this today?), each short. dealBreakers = 2-4 facts that rule a company out, incl. using a direct competitor. Specific, not broad: a precise ICP still has 100+ real companies. Also give card = the 4 calls a founder reads: buyer (who signs, one role), company (stage + type + size in one line), trigger (the one public sign they need it now), skip (the main deal-breakers). Each: text (max 8 words), why (one plain, readable sentence, max 14 words, that a founder understands at once; say the fact behind it in normal words, e.g. "Your pricing is $150 a call, so a founder can pay it alone."; never name a method, a page type or a source), source (where the why comes from: "pricing page", "homepage", "your product" or one gtmskills method: "gtmskills: icp-matrix-builder", "gtmskills: icp-builder", "gtmskills: website-to-signals", "gtmskills: market-finder"). Output strict JSON: {"icps":[{"id":"","mustHave":[],"signals":[],"dealBreakers":[],"card":{"buyer":{"text":"","why":"","source":""},"company":{},"trigger":{},"skip":{}}}]}',
+      'You turn rough buyer personas into a precise ICP that a web researcher can verify. For each ICP give: mustHave = 3-5 yes/no gates, each checkable from ONE named public source, written as "<fact> (source: <team page|pricing page|funding news|job posts|product site>)", e.g. "2-20 people (source: team page)"; avoid internal facts like revenue, internal tools or private habits. signals = 3-5 observable triggers, each visible in public data for many companies today that show they need the product NOW (ask: what must be true in this company for it to need this today?), each short. dealBreakers = 2-4 facts that rule a company out, incl. using a direct competitor. Specific, not broad: a precise ICP still has 100+ real companies. Also give card = the 4 calls a founder reads: buyer (who signs, one role), company (stage + type + size in one line), trigger (the one public sign they need it now), skip (the main deal-breakers). Each: text (max 8 words), why (one plain, readable sentence, max 14 words, that a founder understands at once; say the fact behind it in normal words, e.g. "Your pricing is $150 a call, so a founder can pay it alone."; never name a method, a page type or a source), source (where the why comes from: "pricing page", "homepage", "your product" or one gtmskills method: "gtmskills: icp-matrix-builder", "gtmskills: icp-builder", "gtmskills: website-to-signals", "gtmskills: market-finder"). Output strict JSON: {"icps":[{"id":"","mustHave":[],"signals":[],"dealBreakers":[],"card":{"buyer":{"text":"","why":"","source":""},"company":{},"trigger":{},"skip":{}}}]}',
     prompt: `PRODUCT: ${sellerSummary(p)}\n\nICPS:\n${icps.map((i) => `- id=${i.id} | ${i.name} | ${i.industry} | ${i.size} | pain: ${i.pain}`).join("\n")}`,
     format: "json",
     timeoutMs: 180_000,
@@ -492,7 +549,9 @@ export const sharpenIcps = async (p: Product, icps: Icp[]): Promise<Icp[]> => {
   }
 };
 
-const CANDIDATES = 15;
+const CANDIDATES = 10;
+/** A round stops checking candidates once this many strong fits are in. */
+const ENOUGH_STRONG = 5;
 const PLATFORM_HOSTS =
   /(^|\.)(github\.(com|io)|vercel\.app|netlify\.app|herokuapp\.com|notion\.site|substack\.com|medium\.com|linkedin\.com|ycombinator\.com|producthunt\.com|twitter\.com|x\.com|wordpress\.com|webflow\.io|framer\.(app|website)|carrd\.co)$/;
 
@@ -522,12 +581,21 @@ const findCandidates = async (
   const c = icp.criteria;
   const exclude = [ws.product.url, ...icp.companies.map((x) => x.domain)].join(", ");
   const posts = await socialPosts(icp, windowDays).catch(() => "");
+  // The founder's clicks are the best data before there are customers: search for more like the approved.
+  const picked = (a: "approved" | "rejected") =>
+    icp.companies
+      .filter((x) => x.approval === a)
+      .slice(0, 8)
+      .map((x) => `${x.name} (${x.domain})${x.matchWhy ? `: ${x.matchWhy.slice(0, 120)}` : ""}`)
+      .join("\n");
+  const liked = picked("approved");
+  const disliked = picked("rejected");
   step("search", `Claude searches the web for ${candidates} companies`);
   const res = await (await llm()).generate({
     system:
       `You are an SDR researcher. If FRESH POSTS are given, start there: they are real posts fetched just now from social sites; turn the ones that fit into companies (find each company's own domain).` +
-      ` You are an SDR researcher. Use web search in tiers: first the sources where these signals show up (funding news, launch platforms, job boards, founder posts); then directories and "best X tools" roundups only if the first tier gives fewer than 10. Run at least 2 different queries per buying signal. Find ${candidates} REAL companies with their own website domain that look like this ICP and show a buying signal from the last ${windowDays} days. No GitHub repos or hosted subdomains. Never invent companies, URLs or dates. Output strict JSON: {"companies":[{"name":"","domain":"acme.com","signal":"one sentence","signalUrl":"","signalDate":"YYYY-MM-DD or empty"}]}`,
-    prompt: `SELLER: ${sellerSummary(ws.product)}\n\nICP: ${icp.name} (${icp.industry}, ${icp.size})\nPain: ${icp.pain}\nMust-haves: ${c?.mustHave.join("; ") || "-"}\nBuying signals: ${c?.signals.join("; ") || icp.signals.join("; ")}\nDeal-breakers: ${c?.dealBreakers.join("; ") || "-"}\n\nSkip: ${exclude}${posts ? `\n\nFRESH POSTS:\n${posts}` : ""}\nToday: ${new Date().toISOString().slice(0, 10)}`,
+      ` You are an SDR researcher. Use web search in tiers: first the sources where these signals show up (funding news, launch platforms, job boards, founder posts); then directories and "best X tools" roundups only if the first tier gives fewer than 10. Run at most 6 web searches in total, each aimed at a different buying signal; stop searching once you have enough companies. Do not open company websites: the next step checks every company. If the FRESH POSTS already give enough companies, do not search at all. Find ${candidates} REAL companies with their own website domain that look like this ICP and show a buying signal from the last ${windowDays} days. No GitHub repos or hosted subdomains. Never invent companies, URLs or dates. Never return the SELLER itself or a competitor: a company whose product a buyer could use INSTEAD of the SELLER's offer (same job, even if free, open source or built differently); a company that only USES such a tool is fine. signalDate = the date the EVENT happened (launch, hire, raise, post), never the date an article or list was published; leave it empty if the event date is unclear. If MORE LIKE THESE is given, the founder approved those: find companies like them. If NOT LIKE THESE is given, the founder rejected those: avoid what they have in common. Output strict JSON: {"companies":[{"name":"","domain":"acme.com","signal":"one sentence","signalUrl":"","signalDate":"YYYY-MM-DD or empty"}]}`,
+    prompt: `SELLER: ${sellerSummary(ws.product)}\n\nICP: ${icp.name} (${icp.industry}, ${icp.size})\nPain: ${icp.pain}\nMust-haves: ${c?.mustHave.join("; ") || "-"}\nBuying signals: ${c?.signals.join("; ") || icp.signals.join("; ")}\nDeal-breakers: ${c?.dealBreakers.join("; ") || "-"}\n\nSkip: ${exclude}${liked ? `\n\nMORE LIKE THESE:\n${liked}` : ""}${disliked ? `\n\nNOT LIKE THESE:\n${disliked}` : ""}${posts ? `\n\nFRESH POSTS:\n${posts}` : ""}\nToday: ${new Date().toISOString().slice(0, 10)}`,
     format: "json",
     grounding: true,
     timeoutMs: 420_000,
@@ -578,7 +646,7 @@ const qualify = async (
 ): Promise<Company> => {
   const c = icp.criteria;
   const res = await (await llm()).generate({
-    system: `You check ONE company against an ICP. Open the company website and search the web briefly. For each must-have answer yes, no or unknown with a short evidence line (no means you found proof it does NOT fit). Confirm whether the buying signal is real and recent. Name a deal-breaker only if you found proof. Never guess. Output strict JSON: {"checks":[{"criterion":"","verdict":"yes|no|unknown","evidence":""}],"signalConfirmed":true,"signalDate":"YYYY-MM-DD or empty","dealBreaker":null,"oneLine":"why this company fits, in plain words"}`,
+    system: `You check ONE company against an ICP. Open the company website and search the web briefly: use at most 4 web searches or page opens in total. For each must-have answer yes, no or unknown with a short evidence line (no means you found proof it does NOT fit). Confirm whether the buying signal is real and recent; signalDate is the date the event happened, not when a page about it was published, and empty if unclear. Then look for proof that the signal does NOT mean they need the SELLER's product now (for example they already have a team or a tool doing this job); if you find it, set signalConfirmed false and say why in falsePositive. competitor = one short line if a buyer could use this company's product INSTEAD of the SELLER's offer (same job, even if it is free, open source or built differently), else empty; a company that only USES such a tool is not a competitor. Decide this first, from the company's own site. Name a deal-breaker only if you found proof. Never guess. Output strict JSON: {"checks":[{"criterion":"","verdict":"yes|no|unknown","evidence":""}],"signalConfirmed":true,"signalDate":"YYYY-MM-DD or empty","falsePositive":"","competitor":"","dealBreaker":null,"oneLine":"why this company fits, in plain words"}`,
     prompt: `COMPANY: ${cand.name} (${cand.domain})\nCLAIMED SIGNAL: ${cand.signal ?? "-"} ${cand.signalUrl ?? ""} ${cand.signalDate ?? ""}\n\nMUST-HAVES:\n${(c?.mustHave ?? []).map((m) => `- ${m}`).join("\n") || `- matches: ${icp.name}`}\nDEAL-BREAKERS:\n${(c?.dealBreakers ?? []).map((m) => `- ${m}`).join("\n") || "-"}\nSELLER (to spot competitors): ${sellerSummary(ws.product)}`,
     format: "json",
     grounding: true,
@@ -589,8 +657,13 @@ const qualify = async (
     signalConfirmed?: boolean;
     signalDate?: string;
     dealBreaker?: string | null;
+    falsePositive?: string;
+    competitor?: string;
     oneLine?: string;
   }>(res.text);
+  // A competitor is a hard gate: it can never score, whatever the checks say.
+  if (q.competitor?.trim()) q.dealBreaker = `Competitor: ${q.competitor.trim()}`;
+  const falsePositive = q.falsePositive?.trim();
   const checks = (q.checks ?? [])
     .filter((x) => x && typeof x.criterion === "string")
     .map((x) => ({
@@ -620,7 +693,7 @@ const qualify = async (
     match,
     matchWhy: q.dealBreaker
       ? `Deal-breaker: ${q.dealBreaker}`
-      : `${yes} of ${checks.length} must-haves confirmed${q.signalConfirmed ? " · signal confirmed" : ""}${q.oneLine ? ` · ${q.oneLine}` : ""}`,
+      : `${yes} of ${checks.length} must-haves confirmed${q.signalConfirmed ? (date ? " · signal confirmed" : " · signal has no event date, so it counts less") : falsePositive ? ` · signal not counted: ${falsePositive}` : ""}${q.oneLine ? ` · ${q.oneLine}` : ""}`,
     checks,
     signalConfirmed: Boolean(q.signalConfirmed),
     dealBreaker: q.dealBreaker || undefined,
@@ -642,15 +715,21 @@ export const sourceCompanies = async (
   onFound: (c: Company) => void = () => {}
 ): Promise<Company[]> => {
   const find = () =>
-    findCandidates(ws, icp, cfg.windowDays, cfg.candidates).catch(() => [] as Candidate[]);
+    findCandidates(ws, icp, cfg.windowDays, cfg.candidates).catch((e) => {
+      // A timed-out search is not cheap to repeat: say so and stop instead of retrying.
+      if (/timed out/.test(String(e))) throw new Error("The web search took too long. Try again.");
+      return [] as Candidate[];
+    });
   let cands = await find();
   // A web search run sometimes comes back empty or malformed; one retry is cheap.
   if (cands.length === 0) cands = await find();
   step("found", `Found ${cands.length} candidates`);
   const out: Company[] = [];
   let next = 0;
+  // Enough strong fits for one round: stop checking the rest to save the founder's AI usage.
+  const enough = () => out.filter((c) => (c.match ?? 0) >= cfg.bar).length >= ENOUGH_STRONG;
   const worker = async () => {
-    while (next < cands.length) {
+    while (next < cands.length && !enough()) {
       const cand = cands[next++];
       if (!cand) break;
       step("check", `Checking ${cand.name}`);
@@ -658,7 +737,7 @@ export const sourceCompanies = async (
         const co = await qualify(ws, icp, cand, cfg);
         step(
           (co.match ?? 0) >= cfg.bar ? "pass" : "skip",
-          `${co.name} · ${co.match ?? 0}`,
+          co.dealBreaker ? `${co.name} · ${co.dealBreaker}` : `${co.name} · ${co.match ?? 0}`,
           co.logo
         );
         if ((co.match ?? 0) > 0) {
@@ -666,7 +745,8 @@ export const sourceCompanies = async (
           onFound(co);
         }
       } catch {
-        // One failed check never stops the hunt.
+        // Stopped: leave quietly. Otherwise one failed check never stops the hunt.
+        if (keysNow().some((k) => paused.has(k))) return;
         step("skip", `${cand.name} · could not check`);
       }
     }

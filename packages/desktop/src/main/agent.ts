@@ -39,6 +39,8 @@ const READ_JS = `(() => {
   return { title: document.title, url: location.href, text, elements: els.slice(0, 150).join('\\n') };
 })()`;
 
+const HIDDEN_OK = { stayHidden: true, stayAwake: true };
+
 export class BrowserAgent {
   readonly view: WebContentsView;
   private server: Server | null = null;
@@ -55,7 +57,12 @@ export class BrowserAgent {
     private readonly claudeBin: () => Promise<string>
   ) {
     this.view = new WebContentsView({
-      webPreferences: { partition: "persist:icpfinder-agent", sandbox: true },
+      // No background throttling: the agent keeps working while the founder is on another screen.
+      webPreferences: {
+        partition: "persist:icpfinder-agent",
+        sandbox: true,
+        backgroundThrottling: false,
+      },
     });
     this.view.setVisible(false);
     void this.view.webContents.loadURL("about:blank");
@@ -75,6 +82,13 @@ export class BrowserAgent {
       height: Math.round(b.height),
     });
     this.view.setVisible(true);
+  }
+
+  /** Small live picture for the mini window, taken even while the panel is hidden. */
+  async thumb(): Promise<string | null> {
+    if (!this.run) return null;
+    const img = await this.view.webContents.capturePage(undefined, HIDDEN_OK).catch(() => null);
+    return img && !img.isEmpty() ? img.resize({ width: 480 }).toDataURL() : null;
   }
 
   current(): AgentRun | null {
@@ -161,7 +175,7 @@ export class BrowserAgent {
       }
       case "browser_screenshot": {
         this.step("look", "Looked at the page");
-        const img = await wc.capturePage();
+        const img = await wc.capturePage(undefined, HIDDEN_OK);
         const png = img.resize({ width: Math.min(1200, img.getSize().width) }).toPNG();
         return {
           content: [{ type: "image", data: png.toString("base64"), mimeType: "image/png" }],

@@ -10,6 +10,7 @@ import {
   companiesForLinkedIn,
   companiesToCheck,
   companiesToSearch,
+  LINKEDIN,
   normCompany,
 } from "../shared/people";
 import { defaultModel, isProvider } from "../shared/provider-models";
@@ -38,6 +39,7 @@ import {
   findIcps,
   huntSteps,
   isPaused,
+  jobKeys,
   jobs,
   linkedinFacts,
   parseConnections,
@@ -100,11 +102,16 @@ const work = async (job: { wsId: string; icpId: string; domain: string }): Promi
   let next = company;
   try {
     next = await jobs.run(ws.id, () =>
-      withTask("Research", () => researchCompany(ws, company, scoringOf(ws.scoring).windowDays))
+      jobKeys.run(researchKey(job), () =>
+        withTask("Research", () => researchCompany(ws, company, scoringOf(ws.scoring).windowDays))
+      )
     );
   } catch (err) {
     // Stopped by a re-calibrate: wait in the queue, run again afterwards.
     if (isPaused(ws.id)) next = { ...company, status: "queued" };
+    // Stopped by the founder: back to "not researched yet", no error.
+    else if (isPaused(researchKey(job)))
+      next = { ...company, status: "candidate", error: undefined };
     else
       next = {
         ...company,
@@ -112,6 +119,7 @@ const work = async (job: { wsId: string; icpId: string; domain: string }): Promi
         error: err instanceof Error ? err.message : String(err),
       };
   }
+  resumeWorkspace(researchKey(job));
   const now = locate(job);
   if (now.icp && now.idx >= 0)
     now.icp.companies[now.idx] = { ...now.icp.companies[now.idx], ...next };
@@ -138,6 +146,10 @@ const pump = (): void => {
     });
   }
 };
+
+const researchKey = (job: { icpId: string; domain: string }): string =>
+  `research:${job.icpId}:${job.domain}`;
+const huntKey = (icpId: string): string => `hunt:${icpId}`;
 
 const enqueue = (wsId: string, icpId: string, domains: string[]): void => {
   for (const domain of domains) {
@@ -170,6 +182,7 @@ const huntIcp = async (icpId: string): Promise<State> => {
   let checked = 0;
   let passed = 0;
   let failure: string | undefined;
+  let gap: string | undefined;
   const now = () => new Date().toISOString();
   icp.hunt = {
     startedAt: now(),
@@ -211,71 +224,91 @@ const huntIcp = async (icpId: string): Promise<State> => {
     updateDock();
   };
   return jobs.run(ws.id, () =>
-    huntSteps.run(report, () =>
-      withTask("Hunting", async () => {
-        try {
-          if (icp.card?.edited) {
-            const gates = await regateIcp(ws.product, icp);
-            if (gates) icp.criteria = gates;
-            icp.card.edited = false;
-            icp.sourcingNote = "Searching the web for candidates…";
-            commit();
-          }
-          const cfg = scoringOf(ws.scoring);
-          for (let loop = 0; loop <= cfg.rounds; loop++) {
-            const batch: Company[] = [];
-            await sourceCompanies(ws, icp, cfg, (co) => {
-              co.warm = warmFor(co, state.contacts);
-              batch.push(co);
-              checked += 1;
-              if ((co.match ?? 0) >= cfg.bar) passed += 1;
-              // Weaker fits are kept but hidden, so a lower bar later shows them without a new search.
-              if (!icp.companies.some((x) => x.domain === co.domain)) icp.companies.push(co);
-              icp.sourcingNote = `Checked ${batch.length} companies · ${batch.filter((x) => (x.match ?? 0) >= cfg.bar).length} strong fits`;
+    jobKeys.run(huntKey(icpId), () =>
+      huntSteps.run(report, () =>
+        withTask("Hunting", async () => {
+          try {
+            if (icp.card?.edited) {
+              const gates = await regateIcp(ws.product, icp);
+              if (gates) icp.criteria = gates;
+              icp.card.edited = false;
+              icp.sourcingNote = "Searching the web for candidates…";
               commit();
-            });
-            const strong = icp.companies.filter(
-              (c) => (c.match ?? 0) >= cfg.bar && c.approval !== "rejected"
-            ).length;
-            if (strong >= TARGET_STRONG || loop === cfg.rounds || batch.length === 0) break;
-            icp.sourcingNote = "Too few strong matches. Sharpening the ICP from what failed…";
-            report("sharpen", "Too few strong fits. Sharpening one check");
-            const tuned = await refineCriteria(ws.product, icp, batch);
-            if (!tuned) break;
-            icp.criteria = tuned.criteria;
-            icp.refinements = [tuned.change, ...(icp.refinements ?? [])].slice(0, 5);
-            icp.sourcingNote = `ICP sharpened: ${tuned.change} Searching again…`;
-            commit();
-            report("sharpen", tuned.change);
-            if (icp.hunt) {
-              icp.hunt.round += 1;
-              icp.hunt.phase = "search";
-              icp.hunt.phaseAt = now();
             }
-            searchStart = Date.now();
+            const cfg = scoringOf(ws.scoring);
+            for (let loop = 0; loop <= cfg.rounds; loop++) {
+              const batch: Company[] = [];
+              await sourceCompanies(ws, icp, cfg, (co) => {
+                co.warm = warmFor(co, state.contacts);
+                batch.push(co);
+                checked += 1;
+                if ((co.match ?? 0) >= cfg.bar) passed += 1;
+                // Weaker fits are kept but hidden, so a lower bar later shows them without a new search.
+                if (!icp.companies.some((x) => x.domain === co.domain)) icp.companies.push(co);
+                icp.sourcingNote = `Checked ${batch.length} companies · ${batch.filter((x) => (x.match ?? 0) >= cfg.bar).length} strong fits`;
+                commit();
+              });
+              const strong = icp.companies.filter(
+                (c) => (c.match ?? 0) >= cfg.bar && c.approval !== "rejected"
+              ).length;
+              const newStrong = batch.filter((c) => (c.match ?? 0) >= cfg.bar).length;
+              if (strong >= TARGET_STRONG) break;
+              // Stop rule: never pad to hit a count. A round with no new strong fit, or the last
+              // round, ends the hunt and says why, instead of burning more searches.
+              if (loop === cfg.rounds || batch.length === 0 || (loop > 0 && newStrong === 0)) {
+                gap =
+                  batch.length === 0
+                    ? "The web search found no new companies."
+                    : `Found ${strong} of ${TARGET_STRONG} strong fits. ${newStrong === 0 ? "The last round added none, so the hunt stopped to save your AI usage." : "That was the last round."}`;
+                break;
+              }
+              icp.sourcingNote = "Too few strong matches. Sharpening the ICP from what failed…";
+              report("sharpen", "Too few strong fits. Sharpening one check");
+              const tuned = await refineCriteria(ws.product, icp, batch);
+              if (!tuned) break;
+              icp.criteria = tuned.criteria;
+              icp.refinements = [tuned.change, ...(icp.refinements ?? [])].slice(0, 5);
+              icp.sourcingNote = `ICP sharpened: ${tuned.change} Searching again…`;
+              commit();
+              report("sharpen", tuned.change);
+              if (icp.hunt) {
+                icp.hunt.round += 1;
+                icp.hunt.phase = "search";
+                icp.hunt.phaseAt = now();
+              }
+              searchStart = Date.now();
+            }
+          } catch (err) {
+            // Stopped on purpose (re-calibrate or Stop): not an error worth showing.
+            if (!isPaused(ws.id) && !isPaused(huntKey(icpId)))
+              failure = err instanceof Error ? err.message : String(err);
+          } finally {
+            const stopped = isPaused(huntKey(icpId));
+            resumeWorkspace(huntKey(icpId));
+            icp.sourcing = false;
+            icp.sourcingNote = undefined;
+            icp.lastHunt = { at: new Date().toISOString(), checked, passed, error: failure, gap };
+            commit();
+            updateDock();
+            if (stopped) {
+              // The founder pressed Stop: no notification, the companies found so far stay.
+            } else if (failure)
+              notify(`Hunt for ${icp.name} stopped`, "Open it to try again.", {
+                kind: "icp",
+                icpId,
+              });
+            else
+              notify(
+                `${icp.name}: ${passed} strong ${passed === 1 ? "fit" : "fits"} found`,
+                passed
+                  ? `${gap ? `${gap} ` : ""}Approve the ones that fit to start research.`
+                  : "The ICP got sharper. Search again.",
+                { kind: "icp", icpId }
+              );
           }
-        } catch (err) {
-          // Stopped on purpose (re-calibrate): not an error worth showing.
-          if (!isPaused(ws.id)) failure = err instanceof Error ? err.message : String(err);
-        } finally {
-          icp.sourcing = false;
-          icp.sourcingNote = undefined;
-          icp.lastHunt = { at: new Date().toISOString(), checked, passed, error: failure };
-          commit();
-          updateDock();
-          if (failure)
-            notify(`Hunt for ${icp.name} stopped`, "Open it to try again.", { kind: "icp", icpId });
-          else
-            notify(
-              `${icp.name}: ${passed} strong ${passed === 1 ? "fit" : "fits"} found`,
-              passed
-                ? "Approve the ones that fit to start research."
-                : "The ICP got sharper. Search again.",
-              { kind: "icp", icpId }
-            );
-        }
-        return state;
-      })
+          return state;
+        })
+      )
     )
   );
 };
@@ -743,6 +776,25 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
     }
     return commit();
   },
+  /** Stop one hunt; the companies it found so far stay. */
+  stopHunt: (icpId: string) => {
+    if (activeWorkspace(state)?.icps.some((i) => i.id === icpId && i.sourcing))
+      pauseWorkspace(huntKey(icpId));
+    return state;
+  },
+  /** Stop one company's research, or take it out of the queue. */
+  stopResearch: (icpId: string, domain: string) => {
+    const ws = activeWorkspace(state);
+    const c = ws?.icps.find((i) => i.id === icpId)?.companies.find((x) => x.domain === domain);
+    if (!ws || !c) return state;
+    const i = queue.findIndex((j) => j.wsId === ws.id && j.icpId === icpId && j.domain === domain);
+    if (i >= 0) {
+      queue.splice(i, 1);
+      c.status = "candidate";
+      commit();
+    } else if (c.status === "researching") pauseWorkspace(researchKey({ icpId, domain }));
+    return state;
+  },
   researchCompany: (icpId: string, domain: string) => {
     const ws = activeWorkspace(state);
     if (ws) enqueue(ws.id, icpId, [domain]);
@@ -792,6 +844,15 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
     for (const sig of c?.signals ?? []) sig.seen = true;
     return commit();
   },
+  saveLinkedIn: (icpId: string, domain: string, url: string | null) => {
+    const c = activeWorkspace(state)
+      ?.icps.find((i) => i.id === icpId)
+      ?.companies.find((x) => x.domain === domain);
+    const clean = url?.trim().replace(/^http:\/\//, "https://");
+    if (c && !clean) c.linkedin = undefined;
+    else if (c && clean && LINKEDIN.test(clean)) c.linkedin = clean;
+    return commit();
+  },
   openExternal: (url: string) => {
     if (/^https:\/\//.test(url)) void shell.openExternal(url);
   },
@@ -803,6 +864,7 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
   agentBounds: (rect: { x: number; y: number; width: number; height: number } | null) =>
     agent?.setBounds(rect),
   agentCurrent: () => agent?.current() ?? null,
+  agentThumb: () => agent?.thumb() ?? null,
   /** What re-calibrate would stop right now in the active workspace. */
   busyWork: () => busyWork(activeWorkspace(state)),
   recalibrate: async () => {

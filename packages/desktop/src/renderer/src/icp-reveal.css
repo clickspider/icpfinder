@@ -170,6 +170,15 @@
   gap: 18px;
   margin: 26px 0 16px;
 }
+/* 1 or 2 groups: centred, at the same card width as 3. */
+.ir-cards:has(> :only-child) {
+  grid-template-columns: minmax(0, calc((100% - 36px) / 3));
+  justify-content: center;
+}
+.ir-cards:has(> :nth-child(2):last-child) {
+  grid-template-columns: repeat(2, minmax(0, calc((100% - 36px) / 3)));
+  justify-content: center;
+}
 .ir-card {
   display: block;
   text-align: left;

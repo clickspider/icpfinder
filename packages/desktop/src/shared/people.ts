@@ -264,3 +264,22 @@ export const companiesForLinkedIn = (
   }
   return [...names.values()];
 };
+
+/** A real LinkedIn profile or company page, never a search. */
+export const LINKEDIN = /^https:\/\/([a-z]{2,3}\.)?linkedin\.com\/(in|company)\/[^\s/?#]+/i;
+
+/**
+ * Where "Open on LinkedIn" goes for a found company: the founder's own saved
+ * link first, then a profile the research proved. No match = not verified.
+ */
+export const linkedinFor = (c: {
+  linkedin?: string;
+  research?: { findings: Array<{ person?: { name: string; profileUrl?: string } }> };
+}): { url: string; who?: string } | null => {
+  if (c.linkedin && LINKEDIN.test(c.linkedin)) return { url: c.linkedin };
+  for (const f of c.research?.findings ?? []) {
+    const u = f.person?.profileUrl?.replace(/^http:\/\//, "https://");
+    if (u && LINKEDIN.test(u)) return { url: u, who: f.person?.name };
+  }
+  return null;
+};

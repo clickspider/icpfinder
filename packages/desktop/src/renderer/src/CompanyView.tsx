@@ -6,6 +6,7 @@
 
 import type { Finding, FindingKind } from "@icpfinder/core";
 import { useEffect, useState } from "react";
+import { LINKEDIN, linkedinFor } from "../../shared/people";
 import type { ActionId, State, Workspace } from "../../shared/types";
 import type { View } from "./App";
 import { api, friendly, host, initial, Snap, Spinner, ToolLogo } from "./ui";
@@ -238,7 +239,7 @@ const ACTIONS: Action[] = [
     id: "findEmail",
     title: "Find their email",
     brand: "hunter",
-    sub: "With Hunter",
+    sub: "Their site, then Hunter",
     path: "M12 12a4 4 0 100-8 4 4 0 000 8z M4 21a8 8 0 0116 0 M17 3l4 4",
     tint: "#ffece4",
     ink: "#d84315",
@@ -368,6 +369,8 @@ export const CompanyView = ({
   const [copied, setCopied] = useState<string | null>(null);
   const [watching, setWatching] = useState(false);
   const [hunterKey, setHunterKey] = useState("");
+  const [pasting, setPasting] = useState(false);
+  const [liDraft, setLiDraft] = useState("");
   useEffect(() => {
     if (c?.signals?.some((x) => !x.seen)) void api().markSeen(icpId, domain);
   }, [c?.signals, icpId, domain]);
@@ -378,6 +381,20 @@ export const CompanyView = ({
   const person = r?.findings.find((f) => f.kind === "person" && f.person)?.person;
   const opener = r?.opener.map((l) => l.text).join(" ") ?? "";
   const result = shown ? c.actions?.[shown] : undefined;
+  // A real profile or company page only. Unverified = grayed out, the founder can paste one.
+  const li = linkedinFor(c);
+  const liSub = li
+    ? li.who
+      ? `${li.who}'s profile`
+      : li.url.includes("/company/")
+        ? "Company page"
+        : "Your saved profile"
+    : "Not verified · add the link";
+  const liValid = LINKEDIN.test(liDraft.trim().replace(/^http:\/\//, "https://"));
+  const searchLinkedIn = () => {
+    const q = encodeURIComponent(`${person?.name ?? ""} ${c.name}`.trim());
+    void api().openExternal(`https://www.linkedin.com/search/results/all/?keywords=${q}`);
+  };
 
   const run = (a: Action) => {
     if (a.id === "live") {
@@ -391,8 +408,8 @@ export const CompanyView = ({
       });
     }
     if (a.id === "openLinkedIn") {
-      const q = encodeURIComponent(`${person?.name ?? ""} ${c.name}`.trim());
-      return void api().openExternal(`https://www.linkedin.com/search/results/all/?keywords=${q}`);
+      if (li) return void api().openExternal(li.url);
+      return setPasting(!pasting);
     }
     const id = a.id;
     setShown(id);
@@ -536,6 +553,13 @@ export const CompanyView = ({
                 <div style={{ color: "var(--muted)" }}>
                   Then the code checks every quote on its page.
                 </div>
+                <button
+                  type="button"
+                  className="btn stop-btn"
+                  onClick={() => void api().stopResearch(icpId, c.domain).then(onState)}
+                >
+                  {c.status === "researching" ? "Stop research" : "Take out of the queue"}
+                </button>
               </>
             ) : (
               <Snap
@@ -811,13 +835,17 @@ export const CompanyView = ({
                 {ACTIONS.map((a) => {
                   const st =
                     a.id !== "openLinkedIn" && a.id !== "live" ? c.actions?.[a.id] : undefined;
+                  const unverified = a.id === "openLinkedIn" && !li;
                   return (
                     <button
                       key={a.id}
                       type="button"
                       className="btn rise"
                       onClick={() => run(a)}
+                      aria-expanded={a.id === "openLinkedIn" && !li ? pasting : undefined}
+                      title={unverified ? "We could not verify a LinkedIn page" : undefined}
                       style={{
+                        opacity: unverified && !pasting ? 0.55 : 1,
                         display: "flex",
                         flexDirection: "column",
                         gap: 8,
@@ -861,12 +889,74 @@ export const CompanyView = ({
                       </div>
                       <div>
                         <div style={{ fontWeight: 600, fontSize: 13 }}>{a.title}</div>
-                        <div style={{ fontSize: 11, color: "var(--muted)" }}>{a.sub}</div>
+                        <div className="ellipsis" style={{ fontSize: 11, color: "var(--muted)" }}>
+                          {a.id === "openLinkedIn" ? liSub : a.sub}
+                        </div>
                       </div>
                     </button>
                   );
                 })}
               </div>
+
+              {pasting && !li && (
+                <div
+                  className="panel pop"
+                  style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}
+                >
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <ToolLogo name="linkedin" size={18} radius={4} />
+                    <b style={{ fontSize: 13 }}>Not verified on LinkedIn</b>
+                  </div>
+                  <div style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.45 }}>
+                    We could not find {person?.name ?? c.name} on LinkedIn. Found it? Paste the
+                    profile or company link. It stays with this company.
+                  </div>
+                  <form
+                    style={{ display: "flex", gap: 8 }}
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (!liValid) return;
+                      void api()
+                        .saveLinkedIn(icpId, c.domain, liDraft)
+                        .then((s) => {
+                          onState(s);
+                          setPasting(false);
+                          setLiDraft("");
+                        });
+                    }}
+                  >
+                    <input
+                      className="field"
+                      aria-label="LinkedIn link"
+                      placeholder="https://www.linkedin.com/in/…"
+                      value={liDraft}
+                      onChange={(e) => setLiDraft(e.target.value)}
+                      style={{ flex: 1, minWidth: 0, height: 34, fontSize: 13 }}
+                    />
+                    <button
+                      type="submit"
+                      className="ob-cta"
+                      disabled={!liValid}
+                      style={{ height: 34, fontSize: 12.5 }}
+                    >
+                      Save
+                    </button>
+                  </form>
+                  {liDraft.trim() && !liValid && (
+                    <div style={{ fontSize: 12, color: "#e0244a" }}>
+                      Use a linkedin.com/in/ or linkedin.com/company/ link.
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    className="ghost btn"
+                    style={{ alignSelf: "flex-start", fontSize: 12, color: "var(--accent)" }}
+                    onClick={searchLinkedIn}
+                  >
+                    Search LinkedIn for it
+                  </button>
+                </div>
+              )}
 
               {shown && (
                 <div className="panel pop" style={{ padding: 14 }}>

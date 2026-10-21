@@ -41,9 +41,12 @@ const api: IcpApi = {
   updateCriteria: call("updateCriteria") as IcpApi["updateCriteria"],
   approveCompany: call("approveCompany") as IcpApi["approveCompany"],
   researchCompany: call("researchCompany") as IcpApi["researchCompany"],
+  stopHunt: call("stopHunt") as IcpApi["stopHunt"],
+  stopResearch: call("stopResearch") as IcpApi["stopResearch"],
   runAction: call("runAction") as IcpApi["runAction"],
   watchNow: call("watchNow") as IcpApi["watchNow"],
   markSeen: call("markSeen") as IcpApi["markSeen"],
+  saveLinkedIn: call("saveLinkedIn") as IcpApi["saveLinkedIn"],
   openExternal: call("openExternal") as IcpApi["openExternal"],
   newWorkspace: call("newWorkspace") as IcpApi["newWorkspace"],
   switchWorkspace: call("switchWorkspace") as IcpApi["switchWorkspace"],
@@ -54,6 +57,7 @@ const api: IcpApi = {
   agentAnswer: call("agentAnswer") as IcpApi["agentAnswer"],
   agentBounds: call("agentBounds") as IcpApi["agentBounds"],
   agentCurrent: call("agentCurrent") as IcpApi["agentCurrent"],
+  agentThumb: call("agentThumb") as IcpApi["agentThumb"],
   onAgent: (cb) => {
     const fn = (_e: unknown, r: AgentRun | null) => cb(r);
     ipcRenderer.on("agent", fn);

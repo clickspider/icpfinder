@@ -136,8 +136,9 @@ export class ClaudeCliLlmProvider implements LlmProvider {
     try {
       text = await this.run(args, input.prompt, timeout);
     } catch (e) {
-      // A login problem or a stopped run will not fix itself; anything else gets one more try.
-      if (e instanceof ProviderAuthError || /SIGTERM|killed|null/.test(String(e))) throw e;
+      // A login problem, a stopped run or a timeout will not fix itself (a timed-out web search
+      // would only burn the same minutes again); anything else gets one more try.
+      if (e instanceof ProviderAuthError || /SIGTERM|killed|null|timed out/.test(String(e))) throw e;
       await new Promise((r) => setTimeout(r, 2_000));
       text = await this.run(args, input.prompt, timeout);
     }
