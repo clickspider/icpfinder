@@ -63,7 +63,8 @@ describe("suggested customer profiles", () => {
     expect(icpPresentation(withWhy as never).why).toBe(why);
     expect(without?.reasoning).toBeUndefined();
     expect(PROFILE_GUIDANCE).toContain("WHY WE PICKED IT");
-    expect(PROFILE_GUIDANCE).toContain("never mention methods");
+    expect(PROFILE_GUIDANCE).toContain("Never mention methods");
+    expect(PROFILE_GUIDANCE).toContain("NO REPETITION ACROSS FIELDS");
   });
   it("asks for differentiated hypotheses rather than research or exclusion rules", () => {
     expect(PROFILE_GUIDANCE).toContain("Do not repeat the same generic benefit");
