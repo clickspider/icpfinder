@@ -324,16 +324,14 @@ export function SubscriptionConnection({
               ) : (
                 <>
                   {connected ? (
-                    <>
-                      <div className="sp-account">
-                        {provider && <ProviderMark provider={provider} size={40} />}
-                        <div>
-                          <strong>{name}</strong>
-                          <span>Already signed in on this Mac</span>
-                        </div>
-                        <span className="sp-ready">✓</span>
+                    <div className="sp-account">
+                      {provider && <ProviderMark provider={provider} size={40} />}
+                      <div>
+                        <strong>{name}</strong>
+                        <span>Already signed in on this Mac</span>
                       </div>
-                    </>
+                      <span className="sp-ready">✓</span>
+                    </div>
                   ) : (
                     tiles
                   )}

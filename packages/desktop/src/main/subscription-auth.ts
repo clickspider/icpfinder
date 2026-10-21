@@ -170,6 +170,7 @@ export class SubscriptionAuth {
           break;
         }
     }
+    // The UI polls this pending attempt; complete records every failure on the attempt.
     void this.complete(attempt, controller);
     return { ...attempt };
   }

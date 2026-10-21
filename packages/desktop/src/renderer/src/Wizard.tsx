@@ -224,19 +224,17 @@ export const Wizard = ({
                     </button>
                   </div>
                   {mode === "site" ? (
-                    <>
-                      <div className="ob-website-entry" style={{ gridRow: "3 / 5" }}>
-                        <label htmlFor="business-website">Your website</label>
-                        <input
-                          id="business-website"
-                          className="field"
-                          placeholder="https://yourbusiness.com"
-                          value={url}
-                          onChange={(e) => setUrl(e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && canNext && next()}
-                        />
-                      </div>
-                    </>
+                    <div className="ob-website-entry" style={{ gridRow: "3 / 5" }}>
+                      <label htmlFor="business-website">Your website</label>
+                      <input
+                        id="business-website"
+                        className="field"
+                        placeholder="https://yourbusiness.com"
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && canNext && next()}
+                      />
+                    </div>
                   ) : (
                     <>
                       <p className="ob-sub" id="idea-description-hint">

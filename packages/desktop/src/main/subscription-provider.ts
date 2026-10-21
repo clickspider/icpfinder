@@ -49,6 +49,7 @@ export function parseCodexOutput(raw: string, model: string): { text: string; us
     try {
       event = JSON.parse(line);
     } catch {
+      // Codex may emit diagnostic lines alongside JSON. Success still requires a completed, nonempty turn.
       continue;
     }
     if (event.type === "turn.failed" || event.type === "error")
@@ -100,7 +101,10 @@ export class CodexSubscriptionProvider implements LlmProvider {
 
   async generate(input: GenerateInput): Promise<GenerateResult> {
     const bin = await resolveCli("codex");
-    if (!bin) throw new Error("Install Codex, then sign in from AI subscriptions.");
+    if (!bin)
+      throw new Error(
+        "IcpFinder cannot start its Codex connection. Choose another provider in AI subscriptions."
+      );
     const start = Date.now();
     const raw = await new Promise<string>((resolve, reject) => {
       const child = spawn(bin, codexArgs(input, this.options.model), {
@@ -134,7 +138,13 @@ export class CodexSubscriptionProvider implements LlmProvider {
       });
       // Drain stderr, but never forward provider diagnostics containing account data.
       child.stderr.resume();
-      child.on("error", () => finish(new Error("Could not start Codex. Check its installation.")));
+      child.on("error", () =>
+        finish(
+          new Error(
+            "IcpFinder could not start its Codex connection. Choose another provider in AI subscriptions."
+          )
+        )
+      );
       child.on("close", (code) =>
         finish(
           code === 0
@@ -240,7 +250,10 @@ export async function subscriptionProvider(options: RuntimeOptions): Promise<Llm
   if (options.provider === "codex") return new CodexSubscriptionProvider(options);
   if (options.provider === "xai") return new XaiSubscriptionProvider(options);
   const bin = await resolveCli("claude");
-  if (!bin) throw new Error("Install Claude Code, then sign in from AI subscriptions.");
+  if (!bin)
+    throw new Error(
+      "IcpFinder cannot start its Claude connection. Choose another provider in AI subscriptions."
+    );
   return new ClaudeCliLlmProvider({
     bin,
     model: options.model || "sonnet",

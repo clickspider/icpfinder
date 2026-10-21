@@ -1,11 +1,66 @@
-.og-root { height:100vh; display:flex; flex-direction:column; background:#fff; }
-.og-toolbar { min-height:60px; padding:12px 25px 12px 90px; display:flex; align-items:center; gap:24px; border-bottom:1px solid #f0eded; color:#92878d; font-size:11px; }
-.og-toolbar button,.og-tabs button { border:0; background:transparent; cursor:pointer; color:#8b7d84; font-size:12px; padding:9px 13px; border-radius:8px; }
-.og-surfaces { display:flex; gap:5px; background:#f5f3f2; border-radius:10px; padding:3px; }
-.og-surfaces [aria-pressed=true],.og-tabs [aria-current=page] { color:#292327; background:#fff; box-shadow:0 1px 5px #30202a0b; }
-.og-exit { margin-left:auto; }
-.og-tabs { display:flex; gap:5px; padding:8px 25px; background:#f8f7f7; overflow:auto; flex-shrink:0; }
-.og-tabs button { white-space:nowrap; }
-.og-screen { flex:1; min-height:0; overflow:hidden; }
-.og-screen>.sp-preview { height:100%; }
-.og-footer { padding:10px 25px; font-size:10px; color:#a0969b; }
+.og-root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+.og-toolbar {
+  min-height: 60px;
+  padding: 12px 25px 12px 90px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  border-bottom: 1px solid #f0eded;
+  color: #92878d;
+  font-size: 11px;
+}
+.og-toolbar button,
+.og-tabs button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: #8b7d84;
+  font-size: 12px;
+  padding: 9px 13px;
+  border-radius: 8px;
+}
+.og-surfaces {
+  display: flex;
+  gap: 5px;
+  background: #f5f3f2;
+  border-radius: 10px;
+  padding: 3px;
+}
+.og-surfaces [aria-pressed="true"],
+.og-tabs [aria-current="page"] {
+  color: #292327;
+  background: #fff;
+  box-shadow: 0 1px 5px #30202a0b;
+}
+.og-exit {
+  margin-left: auto;
+}
+.og-tabs {
+  display: flex;
+  gap: 5px;
+  padding: 8px 25px;
+  background: #f8f7f7;
+  overflow: auto;
+  flex-shrink: 0;
+}
+.og-tabs button {
+  white-space: nowrap;
+}
+.og-screen {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.og-screen > .sp-preview {
+  height: 100%;
+}
+.og-footer {
+  padding: 10px 25px;
+  font-size: 10px;
+  color: #a0969b;
+}

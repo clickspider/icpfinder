@@ -1,7 +1,7 @@
 import type { Icp, Product } from "../shared/types";
 import { customIcp } from "./custom-icp";
 
-export const PROFILE_GUIDANCE = `Suggest three distinct customer groups worth exploring for the user's reviewed business. These are hypotheses, NOT researched companies, named contacts, confirmed intent, or guaranteed buyers. No web research or example companies.
+export const PROFILE_GUIDANCE = `CRITICAL: Suggest three distinct customer groups worth exploring for the user's reviewed business. These are hypotheses, NOT researched companies, named contacts, confirmed intent, or guaranteed buyers. No web research or example companies.
 Each profile must earn its place: connect a specific need of this group to the user's actual offer. Do not repeat the same generic benefit on every card. Never invent product capabilities or pricing. Use saved corrections, the user's audience and business progress. Progress describes the seller, not the buyers.
 For Businesses use relevant company characteristics and professional roles. For Consumers use relevant life circumstances, interests, needs or household characteristics, and the person making the decision; do not force company size or job titles. For Both include business and consumer groups when both are supported.
 A signal is a situation to LOOK FOR LATER, never an event you claim has already happened at a named company. A fit concern is a reason for judgment, NOT an automatic exclusion or hard filter.
