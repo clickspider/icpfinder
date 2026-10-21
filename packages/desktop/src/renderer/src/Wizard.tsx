@@ -158,9 +158,6 @@ export const Wizard = ({ state, onState }: { state: State; onState: (s: State) =
                   ? ["buyer", "chat", "site"]
                   : ["company", "buyer", "site"])[index % 3] ?? "buyer",
             })),
-            onAdd: async (draft) => {
-              onState(await api().addIcp(draft));
-            },
             onStart: next,
           }}
         />

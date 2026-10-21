@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { IcpDraft } from "../../shared/types";
 import { DUO } from "./glass";
 import { Mark } from "./ui";
@@ -16,32 +16,13 @@ type LiveReveal = {
   profiles: Profile[];
   busy: string | null;
   error: string | null;
-  onAdd: (draft: IcpDraft) => Promise<void>;
   onStart: () => void;
 };
 
 export function IcpReveal({ onExit, live }: { onExit: () => void; live: LiveReveal }) {
   const tab = live.finding ? "finding" : "portraits";
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [draft, setDraft] = useState({
-    title: "",
-    tag: "",
-    buyer: "",
-    fit: "",
-    signal: "",
-    skip: "",
-  });
   const [phase, setPhase] = useState(0);
   const profiles = live.profiles;
-  const [editing, setEditing] = useState(false);
-  const editorRef = useRef<HTMLFormElement>(null);
-  useEffect(() => {
-    if (editing) {
-      editorRef.current?.scrollIntoView({ block: "center" });
-      editorRef.current?.querySelector("input")?.focus({ preventScroll: true });
-    }
-  }, [editing]);
   useEffect(() => {
     if (tab !== "finding") return;
     const timer = setInterval(() => setPhase((value) => (value + 1) % PHRASES.length), 4200);
@@ -131,96 +112,20 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live: LiveReve
                 </article>
               ))}
             </section>
-            {editing && (
-              <form
-                ref={editorRef}
-                className="ir-editor"
-                onSubmit={async (event) => {
-                  event.preventDefault();
-                  if (Object.values(draft).some((value) => !value.trim())) return;
-                  setSaveError(null);
-                  setSaving(true);
-                  try {
-                    await live.onAdd(draft);
-                    setDraft({ title: "", tag: "", buyer: "", fit: "", signal: "", skip: "" });
-                    setEditing(false);
-                  } catch (error) {
-                    setSaveError(error instanceof Error ? error.message : String(error));
-                  } finally {
-                    setSaving(false);
-                  }
-                }}
-              >
-                <h2>Add a profile</h2>
-                <p>Rough details are enough. You can edit this profile in your dashboard.</p>
-                <div className="ir-editor-fields">
-                  {(
-                    [
-                      ["title", "Profile name", "e.g. Freelance product designers"],
-                      ["tag", "Profile characteristics", "What makes this group distinct?"],
-                      ["fit", "How this group could benefit", "What gets easier for them?"],
-                      ["buyer", "Who to talk to", "Who would decide to buy?"],
-                      ["signal", "A reason to reach out", "What might make now a good time?"],
-                      ["skip", "May not be a fit if", "What would make them a poor fit?"],
-                    ] as const
-                  ).map(([key, label, placeholder]) => (
-                    <label key={key} htmlFor={`ir-${key}`}>
-                      {label}
-                      <input
-                        id={`ir-${key}`}
-                        disabled={saving}
-                        required
-                        maxLength={240}
-                        placeholder={placeholder}
-                        value={draft[key]}
-                        onChange={(event) =>
-                          setDraft((value) => ({ ...value, [key]: event.target.value }))
-                        }
-                      />
-                    </label>
-                  ))}
-                </div>
-                {saveError && (
-                  <p className="error" role="alert">
-                    {saveError}
-                  </p>
-                )}
-                <div className="ir-editor-actions">
-                  <button
-                    type="button"
-                    className="ir-refine"
-                    disabled={saving}
-                    onClick={() => setEditing(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button type="submit" className="ir-hunt" disabled={saving}>
-                    {saving ? "Adding…" : "Add profile"}
-                  </button>
-                </div>
-              </form>
-            )}
             {live.error && (
               <p className="error" role="alert">
                 {live.error}
               </p>
             )}
             <p className="ir-hunt-note">
-              All these profiles will be in your dashboard. You can edit them there anytime.
+              All these profiles will be in your dashboard. You can edit them or add more there
+              anytime.
             </p>
             <div className="ir-actions">
               <button
                 type="button"
-                className="ir-refine"
-                disabled={Boolean(live.busy) || saving}
-                onClick={() => setEditing(!editing)}
-              >
-                {editing ? "Close form" : "Add a profile"}
-              </button>
-              <button
-                type="button"
                 className="ir-hunt"
-                disabled={Boolean(live.busy) || saving || editing || profiles.length === 0}
+                disabled={Boolean(live.busy) || profiles.length === 0}
                 onClick={live.onStart}
               >
                 {live.busy || "Go to my dashboard"} <span aria-hidden="true">↗</span>
