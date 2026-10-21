@@ -1,5 +1,9 @@
 # icpfinder — agent instructions
 
+## Read first: the IcpFinder guide
+
+**Every agent reads [`.claude/skills/icpfinder-guide/SKILL.md`](./.claude/skills/icpfinder-guide/SKILL.md) before it starts.** It is the main guide to the product mindset: brand voice, copywriting, design language, the approved onboarding flow and the rules for generated content. It applies to all IcpFinder work, and it is the design source for the Mac app in `packages/desktop`. For the web app's tokens and components, also read `DESIGN.md` below.
+
 ## What this repo is
 
 icpfinder is a free, open-source first-customer-discovery tool. Paste a product idea, stream 3 ICP archetypes + verified contact emails in 30 seconds. MIT. No signup wall.
