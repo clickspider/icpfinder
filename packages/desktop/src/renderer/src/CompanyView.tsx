@@ -239,7 +239,7 @@ const ACTIONS: Action[] = [
     id: "findEmail",
     title: "Find their email",
     brand: "hunter",
-    sub: "With Hunter",
+    sub: "Their site, then Hunter",
     path: "M12 12a4 4 0 100-8 4 4 0 000 8z M4 21a8 8 0 0116 0 M17 3l4 4",
     tint: "#ffece4",
     ink: "#d84315",

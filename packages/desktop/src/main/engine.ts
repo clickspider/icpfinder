@@ -11,6 +11,7 @@ import { type ChildProcess, execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { htmlToText, researchAccount, safeFetch } from "@icpfinder/core";
 import { HunterEmailProvider, type LlmProvider, parseCliResult } from "@icpfinder/providers";
+import { emailsIn, pickEmail } from "../shared/emails";
 import {
   type CompanyFacts,
   INDUSTRIES,
@@ -334,6 +335,66 @@ const ACTION_PROMPTS: Record<
   },
 };
 
+const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)*\.[a-z]{2,}/i;
+
+/** Pages where companies usually show an address; legal pages must name a contact. */
+const SITE_PAGES = [
+  "",
+  "/contact",
+  "/contact-us",
+  "/about",
+  "/team",
+  "/privacy",
+  "/privacy-policy",
+  "/terms",
+  "/imprint",
+];
+
+/** Emails on the company's own site, from raw HTML (mailto links count). Stops at the first good one. */
+const siteEmail = async (
+  c: Company,
+  person?: string
+): Promise<{ email: string; page: string } | null> => {
+  const all: string[] = [];
+  let page = "";
+  for (const path of SITE_PAGES) {
+    const url = `https://${c.domain}${path}`;
+    const res = await safeFetch(url, {
+      timeoutMs: 8_000,
+      maxRedirects: 5,
+      maxBytes: 3_000_000,
+    }).catch(() => null);
+    if (!res || res.status >= 400) continue;
+    const found = emailsIn(res.body);
+    if (found.length && !page) page = url;
+    all.push(...found);
+    // Stop early once the person's own address or a direct inbox is found.
+    const best = pickEmail(all, c.domain, person);
+    if (best && !/^(support|help|info|mail|office)@/.test(best)) return { email: best, page: url };
+  }
+  const best = pickEmail(all, c.domain, person);
+  return best ? { email: best, page } : null;
+};
+
+/** The address to write to: the company's own website first (free), then Hunter if connected. */
+const findAddress = async (c: Company, hunterKey: string): Promise<string> => {
+  const person = bestPerson(c);
+  const site = await siteEmail(c, person?.name);
+  if (site) return `${site.email} · from their website (${site.page.replace(/^https:\/\//, "")})`;
+  if (!hunterKey)
+    throw new Error("No email on their website. Connect Hunter in Connectors to search more.");
+  if (!person) throw new Error("No email on their website, and no contact person found yet");
+  const [firstName, ...rest] = person.name.split(" ");
+  const res = await new HunterEmailProvider({ apiKey: hunterKey }).findEmail({
+    domain: c.domain,
+    firstName: firstName ?? person.name,
+    lastName: rest.join(" "),
+  });
+  return res.email
+    ? `${res.email} · confidence ${res.confidence}${res.score !== null ? ` (${res.score})` : ""} · ${person.name}`
+    : `No email on their website, and Hunter found none for ${person.name} at ${c.domain}.`;
+};
+
 /** Next-step actions that Claude (or Hunter) runs for one company. */
 export const runCompanyAction = async (
   ws: Workspace,
@@ -344,22 +405,13 @@ export const runCompanyAction = async (
   const person = bestPerson(c);
   if (action === "gmailDraft") {
     const email = c.actions?.email?.text ?? (await runCompanyAction(ws, c, "email", hunterKey));
-    const found = c.actions?.findEmail?.text?.match(/[\w.+-]+@[\w-]+\.[\w.-]+/)?.[0];
+    // Use the address found before; if none, look for one now (website first, then Hunter).
+    const found =
+      c.actions?.findEmail?.text?.match(EMAIL)?.[0] ??
+      (await findAddress(c, hunterKey).catch(() => "")).match(EMAIL)?.[0];
     return gmailDraft(c, email, found);
   }
-  if (action === "findEmail") {
-    if (!hunterKey) throw new Error("Connect Hunter in Connectors first");
-    if (!person) throw new Error("No contact person found yet");
-    const [firstName, ...rest] = person.name.split(" ");
-    const res = await new HunterEmailProvider({ apiKey: hunterKey }).findEmail({
-      domain: c.domain,
-      firstName: firstName ?? person.name,
-      lastName: rest.join(" "),
-    });
-    return res.email
-      ? `${res.email} · confidence ${res.confidence}${res.score !== null ? ` (${res.score})` : ""} · ${person.name}`
-      : `Hunter found no email for ${person.name} at ${c.domain}.`;
-  }
+  if (action === "findEmail") return findAddress(c, hunterKey);
   const spec = ACTION_PROMPTS[action];
   const res = await (await llm()).generate({
     system: spec.system,
