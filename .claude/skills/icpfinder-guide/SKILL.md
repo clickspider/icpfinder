@@ -130,6 +130,7 @@ Each profile needs:
 3. **Who to talk to**: relevant roles for businesses, or the appropriate decision-making person for consumers. Never imply named contacts have been found.
 4. **A reason to reach out**: a signal or circumstance to look for later. Do not imply it has been observed at a real company.
 5. **May not be a fit if**: a meaningful qualification concern, presented as guidance rather than an automatic exclusion.
+6. **Why we picked it** (approved 2026-10-21): one short sentence, written to the user ("you"), that names what they shared (offer, problem, audience, progress or their own words) that points to this group. It never names methods, research or sources, and never claims a company, contact or buying signal was found. Optional: a missing reason never fails the set; manually added profiles have none. It is written from the saved overview at generation time; editing the overview later does not rewrite it.
 
 Write a connection between the offer and the group. Merely repeating “save time” across three cards is not personalization. Do not invent differentiators to make cards appear varied; the distinctions must be supported by the business context.
 
@@ -321,6 +322,8 @@ Heading: “Here’s where we’d start.” Subtitle: “A few customer groups t
 Near actions: “All these profiles will be in your dashboard. You can edit them there anytime.” Actions: Add a profile / Go to my dashboard. Back remains available. No profile selection is required. Do not restore “Next: we’ll find real companies and check why they fit.”
 
 **Cards use approved option A**, not the dropped B or alternate row design. Each contains characteristics, recognizable group name, differentiated benefit, “Who to talk to”, “A reason to reach out”, and “May not be a fit if”. The fit concern stays inside the card. Do not number the cards.
+
+**Card hierarchy (approved 2026-10-21, “quiet hierarchy”):** a different icon on each card; the group name first, with the characteristics under it in quiet text; then the “Why we picked it” box (soft teal tint, lightbulb icon); then the benefit as the main readable text; then the labels “Who to talk to” and “A reason to reach out” as plain sentence-case bold text (no capitals, no label icons); one thin divider before “May not be a fit if”, whose label uses a muted rose. The dashboard ICP page shows the same “Why we picked it” box in its header.
 
 Use content-sized shared grid tracks/subgrid so corresponding rows align across neighboring cards regardless of wrapping. Do not solve alignment with fixed heights that clip longer generated text. Characteristic, title, benefit, role, signal, and fit-concern content must remain readable. Preserve alignment at narrower widths and with manually added profiles.
 
