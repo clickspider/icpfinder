@@ -133,6 +133,7 @@ This is a writing contract for generated content, not a set of static sample sen
 - A signal counts only with its EVENT date, not the article date. Undated = unconfirmed. Newer signals score higher inside the window.
 - The check step looks for proof that the signal does NOT mean need (a false positive) and then does not count it.
 - The next search uses the user's approved companies as "more like these" and the rejected ones as "not like these".
+- Lean by default, for $20 Claude or Codex plans: 10 candidates per round, at most 6 web searches in the search step (no site visits there), at most 4 searches or page opens per company check, and a round stops checking once 5 strong fits are in. A timed-out AI call is never retried.
 - Equal scores: the company the user can reach (someone they know, a LinkedIn page, a found email) ranks first.
 
 Each profile needs:

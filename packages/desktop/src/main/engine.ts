@@ -549,7 +549,9 @@ export const sharpenIcps = async (p: Product, icps: Icp[]): Promise<Icp[]> => {
   }
 };
 
-const CANDIDATES = 15;
+const CANDIDATES = 10;
+/** A round stops checking candidates once this many strong fits are in. */
+const ENOUGH_STRONG = 5;
 const PLATFORM_HOSTS =
   /(^|\.)(github\.(com|io)|vercel\.app|netlify\.app|herokuapp\.com|notion\.site|substack\.com|medium\.com|linkedin\.com|ycombinator\.com|producthunt\.com|twitter\.com|x\.com|wordpress\.com|webflow\.io|framer\.(app|website)|carrd\.co)$/;
 
@@ -592,7 +594,7 @@ const findCandidates = async (
   const res = await (await llm()).generate({
     system:
       `You are an SDR researcher. If FRESH POSTS are given, start there: they are real posts fetched just now from social sites; turn the ones that fit into companies (find each company's own domain).` +
-      ` You are an SDR researcher. Use web search in tiers: first the sources where these signals show up (funding news, launch platforms, job boards, founder posts); then directories and "best X tools" roundups only if the first tier gives fewer than 10. Run at least 2 different queries per buying signal. Find ${candidates} REAL companies with their own website domain that look like this ICP and show a buying signal from the last ${windowDays} days. No GitHub repos or hosted subdomains. Never invent companies, URLs or dates. Never return the SELLER itself or a company that SELLS a product doing the same job as the SELLER's offer (a competitor or alternative); a company that only USES such a tool is fine. signalDate = the date the EVENT happened (launch, hire, raise, post), never the date an article or list was published; leave it empty if the event date is unclear. If MORE LIKE THESE is given, the founder approved those: find companies like them. If NOT LIKE THESE is given, the founder rejected those: avoid what they have in common. Output strict JSON: {"companies":[{"name":"","domain":"acme.com","signal":"one sentence","signalUrl":"","signalDate":"YYYY-MM-DD or empty"}]}`,
+      ` You are an SDR researcher. Use web search in tiers: first the sources where these signals show up (funding news, launch platforms, job boards, founder posts); then directories and "best X tools" roundups only if the first tier gives fewer than 10. Run at most 6 web searches in total, each aimed at a different buying signal; stop searching once you have enough companies. Do not open company websites: the next step checks every company. If the FRESH POSTS already give enough companies, do not search at all. Find ${candidates} REAL companies with their own website domain that look like this ICP and show a buying signal from the last ${windowDays} days. No GitHub repos or hosted subdomains. Never invent companies, URLs or dates. Never return the SELLER itself or a competitor: a company whose product a buyer could use INSTEAD of the SELLER's offer (same job, even if free, open source or built differently); a company that only USES such a tool is fine. signalDate = the date the EVENT happened (launch, hire, raise, post), never the date an article or list was published; leave it empty if the event date is unclear. If MORE LIKE THESE is given, the founder approved those: find companies like them. If NOT LIKE THESE is given, the founder rejected those: avoid what they have in common. Output strict JSON: {"companies":[{"name":"","domain":"acme.com","signal":"one sentence","signalUrl":"","signalDate":"YYYY-MM-DD or empty"}]}`,
     prompt: `SELLER: ${sellerSummary(ws.product)}\n\nICP: ${icp.name} (${icp.industry}, ${icp.size})\nPain: ${icp.pain}\nMust-haves: ${c?.mustHave.join("; ") || "-"}\nBuying signals: ${c?.signals.join("; ") || icp.signals.join("; ")}\nDeal-breakers: ${c?.dealBreakers.join("; ") || "-"}\n\nSkip: ${exclude}${liked ? `\n\nMORE LIKE THESE:\n${liked}` : ""}${disliked ? `\n\nNOT LIKE THESE:\n${disliked}` : ""}${posts ? `\n\nFRESH POSTS:\n${posts}` : ""}\nToday: ${new Date().toISOString().slice(0, 10)}`,
     format: "json",
     grounding: true,
@@ -644,7 +646,7 @@ const qualify = async (
 ): Promise<Company> => {
   const c = icp.criteria;
   const res = await (await llm()).generate({
-    system: `You check ONE company against an ICP. Open the company website and search the web briefly. For each must-have answer yes, no or unknown with a short evidence line (no means you found proof it does NOT fit). Confirm whether the buying signal is real and recent; signalDate is the date the event happened, not when a page about it was published, and empty if unclear. Then look for proof that the signal does NOT mean they need the SELLER's product now (for example they already have a team or a tool doing this job); if you find it, set signalConfirmed false and say why in falsePositive. competitor = one short line if this company SELLS a product that does the same job as the SELLER's offer, else empty; a company that only USES such a tool is not a competitor. Name a deal-breaker only if you found proof. Never guess. Output strict JSON: {"checks":[{"criterion":"","verdict":"yes|no|unknown","evidence":""}],"signalConfirmed":true,"signalDate":"YYYY-MM-DD or empty","falsePositive":"","competitor":"","dealBreaker":null,"oneLine":"why this company fits, in plain words"}`,
+    system: `You check ONE company against an ICP. Open the company website and search the web briefly: use at most 4 web searches or page opens in total. For each must-have answer yes, no or unknown with a short evidence line (no means you found proof it does NOT fit). Confirm whether the buying signal is real and recent; signalDate is the date the event happened, not when a page about it was published, and empty if unclear. Then look for proof that the signal does NOT mean they need the SELLER's product now (for example they already have a team or a tool doing this job); if you find it, set signalConfirmed false and say why in falsePositive. competitor = one short line if a buyer could use this company's product INSTEAD of the SELLER's offer (same job, even if it is free, open source or built differently), else empty; a company that only USES such a tool is not a competitor. Decide this first, from the company's own site. Name a deal-breaker only if you found proof. Never guess. Output strict JSON: {"checks":[{"criterion":"","verdict":"yes|no|unknown","evidence":""}],"signalConfirmed":true,"signalDate":"YYYY-MM-DD or empty","falsePositive":"","competitor":"","dealBreaker":null,"oneLine":"why this company fits, in plain words"}`,
     prompt: `COMPANY: ${cand.name} (${cand.domain})\nCLAIMED SIGNAL: ${cand.signal ?? "-"} ${cand.signalUrl ?? ""} ${cand.signalDate ?? ""}\n\nMUST-HAVES:\n${(c?.mustHave ?? []).map((m) => `- ${m}`).join("\n") || `- matches: ${icp.name}`}\nDEAL-BREAKERS:\n${(c?.dealBreakers ?? []).map((m) => `- ${m}`).join("\n") || "-"}\nSELLER (to spot competitors): ${sellerSummary(ws.product)}`,
     format: "json",
     grounding: true,
@@ -691,7 +693,7 @@ const qualify = async (
     match,
     matchWhy: q.dealBreaker
       ? `Deal-breaker: ${q.dealBreaker}`
-      : `${yes} of ${checks.length} must-haves confirmed${q.signalConfirmed ? " · signal confirmed" : falsePositive ? ` · signal not counted: ${falsePositive}` : ""}${q.oneLine ? ` · ${q.oneLine}` : ""}`,
+      : `${yes} of ${checks.length} must-haves confirmed${q.signalConfirmed ? (date ? " · signal confirmed" : " · signal has no event date, so it counts less") : falsePositive ? ` · signal not counted: ${falsePositive}` : ""}${q.oneLine ? ` · ${q.oneLine}` : ""}`,
     checks,
     signalConfirmed: Boolean(q.signalConfirmed),
     dealBreaker: q.dealBreaker || undefined,
@@ -713,15 +715,21 @@ export const sourceCompanies = async (
   onFound: (c: Company) => void = () => {}
 ): Promise<Company[]> => {
   const find = () =>
-    findCandidates(ws, icp, cfg.windowDays, cfg.candidates).catch(() => [] as Candidate[]);
+    findCandidates(ws, icp, cfg.windowDays, cfg.candidates).catch((e) => {
+      // A timed-out search is not cheap to repeat: say so and stop instead of retrying.
+      if (/timed out/.test(String(e))) throw new Error("The web search took too long. Try again.");
+      return [] as Candidate[];
+    });
   let cands = await find();
   // A web search run sometimes comes back empty or malformed; one retry is cheap.
   if (cands.length === 0) cands = await find();
   step("found", `Found ${cands.length} candidates`);
   const out: Company[] = [];
   let next = 0;
+  // Enough strong fits for one round: stop checking the rest to save the founder's AI usage.
+  const enough = () => out.filter((c) => (c.match ?? 0) >= cfg.bar).length >= ENOUGH_STRONG;
   const worker = async () => {
-    while (next < cands.length) {
+    while (next < cands.length && !enough()) {
       const cand = cands[next++];
       if (!cand) break;
       step("check", `Checking ${cand.name}`);

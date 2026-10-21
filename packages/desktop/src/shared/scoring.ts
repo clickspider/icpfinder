@@ -24,7 +24,7 @@ export const DEFAULT_SCORING: Scoring = {
   mustWeight: 60,
   unknownCredit: 0.15,
   windowDays: 120,
-  candidates: 15,
+  candidates: 10,
   rounds: 1,
 };
 
