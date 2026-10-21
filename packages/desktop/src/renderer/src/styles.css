@@ -2169,6 +2169,14 @@ details.fact[open] .fact-chev {
 
 /* Stop a running hunt or research: quiet, never red, so it never reads as the main action. */
 .btn.stop-btn {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 11px;
+  font-weight: 600;
+  font-size: 13.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: #fff;
   color: var(--ink);
   box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.18);
