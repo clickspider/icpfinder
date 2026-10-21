@@ -491,8 +491,13 @@
   align-items: center;
 }
 .ob-overview-form .ob-cta {
+  /* Fixed height + vertical padding pushed the label down; centre it instead. */
+  height: 42px;
+  padding: 0 20px;
   font-size: 14px;
-  padding: 12px 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 @media (prefers-reduced-motion: reduce) {
   .ob-flip-shell {
