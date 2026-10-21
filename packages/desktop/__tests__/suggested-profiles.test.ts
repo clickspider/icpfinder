@@ -62,6 +62,17 @@ describe("suggested customer profiles", () => {
     expect(withWhy?.reasoning).toBe(why);
     expect(icpPresentation(withWhy as never).why).toBe(why);
     expect(without?.reasoning).toBeUndefined();
+    const [iconed, bad] = parseSuggestedProfiles(
+      {
+        profiles: [
+          { ...entry, icon: "home" },
+          { ...entry, title: "Allotment holders", icon: "rocket" },
+        ],
+      },
+      p
+    );
+    expect(iconed?.icon).toBe("home");
+    expect(bad?.icon).toBeUndefined();
     expect(PROFILE_GUIDANCE).toContain("WHY WE PICKED IT");
     expect(PROFILE_GUIDANCE).toContain("Never mention methods");
     expect(PROFILE_GUIDANCE).toContain("NO REPETITION ACROSS FIELDS");

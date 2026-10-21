@@ -1,6 +1,24 @@
 import type { Icp, Product } from "../shared/types";
 import { customIcp } from "./custom-icp";
 
+/** Icons the results cards can draw; the AI picks one per group. */
+export const PROFILE_ICONS = [
+  "shop",
+  "cart",
+  "phone",
+  "chat",
+  "code",
+  "people",
+  "briefcase",
+  "building",
+  "home",
+  "heart",
+  "school",
+  "megaphone",
+  "wrench",
+  "money",
+];
+
 export const PROFILE_GUIDANCE = `CRITICAL: Suggest three distinct customer groups worth exploring for the user's reviewed business. These are hypotheses, NOT researched companies, named contacts, confirmed intent, or guaranteed buyers. No web research or example companies.
 Each profile must earn its place: connect a specific need of this group to the user's actual offer. Do not repeat the same generic benefit on every card. Never invent product capabilities or pricing. Use saved corrections, the user's audience and business progress. Progress describes the seller, not the buyers.
 For Businesses use relevant company characteristics and professional roles. For Consumers use relevant life circumstances, interests, needs or household characteristics, and the person making the decision; do not force company size or job titles. For Both include business and consumer groups when both are supported.
@@ -9,7 +27,7 @@ PLAIN, CORRECT ENGLISH: write the way a person talks. No jargon or invented labe
 WHO TO TALK TO must name a concrete, recognizable person with a role or life situation (for example "the owner who answers customer messages" or "a busy parent who runs family life from their phone"). Never write "the individual", "the user" or "the person managing their own account".
 NO REPETITION ACROSS FIELDS: each field adds something new. The tag lists traits that are NOT already in the title. The fit says what gets easier for this group in their own terms; do not repeat the product name or the user's offer word for word. Keep every field short and plain.
 A signal is a situation to LOOK FOR LATER, never an event you claim has already happened at a named company. A fit concern is a reason for judgment, NOT an automatic exclusion or hard filter.
-Output strict JSON {"profiles":[{"kind":"business or consumer","title":"recognizable customer group","tag":"relevant characteristics","fit":"one differentiated sentence about how this group could benefit","buyer":"who to talk to / relevant role or person","signal":"a possible situation to look for","skip":"a meaningful fit concern","why":"what you shared that points to this group"}]}. Every text field must be nonempty and at most 240 characters. No company names, contact names, URLs or exampleCompanies fields.`;
+Output strict JSON {"profiles":[{"kind":"business or consumer","title":"recognizable customer group","tag":"relevant characteristics","fit":"one differentiated sentence about how this group could benefit","buyer":"who to talk to / relevant role or person","signal":"a possible situation to look for","skip":"a meaningful fit concern","why":"what you shared that points to this group","icon":"one of: shop, cart, phone, chat, code, people, briefcase, building, home, heart, school, megaphone, wrench, money - the one that best shows who this group is"}]}. Every text field must be nonempty and at most 240 characters. No company names, contact names, URLs or exampleCompanies fields.`;
 
 export function parseSuggestedProfiles(value: unknown, product: Product): Icp[] {
   const profiles =
@@ -29,6 +47,7 @@ export function parseSuggestedProfiles(value: unknown, product: Product): Icp[] 
     // "Why we picked it": optional, so one weak sentence never fails the whole set.
     if (typeof entry.why === "string" && entry.why.trim() && entry.why.length <= 140)
       icp.reasoning = entry.why.trim();
+    if (typeof entry.icon === "string" && PROFILE_ICONS.includes(entry.icon)) icp.icon = entry.icon;
     const key = icp.name.toLowerCase();
     if (seen.has(key)) throw new Error("The suggestions repeated a profile. Please try again.");
     seen.add(key);

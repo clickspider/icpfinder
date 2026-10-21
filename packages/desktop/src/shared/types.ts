@@ -128,6 +128,8 @@ export interface Icp {
   pain: string;
   /** "Why we picked it": what the user shared that points to this group (generated profiles only). */
   reasoning?: string;
+  /** Card icon the AI picked for this group (see PROFILE_ICONS). */
+  icon?: string;
   sellingAngle?: string;
   signals: string[];
   objections: string[];

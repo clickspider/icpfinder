@@ -150,13 +150,10 @@ export const Wizard = ({ state, onState }: { state: State; onState: (s: State) =
             finding: busy === "Finding your ICPs…",
             busy,
             error,
-            profiles: (ws?.icps ?? []).map((profile, index) => ({
+            profiles: (ws?.icps ?? []).map((profile) => ({
               ...icpPresentation(profile),
-              // A different icon on each card, so the groups don't all look the same.
-              icon:
-                (profile.profileKind === "consumer"
-                  ? ["buyer", "chat", "site"]
-                  : ["company", "buyer", "site"])[index % 3] ?? "buyer",
+              // The AI's pick for this group; the card falls back to words in the name.
+              icon: profile.icon ?? "",
             })),
             onStart: next,
           }}

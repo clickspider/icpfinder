@@ -16,13 +16,24 @@ type Profile = IcpDraft & { icon: string; id: string; why?: string };
 /** Ink-only icons, one per kind of group, chosen from the group's own words. */
 const GROUP_ICONS = {
   shop: "M4 9h16l-1.5-5h-13zM5 9v11h14V9M9 20v-6h6v6",
+  cart: "M3 4h2l2.4 11h10.2L20 8H6.2M10 20h.01M17 20h.01",
   phone: "M8 3h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM11 18h2",
   chat: "M4 5h16v11H9l-5 4zM8 10h.01M12 10h.01M16 10h.01",
   code: "M9 8l-4 4 4 4M15 8l4 4-4 4",
   people:
     "M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20c.6-3.5 3-5 6-5s5.4 1.5 6 5M16 11a3 3 0 1 0-1-5.8M17 15c2.2.4 3.6 2 4 5",
+  briefcase: "M4 8h16v11H4zM9 8V5h6v3M4 13h16",
+  building: "M5 21V4h10v17M15 9h4v12M8 8h4M8 12h4M8 16h4M3 21h18",
+  home: "M3 11l9-7 9 7M5 10v10h14V10M10 20v-5h4v5",
+  heart: "M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z",
+  school: "M2 9l10-5 10 5-10 5zM6 11v5c3 2 9 2 12 0v-5",
+  megaphone: "M3 10v4h3l7 4V6L6 10zM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11",
+  wrench: "M14.5 5.5a4 4 0 0 0 4.9 4.9L10 20l-3-3 9.6-9.4a4 4 0 0 0-1.1-2.1z",
+  money: "M3 7h18v10H3zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 10v4M18 10v4",
 } as const;
-const groupIcon = (title: string, index: number): keyof typeof GROUP_ICONS => {
+// The AI picks the icon from this set for each group; words in the name are the fallback.
+const groupIcon = (title: string, index: number, picked?: string): keyof typeof GROUP_ICONS => {
+  if (picked && picked in GROUP_ICONS) return picked as keyof typeof GROUP_ICONS;
   const t = title.toLowerCase();
   if (/shop|store|e-?commerce|retail|salon|restaurant|clinic|service business|agenc/.test(t))
     return "shop";
@@ -32,10 +43,10 @@ const groupIcon = (title: string, index: number): keyof typeof GROUP_ICONS => {
   if (/develop|coder|engineer|dev |dev$|programm|technical/.test(t)) return "code";
   return (["people", "chat", "shop"] as const)[index % 3] ?? "people";
 };
-const GroupIcon = ({ title, index }: { title: string; index: number }) => (
+const GroupIcon = ({ title, index, picked }: { title: string; index: number; picked?: string }) => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path
-      d={GROUP_ICONS[groupIcon(title, index)]}
+      d={GROUP_ICONS[groupIcon(title, index, picked)]}
       stroke="#1d1a1c"
       strokeWidth="1.6"
       strokeLinecap="round"
@@ -118,7 +129,7 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live: LiveReve
                   {/* Icon and name belong together: one header row. */}
                   <header className="ir-card-head">
                     <span className="ir-profile-icon">
-                      <GroupIcon title={profile.title} index={index} />
+                      <GroupIcon title={profile.title} index={index} picked={profile.icon} />
                     </span>
                     <h2>{profile.title}</h2>
                   </header>
