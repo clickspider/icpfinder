@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 import { describe, expect, it } from "vitest";
-import { peopleAt, peopleInIcp, rolesOf } from "../src/shared/people";
+import { linkedinFor, peopleAt, peopleInIcp, rolesOf } from "../src/shared/people";
 
 const p = (position: string) => ({ name: "A B", company: "X", position });
 
@@ -49,5 +49,33 @@ describe("company facts decide", () => {
   });
   it("finds people at a company in one lookup", () => {
     expect(peopleAt(people, { name: "TinyCo", domain: "tinyco.dev" })).toHaveLength(1);
+  });
+});
+
+describe("linkedinFor", () => {
+  const finding = (profileUrl?: string) => ({ person: { name: "Ada", profileUrl } });
+  it("opens a proven profile, never a search", () => {
+    expect(
+      linkedinFor({
+        research: {
+          findings: [finding("https://x.com/ada"), finding("http://linkedin.com/in/ada")],
+        },
+      })
+    ).toEqual({ url: "https://linkedin.com/in/ada", who: "Ada" });
+    expect(
+      linkedinFor({
+        research: {
+          findings: [finding("https://www.linkedin.com/search/results/all/?keywords=ada")],
+        },
+      })
+    ).toBeNull();
+  });
+  it("prefers the founder's own saved link", () => {
+    expect(
+      linkedinFor({
+        linkedin: "https://www.linkedin.com/company/acme",
+        research: { findings: [finding("https://www.linkedin.com/in/ada")] },
+      })
+    ).toEqual({ url: "https://www.linkedin.com/company/acme" });
   });
 });

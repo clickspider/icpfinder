@@ -152,10 +152,8 @@ export const AgentView = ({
           type="button"
           className="btn"
           style={{ background: "transparent", color: "var(--muted)" }}
-          onClick={() => {
-            if (active) void api().agentStop();
-            onClose();
-          }}
+          // Back keeps Claude working; a mini window shows it until it is done.
+          onClick={onClose}
         >
           ← Back
         </button>
@@ -401,5 +399,52 @@ export const AgentView = ({
         </aside>
       </div>
     </div>
+  );
+};
+
+/** The live browser, small, while the founder is on another screen. Click to watch it big. */
+export const AgentMini = ({ onOpen }: { onOpen: () => void }) => {
+  const [run, setRun] = useState<AgentRun | null>(null);
+  const [img, setImg] = useState<string | null>(null);
+  useEffect(() => {
+    void api().agentCurrent().then(setRun);
+    return api().onAgent(setRun);
+  }, []);
+  const active = run?.status === "running" || run?.status === "waiting";
+  useEffect(() => {
+    if (!active) {
+      setImg(null);
+      return;
+    }
+    let live = true;
+    const tick = () =>
+      void api()
+        .agentThumb()
+        .then((u) => live && u && setImg(u));
+    tick();
+    const t = setInterval(tick, 1500);
+    return () => {
+      live = false;
+      clearInterval(t);
+    };
+  }, [active]);
+  if (!run || !active) return null;
+  const waiting = run.status === "waiting";
+  const last = run.steps[run.steps.length - 1];
+  return (
+    <button
+      type="button"
+      className="agent-mini glass pop"
+      onClick={onOpen}
+      aria-label="Open the live browser"
+    >
+      {img ? <img src={img} alt="" /> : <span className="agent-mini-blank" />}
+      <span className="agent-mini-bar">
+        <span className={`agent-mini-dot ${waiting ? "wait" : ""}`} />
+        <span className="ellipsis" style={{ flex: 1, minWidth: 0 }}>
+          {waiting ? "Claude needs your OK" : (last?.text ?? "Claude is working")}
+        </span>
+      </span>
+    </button>
   );
 };

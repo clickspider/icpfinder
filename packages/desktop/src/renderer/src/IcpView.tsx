@@ -454,9 +454,10 @@ const WayIn = ({
             <button
               key={`${p.name}|${p.company}`}
               type="button"
-              className="btn wayin-person"
+              className={`btn wayin-person ${p.url ? "" : "nolink"}`}
+              disabled={!p.url}
               onClick={() => p.url && void api().openExternal(p.url)}
-              title={p.url ? "Open on LinkedIn" : undefined}
+              title={p.url ? `Open ${p.name} on LinkedIn` : "No profile link in your export"}
             >
               <span className="wayin-av">{initial(p.name)}</span>
               <span style={{ flex: 1, minWidth: 0 }}>
@@ -584,7 +585,11 @@ export const IcpView = ({
       <ProfileEditor key={icp.id} icp={icp} onState={onState} />
 
       <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-        <section className="panel" style={{ flex: 1.6, overflow: "hidden" }} aria-label="Companies">
+        <section
+          className="panel"
+          style={{ flex: "1.6 1 0", minWidth: 0, overflow: "hidden" }}
+          aria-label="Companies"
+        >
           <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "14px 16px" }}>
             <h2 style={{ margin: 0, fontSize: 15 }}>Companies</h2>
             <div style={{ fontSize: 12, color: "var(--faint)" }}>
@@ -674,7 +679,14 @@ export const IcpView = ({
 
         <aside
           className="panel"
-          style={{ flex: 1, padding: 16, display: "flex", flexDirection: "column", gap: 12 }}
+          style={{
+            flex: "1 1 0",
+            minWidth: 0,
+            padding: 16,
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+          }}
         >
           {(shown.length > 0 || contacts.length > 0) && (
             <WayIn

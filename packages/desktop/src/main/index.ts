@@ -10,6 +10,7 @@ import {
   companiesForLinkedIn,
   companiesToCheck,
   companiesToSearch,
+  LINKEDIN,
   normCompany,
 } from "../shared/people";
 import { defaultModel, isProvider } from "../shared/provider-models";
@@ -792,6 +793,15 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
     for (const sig of c?.signals ?? []) sig.seen = true;
     return commit();
   },
+  saveLinkedIn: (icpId: string, domain: string, url: string | null) => {
+    const c = activeWorkspace(state)
+      ?.icps.find((i) => i.id === icpId)
+      ?.companies.find((x) => x.domain === domain);
+    const clean = url?.trim().replace(/^http:\/\//, "https://");
+    if (c && !clean) c.linkedin = undefined;
+    else if (c && clean && LINKEDIN.test(clean)) c.linkedin = clean;
+    return commit();
+  },
   openExternal: (url: string) => {
     if (/^https:\/\//.test(url)) void shell.openExternal(url);
   },
@@ -803,6 +813,7 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
   agentBounds: (rect: { x: number; y: number; width: number; height: number } | null) =>
     agent?.setBounds(rect),
   agentCurrent: () => agent?.current() ?? null,
+  agentThumb: () => agent?.thumb() ?? null,
   /** What re-calibrate would stop right now in the active workspace. */
   busyWork: () => busyWork(activeWorkspace(state)),
   recalibrate: async () => {
