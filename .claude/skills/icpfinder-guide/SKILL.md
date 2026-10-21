@@ -403,3 +403,7 @@ For future design changes, verify long content, narrow windows, bottom action sp
 ## Extending IcpFinder beyond the approved baseline
 
 Use this language to align the dashboard and other non-onboarding surfaces. Their detailed layouts and copy are not yet approved. Reuse the brand, palette, typography, hierarchy, spacing, restrained icons, and clear action patterns; do not mechanically give every screen the split onboarding layout. Review new states with the user rather than treating old dashboard UI or unused CSS variants as settled design.
+
+## README presentation
+
+Use a compact identity header and direct product screenshots rather than gradient banners, floating-card posters, or oversized badge stacks. Screenshot captions must disclose synthetic example companies, signals, and source material. Do not ship capture fixtures or review-page scaffolding. Clearly separate Mac subscription connections and workspace features from web API-key discovery, MCP, and developer-library examples. Avoid blanket timing, unlimited-usage, verified-contact-count, or fixed-cost promises across these surfaces.
