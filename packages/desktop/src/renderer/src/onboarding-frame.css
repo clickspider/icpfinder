@@ -277,6 +277,7 @@
   min-width: 0;
 }
 .ob-question legend {
+  padding: 0;
   font-size: 14px;
   font-weight: 550;
   margin-bottom: 12px;
@@ -377,8 +378,10 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  margin: 0;
-  padding: 24px 0;
+  /* Side room so the scroll edge never cuts the selected card's ring and glow;
+     the negative margin keeps the text aligned with the other screens. */
+  margin: 0 -12px;
+  padding: 24px 12px;
 }
 .ob-sidebar:has(.ob-question) > .ob-body > * {
   flex-shrink: 0;
