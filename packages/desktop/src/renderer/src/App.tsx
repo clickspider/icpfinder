@@ -23,7 +23,7 @@ import { Wizard } from "./Wizard";
 
 export type View =
   | { kind: "overview" }
-  | { kind: "settings" }
+  | { kind: "settings"; tab?: "Provider" | "Connected services" | "Usage" }
   | { kind: "icp"; icpId: string }
   | { kind: "company"; icpId: string; domain: string }
   | { kind: "product" }
@@ -129,7 +129,12 @@ export const App = () => {
           <Overview key={ws.id} ws={ws} go={setView} onState={setState} />
         )}
         {current?.kind === "settings" && (
-          <SettingsView state={state} onState={setState} go={setView} />
+          <SettingsView
+            state={state}
+            onState={setState}
+            go={setView}
+            tab={current.tab ?? "Provider"}
+          />
         )}
         {current?.kind === "icp" && (
           <IcpView

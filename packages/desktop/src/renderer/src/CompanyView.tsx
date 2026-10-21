@@ -753,14 +753,8 @@ export const CompanyView = ({
                   <div className="lbl">Recent signals</div>
                   <button
                     type="button"
-                    className="btn"
-                    style={{
-                      marginLeft: "auto",
-                      background: "transparent",
-                      color: "var(--accent)",
-                      fontSize: 12,
-                      fontWeight: 600,
-                    }}
+                    className="secondary btn"
+                    style={{ marginLeft: "auto" }}
                     disabled={watching}
                     onClick={() => {
                       setWatching(true);
@@ -836,14 +830,8 @@ export const CompanyView = ({
                     <div className="lbl">Suggested opener</div>
                     <button
                       type="button"
-                      className="btn"
-                      style={{
-                        marginLeft: "auto",
-                        background: "transparent",
-                        color: "var(--accent)",
-                        fontSize: 12,
-                        fontWeight: 600,
-                      }}
+                      className="secondary btn"
+                      style={{ marginLeft: "auto" }}
                       onClick={() => copy("opener", opener)}
                     >
                       {copied === "opener" ? "Copied" : "Copy"}
@@ -1020,14 +1008,8 @@ export const CompanyView = ({
                     {result?.status === "done" && result.text && (
                       <button
                         type="button"
-                        className="btn"
-                        style={{
-                          marginLeft: "auto",
-                          background: "transparent",
-                          color: "var(--accent)",
-                          fontSize: 12,
-                          fontWeight: 600,
-                        }}
+                        className="secondary btn"
+                        style={{ marginLeft: "auto" }}
                         onClick={() => copy("result", result.text ?? "")}
                       >
                         {copied === "result" ? "Copied" : "Copy"}
@@ -1070,12 +1052,11 @@ export const CompanyView = ({
                           placeholder="Paste your Hunter API key"
                           value={hunterKey}
                           onChange={(e) => setHunterKey(e.target.value)}
-                          style={{ height: 38, fontSize: 13 }}
+                          style={{ fontSize: 13 }}
                         />
                         <button
                           type="button"
                           className="primary btn"
-                          style={{ height: 38 }}
                           disabled={!hunterKey.trim()}
                           onClick={async () => {
                             setError("");

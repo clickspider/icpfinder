@@ -139,25 +139,28 @@ export function SubscriptionPanel({
                 >
                   {status?.connected ? "Change account" : "Sign in"}
                 </button>
-                {status?.connected && (
-                  <button
-                    className="secondary btn"
-                    type="button"
-                    disabled={
-                      checkingStatus ||
-                      busy ||
-                      attempt?.status === "pending" ||
-                      selected === provider
-                    }
-                    onClick={() =>
-                      void act(async () => {
-                        onState(await api().saveSettings({ provider }));
-                      })
-                    }
-                  >
-                    {selected === provider ? "Selected" : "Use this provider"}
-                  </button>
-                )}
+                {status?.connected &&
+                  (selected === provider ? (
+                    <span className="provider-current">Current provider</span>
+                  ) : (
+                    <button
+                      className="secondary btn"
+                      type="button"
+                      disabled={
+                        checkingStatus ||
+                        busy ||
+                        attempt?.status === "pending" ||
+                        selected === provider
+                      }
+                      onClick={() =>
+                        void act(async () => {
+                          onState(await api().saveSettings({ provider }));
+                        })
+                      }
+                    >
+                      Use this provider
+                    </button>
+                  ))}
               </div>
               <p style={{ fontSize: 13, color: "var(--muted)", margin: "8px 0 0" }}>
                 {provider === "claude"

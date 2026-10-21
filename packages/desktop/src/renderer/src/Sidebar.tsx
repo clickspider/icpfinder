@@ -216,7 +216,11 @@ export function Sidebar({
           Settings
         </button>
         <div>
-          <button type="button" className="btn ghost" onClick={() => go({ kind: "settings" })}>
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => go({ kind: "settings", tab: "Provider" })}
+          >
             Provider · {provider}
           </button>
           <button type="button" className="btn ghost" onClick={() => go({ kind: "usage" })}>

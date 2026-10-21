@@ -667,7 +667,11 @@ export const IcpView = ({
                 <span className="disclosure-open">Hide details</span>
               </span>
             </summary>
-            <button type="button" className="btn ghost" onClick={() => go({ kind: "matching", back: { kind: "icp", icpId: icp.id } })}>
+            <button
+              type="button"
+              className="btn secondary"
+              onClick={() => go({ kind: "matching", back: { kind: "icp", icpId: icp.id } })}
+            >
               Adjust matching for this business →
             </button>
             {crit ? (

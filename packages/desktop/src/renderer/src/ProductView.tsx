@@ -164,7 +164,7 @@ export const ProductView = ({ ws, onState }: { ws: Workspace; onState: (s: State
                 </label>
               )}
               <div className="native-form-actions">
-                <button type="button" className="secondary btn" onClick={close}>
+                <button type="button" className="ghost btn" onClick={close}>
                   Cancel
                 </button>
                 <button type="submit" className="primary btn">

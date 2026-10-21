@@ -134,7 +134,7 @@ export const MatchingView = ({
         </div>
         <button
           type="button"
-          className="ghost btn nodrag"
+          className="secondary btn nodrag"
           style={{ marginLeft: "auto" }}
           onClick={() => {
             setCfg(DEFAULT_SCORING);

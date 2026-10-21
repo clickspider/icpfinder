@@ -440,7 +440,7 @@ export const ModelPicker = ({
   value,
   onChange,
   provider = "claude",
-  size = 16,
+  size = 13,
   label,
 }: {
   label?: string;
@@ -453,8 +453,8 @@ export const ModelPicker = ({
     {label ?? PROVIDER_NAMES[provider]}
     <select
       aria-label="AI model"
-      className="field"
-      style={{ width: "auto", padding: "5px 8px" }}
+      className="field model-select"
+      style={{ width: "auto" }}
       value={value}
       onChange={(event) => onChange(event.target.value)}
     >

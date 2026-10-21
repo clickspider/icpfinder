@@ -196,14 +196,8 @@ export const Connectors = ({
         ) : hunter?.ok ? (
           <button
             type="button"
-            className="btn"
-            style={{
-              alignSelf: "flex-start",
-              background: "transparent",
-              color: "var(--muted)",
-              fontSize: 13,
-              padding: 0,
-            }}
+            className="secondary btn"
+            style={{ alignSelf: "flex-start" }}
             onClick={() => void disconnect()}
           >
             Disconnect
@@ -220,12 +214,11 @@ export const Connectors = ({
               placeholder="Paste your Hunter API key"
               value={key}
               onChange={(e) => setKey(e.target.value)}
-              style={{ height: 38, fontSize: 13 }}
+              style={{ fontSize: 13 }}
             />
             <button
               type="button"
-              className="secondary btn"
-              style={{ height: 38, background: "#111114", color: "#fff" }}
+              className="primary btn"
               disabled={!key.trim() || checking}
               onClick={() => void connect()}
             >
@@ -342,8 +335,7 @@ const SignalSources = ({ state, onState }: { state: State; onState: (s: State) =
           {s.login && !ownBrowser && (
             <button
               type="button"
-              className="ghost btn"
-              style={{ fontSize: 12 }}
+              className="secondary btn"
               onClick={() => void api().openLogin(s.login ?? "")}
             >
               Sign in

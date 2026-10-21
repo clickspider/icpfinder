@@ -35,7 +35,7 @@ export function ProfileEditor({ icp, onState }: { icp: Icp; onState: (state: Sta
         {!draft && (
           <button
             type="button"
-            className="btn ghost"
+            className="btn secondary"
             disabled={icp.sourcing}
             onClick={() => {
               setDraft(values);

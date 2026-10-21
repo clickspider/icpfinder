@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { State } from "../../shared/types";
 import type { View } from "./App";
 import { ConnectorsView } from "./Connectors";
@@ -8,25 +7,26 @@ export function SettingsView({
   state,
   onState,
   go,
+  tab,
 }: {
   state: State;
   onState: (s: State) => void;
   go: (v: View) => void;
+  tab: "Provider" | "Connected services" | "Usage";
 }) {
-  const [tab, setTab] = useState("Provider");
   return (
     <div className="native-settings">
       <header>
         <h1>Settings</h1>
         <p>Manage the services IcpFinder uses.</p>
         <nav className="native-settings-tabs" aria-label="Settings section">
-          {["Provider", "Connected services", "Usage"].map((t) => (
+          {(["Provider", "Connected services", "Usage"] as const).map((t) => (
             <button
               className={`btn ${tab === t ? "selected" : ""}`}
               type="button"
               key={t}
               aria-pressed={tab === t}
-              onClick={() => setTab(t)}
+              onClick={() => go({ kind: "settings", tab: t })}
             >
               {t}
             </button>

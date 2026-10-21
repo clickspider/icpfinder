@@ -320,8 +320,8 @@ const LinkedInPanel = ({
               </button>
               <button
                 type="button"
-                className="ghost btn"
-                style={{ marginLeft: "auto", color: "var(--red)", fontSize: 12 }}
+                className="btn control-danger confirm"
+                style={{ marginLeft: "auto" }}
                 onClick={() =>
                   void api()
                     .deleteNetwork()
@@ -335,8 +335,8 @@ const LinkedInPanel = ({
           ) : (
             <button
               type="button"
-              className="ghost btn"
-              style={{ marginLeft: "auto", fontSize: 12 }}
+              className="btn control-danger"
+              style={{ marginLeft: "auto" }}
               onClick={() => setSure(true)}
             >
               Delete my network
