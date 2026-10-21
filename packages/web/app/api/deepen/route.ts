@@ -16,7 +16,7 @@ import type { LlmProvider } from "@icpfinder/providers";
 import { type NextRequest, NextResponse } from "next/server";
 import { asString, buildApiContext, debitOperatorCost, getClientIp } from "@/lib/api-context";
 import { reserveDeepen } from "@/lib/deepen-quota";
-import { hashClientIp } from "@/lib/rate-limit";
+import { hashClientIp, retryAfter } from "@/lib/rate-limit";
 import { getCachedDeepen, setCachedDeepen } from "@/lib/run-cache";
 import { sanitizeProvenanceUrl } from "@/lib/sanitize-url";
 
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         provider: "gemini",
         remaining: 0,
       },
-      { status: 429 }
+      { status: 429, ...retryAfter(quota.retryAfterSeconds) }
     );
   }
 

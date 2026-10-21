@@ -12,7 +12,7 @@ import { researchAccount } from "@icpfinder/core";
 import { type NextRequest, NextResponse } from "next/server";
 import { asString, buildApiContext, clampInt, getClientIp } from "@/lib/api-context";
 import { reserveDeepen } from "@/lib/deepen-quota";
-import { hashClientIp } from "@/lib/rate-limit";
+import { hashClientIp, retryAfter } from "@/lib/rate-limit";
 import { scanUrl } from "@/lib/scan-url";
 import { classifySeed } from "@/lib/seed-input";
 
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         error: `Daily research quota reached (${quota.limit}). Add your own Gemini key for unlimited.`,
         code: "rate_limit",
       },
-      { status: 429 }
+      { status: 429, ...retryAfter(quota.retryAfterSeconds) }
     );
   }
 

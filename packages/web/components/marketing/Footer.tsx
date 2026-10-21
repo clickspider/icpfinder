@@ -45,6 +45,9 @@ export function Footer() {
           <a href="/faq" className="hover:text-[color:var(--text)] transition-colors">
             faq
           </a>
+          <a href="/pricing" className="hover:text-[color:var(--text)] transition-colors">
+            pricing
+          </a>
           <a href="/llms.txt" className="hover:text-[color:var(--text)] transition-colors">
             llms.txt
           </a>
