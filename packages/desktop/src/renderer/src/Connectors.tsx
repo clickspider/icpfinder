@@ -4,7 +4,8 @@
 // live status. Used in the setup wizard and as a page in the app.
 
 import { useEffect, useState } from "react";
-import type { AiTool, State } from "../../shared/types";
+import type { State } from "../../shared/types";
+import { SubscriptionPanel } from "./SubscriptionPanel";
 import { api, Spinner, TOOL_LOGOS, ToolLogo } from "./ui";
 
 type Hunter = Awaited<ReturnType<ReturnType<typeof api>["verifyHunter"]>>;
@@ -82,13 +83,11 @@ export const Connectors = ({
   compact?: boolean;
 }) => {
   const icons = TOOL_LOGOS;
-  const [ai, setAi] = useState<AiTool[] | null>(null);
   const [key, setKey] = useState(state.settings.hunterKey);
   const [hunter, setHunter] = useState<Hunter | null>(null);
   const [checking, setChecking] = useState(false);
 
   useEffect(() => {
-    void api().detectAi().then(setAi);
     if (state.settings.hunterKey) void api().verifyHunter(state.settings.hunterKey).then(setHunter);
   }, [state.settings.hunterKey]);
 
@@ -105,9 +104,6 @@ export const Connectors = ({
     onState(await api().saveSettings({ hunterKey: "" }));
   };
 
-  const claude = ai?.find((t) => t.name === "Claude Code");
-  const codex = ai?.find((t) => t.name === "Codex");
-
   return (
     <div
       style={{
@@ -116,42 +112,9 @@ export const Connectors = ({
         gap: 10,
       }}
     >
-      <Card>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <Logo src={icons.claude} name="Claude" bg="#d97757" />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 600 }}>Claude Code</div>
-            <div style={{ fontSize: 12, color: "var(--muted)" }}>
-              Thinks and searches the web · your plan
-            </div>
-          </div>
-          {!ai ? (
-            <Spinner />
-          ) : (
-            <Status
-              kind={claude?.found ? "on" : "off"}
-              text={claude?.found ? "Connected" : "Not found"}
-            />
-          )}
-        </div>
-      </Card>
-      <Card>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <Logo src={icons.codex} name="Codex" bg="#111114" />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 600 }}>Codex</div>
-            <div style={{ fontSize: 12, color: "var(--muted)" }}>Writes scripts · optional</div>
-          </div>
-          {!ai ? (
-            <Spinner />
-          ) : (
-            <Status
-              kind={codex?.found ? "on" : "soon"}
-              text={codex?.found ? "Connected" : "Not installed"}
-            />
-          )}
-        </div>
-      </Card>
+      <div style={{ gridColumn: "1 / -1" }}>
+        <SubscriptionPanel state={state} onState={onState} />
+      </div>
       <Card>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <Logo src={icons.hunter} name="Hunter" bg="#ff5722" />
@@ -223,10 +186,7 @@ export const Connectors = ({
             <div style={{ fontWeight: 600 }}>Gmail</div>
             <div style={{ fontSize: 12, color: "var(--muted)" }}>Via Claude · drafts only</div>
           </div>
-          <Status
-            kind={claude?.found ? "on" : "off"}
-            text={claude?.found ? "Via Claude" : "Needs Claude"}
-          />
+          <Status kind="off" text="Requires Claude Gmail connector" />
         </div>
       </Card>
     </div>
@@ -275,7 +235,7 @@ const SignalSources = ({ state, onState }: { state: State; onState: (s: State) =
       <div style={{ display: "flex", alignItems: "baseline" }}>
         <div className="lbl">Where we look for signals</div>
         <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--muted)" }}>
-          plus Claude's web search
+          plus your AI provider’s web search
         </span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

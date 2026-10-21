@@ -109,7 +109,7 @@ Prefer “customer profiles” to unexplained “ICPs” in introductory copy, �
 | Loading | Describe meaningful work without fabricated progress | “Getting to know your business…” |
 | Discovery | Build anticipation around a credible result | “Discovering who you could help.” |
 | Results | Recommend, without declaring certainty | “Here’s where we’d start.” |
-| Reassurance | State what persists or can be changed | “All these profiles will be in your dashboard. You can edit them there anytime.” |
+| Reassurance | State what persists or can be changed | “All these profiles will be in your dashboard. You can edit them or add more there anytime.” |
 | Error | Explain the known problem and an available recovery | “We couldn’t reach ChatGPT. Try again in a moment.” |
 
 ### Actions and transitions
@@ -130,8 +130,11 @@ Each profile needs:
 3. **Who to talk to**: relevant roles for businesses, or the appropriate decision-making person for consumers. Never imply named contacts have been found.
 4. **A reason to reach out**: a signal or circumstance to look for later. Do not imply it has been observed at a real company.
 5. **May not be a fit if**: a meaningful qualification concern, presented as guidance rather than an automatic exclusion.
+6. **Why we picked it** (approved 2026-10-21): one short sentence (max 14 words), written to the user ("you"), that names the one thing they shared (offer, problem, audience, progress or their own words) that points to this group. Prefer a concrete detail from their own description; never just echo a setting they chose ("You chose Businesses"). Each card has a different reason. It never names methods, research or sources, and never claims a company, contact or buying signal was found. Optional: a missing reason never fails the set; manually added profiles have none. It is written from the saved overview at generation time; editing the overview later does not rewrite it.
 
-Write a connection between the offer and the group. Merely repeating “save time” across three cards is not personalization. Do not invent differentiators to make cards appear varied; the distinctions must be supported by the business context.
+**Plain, correct English** (2026-10-21): no jargon or invented labels (“people who avoid new apps”, never “app-avoidant users”). Progress phrases: “You're at the idea stage”, “You're preparing to launch”, “You're looking for your first customers”, “You already serve customers”. “Who to talk to” names a concrete person with a role or life situation, never “the individual” or “the user”.
+
+**No repetition across fields** (2026-10-21): each field adds something new. The reason must not restate the offer or the benefit; the characteristics must not repeat the title; the benefit must not repeat the product name or the offer word for word. Write a connection between the offer and the group. Merely repeating “save time” across three cards is not personalization. Do not invent differentiators to make cards appear varied; the distinctions must be supported by the business context.
 
 For an invoicing example, “Keep invoicing from eating into the time founders need to build and sell” explains a founder-specific benefit; “Handle more complex billing without adding more manual work for operations” explains another group's needs. These are illustrative examples, not templates to paste into unrelated businesses.
 
@@ -318,9 +321,17 @@ Rotate these lines without implying measured progress:
 
 Heading: “Here’s where we’d start.” Subtitle: “A few customer groups that could benefit from what you offer.”
 
-Near actions: “All these profiles will be in your dashboard. You can edit them there anytime.” Actions: Add a profile / Go to my dashboard. Back remains available. No profile selection is required. Do not restore “Next: we’ll find real companies and check why they fit.”
+Near actions: “All these profiles will be in your dashboard. You can edit them or add more there anytime.” One action: Go to my dashboard. Back remains available. No profile selection is required. **No “Add a profile” in onboarding** (decided 2026-10-21): onboarding exists to get people to the dashboard as fast as possible; adding and editing profiles happens in the dashboard. Do not restore “Next: we’ll find real companies and check why they fit.”
 
 **Cards use approved option A**, not the dropped B or alternate row design. Each contains characteristics, recognizable group name, differentiated benefit, “Who to talk to”, “A reason to reach out”, and “May not be a fit if”. The fit concern stays inside the card. Do not number the cards.
+
+**Card hierarchy (approved 2026-10-21, “quiet hierarchy”, grouped):** a header row with an ink icon that fits the group, picked dynamically by the AI from a fixed set of 14 (shop, cart, phone, chat, code, people, briefcase, building, home, heart, school, megaphone, wrench, money), with words in the group name as the fallback; no coloured accent dots beside the group name; then the benefit paragraph; then, 10px below, a small “Why we picked it” label (0.75rem, 600, ink) with a 7px amber dot (#d8952b) and the reason in 0.85rem muted grey (#5f565b); then “Who to talk to” and “A reason to reach out” as plain sentence-case bold labels; one thin divider before “May not be a fit if” (ink label). The characteristics line is not on the card face; it stays in the profile and the dashboard editor. Generated text is shown as sentences.
+
+**Results page colour rule:** red means only brand and the primary action. One neutral (ink) for icons and labels, amber only for the reason dot. No green or teal on this page.
+
+**Results page controls:** “← Back” top-left above the panel (44px hit area, 0.95rem, 500, ink, subtle hover). “Go to my dashboard →” (in-app arrow, never ↗; press feedback scale 0.97, 100ms ease-out). Footer note #5f565b at 0.88rem. 48px under the button inside the panel. Cards enter with a fade and 8px rise, 520ms cubic-bezier(.22,1,.36,1), 40ms stagger; fade only under reduced motion.
+
+The dashboard ICP page shows the reason as a “Why we picked it” box in its header. Below the header, the customer profile shows one line by default (“Talk to” and “Reach out when”, cut to fit, with “Show all”); clicking it opens the full profile, with “Show less” beside “Edit profile”. “How we match” has “← Back” above its title, which returns to the ICP the user came from.
 
 Use content-sized shared grid tracks/subgrid so corresponding rows align across neighboring cards regardless of wrapping. Do not solve alignment with fixed heights that clip longer generated text. Characteristic, title, benefit, role, signal, and fit-concern content must remain readable. Preserve alignment at narrower widths and with manually added profiles.
 
@@ -357,7 +368,7 @@ Paths below are relative to the repository root.
 | Shared brand / right panels | `packages/desktop/src/renderer/src/OnboardingFrame.tsx`, `onboarding-frame.css` |
 | Overview view/edit | `packages/desktop/src/renderer/src/BusinessOverview.tsx` |
 | Provider selection and errors | `SubscriptionConnection.tsx`, `ConnectionErrorCard.tsx`, `subscription-preview.css` in the renderer directory |
-| Loader/results/add profile | `IcpReveal.tsx`, `icp-reveal-preview.css` in the renderer directory |
+| Loader/results | `IcpReveal.tsx`, `icp-reveal-preview.css` in the renderer directory |
 | Existing brand/icons | `styles.css`, `ui.tsx`, `glass.tsx` in the renderer directory |
 | Galleries | `OnboardingGallery.tsx`, `SubscriptionDesignPreview.tsx` in the renderer directory |
 | Saved business / inference contract | `packages/desktop/src/shared/business-overview.ts` |

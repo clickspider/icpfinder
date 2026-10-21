@@ -13,6 +13,9 @@ import { join } from "node:path";
 import { parseCliResult } from "@icpfinder/providers";
 import { type BrowserWindow, WebContentsView } from "electron";
 import type { AgentRun, AgentStep } from "../shared/types";
+import { runBrowserLoop } from "./browser-loop";
+import { subscriptionEnv } from "./cli";
+import { createLlm, getModel, getProvider } from "./engine";
 import { recordUsage } from "./usage";
 
 const SYSTEM = `You work for a startup founder inside IcpFinder. You control a browser panel the founder watches live, using the icpfinder-browser tools.
@@ -44,6 +47,7 @@ export class BrowserAgent {
   private run: AgentRun | null = null;
   private approve: ((v: string) => void) | null = null;
   private child: ReturnType<typeof spawn> | null = null;
+  private controller: AbortController | null = null;
 
   constructor(
     win: BrowserWindow,
@@ -97,6 +101,7 @@ export class BrowserAgent {
   }
 
   stop(): void {
+    this.controller?.abort();
     this.child?.kill("SIGTERM");
     if (this.approve) this.answer(false, "stopped");
     if (this.run && this.run.status !== "done") this.run.status = "stopped";
@@ -237,6 +242,8 @@ export class BrowserAgent {
     cont?: { goal: string; keepSteps: AgentStep[]; shown: string }
   ): Promise<AgentRun> {
     if (this.run?.status === "running" || this.run?.status === "waiting") this.stop();
+    const controller = new AbortController();
+    this.controller = controller;
     await this.ensureBridge();
     this.run = {
       id: `run_${Date.now().toString(36)}`,
@@ -251,6 +258,43 @@ export class BrowserAgent {
         : [],
     };
     if (startUrl) await this.view.webContents.loadURL(startUrl).catch(() => undefined);
+    const activeRun = this.run;
+    if (getProvider() !== "claude") {
+      void (async () => {
+        try {
+          const llm = await createLlm(false, controller.signal);
+          await runBrowserLoop({
+            llm,
+            task,
+            system: SYSTEM,
+            signal: controller.signal,
+            tool: (name, args) => this.tool(name, args),
+            say: (text) => this.step("say", text),
+          });
+          if (this.run === activeRun && !controller.signal.aborted) {
+            activeRun.status = "done";
+            this.step("done", "Done");
+          }
+        } catch (error) {
+          if (this.run === activeRun && !controller.signal.aborted) {
+            activeRun.status = "failed";
+            this.step("error", error instanceof Error ? error.message : "Browser request failed.");
+          }
+        }
+      })();
+      this.touch();
+      return activeRun;
+    }
+    try {
+      await createLlm(false, controller.signal);
+    } catch (error) {
+      if (this.run === activeRun && !controller.signal.aborted) {
+        activeRun.status = "failed";
+        this.step("error", error instanceof Error ? error.message : "Check your AI subscription.");
+      }
+      return activeRun;
+    }
+    if (controller.signal.aborted) return activeRun;
     const cfg = join(tmpdir(), `icpfinder-mcp-${process.pid}.json`);
     writeFileSync(
       cfg,
@@ -270,8 +314,18 @@ export class BrowserAgent {
       }),
       { mode: 0o600 }
     );
-    const bin = await this.claudeBin();
-    const { ANTHROPIC_API_KEY: _a, ANTHROPIC_AUTH_TOKEN: _b, ...env } = process.env;
+    let bin: string;
+    try {
+      bin = await this.claudeBin();
+    } catch {
+      if (this.run === activeRun && !controller.signal.aborted) {
+        activeRun.status = "failed";
+        this.step("error", "Could not find Claude Code. Check AI subscriptions.");
+      }
+      return activeRun;
+    }
+    if (controller.signal.aborted) return activeRun;
+    const env = subscriptionEnv();
     const child = spawn(
       bin,
       [
@@ -289,14 +343,29 @@ export class BrowserAgent {
         "--setting-sources",
         "",
         "--no-session-persistence",
+        "--model",
+        getModel() || "sonnet",
         "--append-system-prompt",
         SYSTEM,
       ],
       { env, stdio: ["pipe", "pipe", "pipe"] }
     );
     this.child = child;
+    child.stdin.on("error", () => {
+      if (this.run === activeRun && !controller.signal.aborted) {
+        activeRun.status = "failed";
+        this.step("error", "Claude closed the request.");
+      }
+    });
+    child.on("error", () => {
+      if (this.run === activeRun) {
+        activeRun.status = "failed";
+        this.step("error", "Could not start Claude. Check AI subscriptions.");
+      }
+    });
     let buf = "";
     child.stdout?.on("data", (d: Buffer) => {
+      if (this.run !== activeRun || controller.signal.aborted) return;
       buf += d.toString();
       let nl = buf.indexOf("\n");
       while (nl >= 0) {
@@ -329,7 +398,7 @@ export class BrowserAgent {
       err += d.toString();
     });
     child.on("close", (code) => {
-      if (!this.run) return;
+      if (this.run !== activeRun || controller.signal.aborted) return;
       if (this.run.status === "running" || this.run.status === "waiting") {
         this.run.status = code === 0 ? "done" : "failed";
         if (code !== 0) this.step("error", err.trim().slice(0, 300) || `Claude stopped (${code})`);

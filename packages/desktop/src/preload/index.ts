@@ -9,16 +9,21 @@ const call =
     ipcRenderer.invoke(name, ...args);
 
 const api: IcpApi = {
+  subscriptionStatus: call("subscriptionStatus") as IcpApi["subscriptionStatus"],
+  beginSubscriptionLogin: call("beginSubscriptionLogin") as IcpApi["beginSubscriptionLogin"],
+  subscriptionLoginState: call("subscriptionLoginState") as IcpApi["subscriptionLoginState"],
+  cancelSubscriptionLogin: call("cancelSubscriptionLogin") as IcpApi["cancelSubscriptionLogin"],
+  verifySubscription: call("verifySubscription") as IcpApi["verifySubscription"],
   getState: call("getState") as IcpApi["getState"],
   detectAi: call("detectAi") as IcpApi["detectAi"],
   readProduct: call("readProduct") as IcpApi["readProduct"],
   updateProduct: call("updateProduct") as IcpApi["updateProduct"],
   verifyHunter: call("verifyHunter") as IcpApi["verifyHunter"],
   findIcps: call("findIcps") as IcpApi["findIcps"],
+  addIcp: call("addIcp") as IcpApi["addIcp"],
+  updateProfile: call("updateProfile") as IcpApi["updateProfile"],
   saveScoring: call("saveScoring") as IcpApi["saveScoring"],
-  ideaTurn: call("ideaTurn") as IcpApi["ideaTurn"],
   ideaFinish: call("ideaFinish") as IcpApi["ideaFinish"],
-  transcribe: call("transcribe") as IcpApi["transcribe"],
   updateCard: call("updateCard") as IcpApi["updateCard"],
   importLinkedIn: call("importLinkedIn") as IcpApi["importLinkedIn"],
   importNetwork: call("importNetwork") as IcpApi["importNetwork"],

@@ -221,7 +221,7 @@ const ACTIONS: Action[] = [
     id: "intros",
     title: "Find warm intros",
     brand: "claude",
-    sub: "Claude searches the web",
+    sub: "Your AI searches the web",
     path: "M8 12a3 3 0 100-6 3 3 0 000 6z M16 12a3 3 0 100-6 3 3 0 000 6z M2 20a6 6 0 0112 0 M10 20a6 6 0 0112 0",
     tint: "#f1e6ff",
     ink: "#8e2fc0",
@@ -256,7 +256,7 @@ const ACTIONS: Action[] = [
     id: "live",
     title: "Connect on LinkedIn, live",
     brand: "linkedin",
-    sub: "Watch Claude do it · asks before sending",
+    sub: "Watch your AI do it · asks before sending",
     path: "M3 5h18v12H3z M8 21h8 M12 17v4 M10 9l4 2-4 2z",
     tint: "#fff0f3",
     ink: "#e0244a",
@@ -384,7 +384,7 @@ export const CompanyView = ({
       const note = c.actions?.linkedin?.text ?? opener;
       return go({
         kind: "agent",
-        title: `Claude on LinkedIn · ${c.name}`,
+        title: `Browser agent on LinkedIn · ${c.name}`,
         url: "https://www.linkedin.com/feed/",
         back: { kind: "company", icpId, domain: c.domain },
         task: `Find ${person ? `${person.name} (${person.role}) at` : "the founder or growth lead of"} ${c.name} (${c.domain}) on LinkedIn and prepare a connection request${note ? ` with a note based on this text (shorten it to fit LinkedIn's limit, keep it a complete sentence):\n\n${note}` : ""}.\nIf LinkedIn asks to log in, say so and stop. Ask the founder before you send the request.`,
@@ -531,7 +531,7 @@ export const CompanyView = ({
               <>
                 <Spinner />
                 <div style={{ fontWeight: 600 }}>
-                  {c.status === "researching" ? "Claude is researching" : "In the queue"}
+                  {c.status === "researching" ? "Your AI is researching" : "In the queue"}
                 </div>
                 <div style={{ color: "var(--muted)" }}>
                   Then the code checks every quote on its page.
@@ -799,7 +799,7 @@ export const CompanyView = ({
               )}
 
               <div className="lbl" style={{ padding: "4px 2px 0" }}>
-                Next steps · Claude does them
+                Next steps · your AI does them
               </div>
               <div
                 style={{
@@ -908,7 +908,7 @@ export const CompanyView = ({
                         }}
                       >
                         <Spinner />
-                        Claude is working on it…
+                        Your AI is working on it…
                       </span>
                     ) : (
                       result.text

@@ -19,12 +19,23 @@ export interface Product {
   logo?: string;
   /** Up to 3 brand colors from the site, primary first. */
   colors?: string[];
+  audience?: Audience;
+  progress?: BusinessProgress;
+  marketplace?: boolean;
+  confirmedFields?: string[];
+  /** Legacy funding/model answers: retained for compatibility, not used as progress. */
   model?: BusinessModel;
   stage?: Stage;
   /** Known competitors or today's way; sharpens the ICP and the price guess. */
   competitors?: string;
 }
 
+export type Audience = "Businesses" | "Consumers" | "Both";
+export type BusinessProgress =
+  | "Exploring an idea"
+  | "Preparing to launch"
+  | "Looking for first customers"
+  | "Already serving customers";
 export type BusinessModel = "B2B" | "B2C" | "B2B2C" | "Marketplace";
 export type Stage = "Idea" | "Pre-seed" | "Seed" | "Series A+";
 
@@ -52,32 +63,6 @@ export interface Contact {
   company: string;
   position: string;
   url?: string;
-}
-
-export interface IdeaMsg {
-  role: "agent" | "you";
-  text: string;
-  /** Length in seconds when the message was a voice note. */
-  voice?: number;
-}
-
-/** What the idea chat knows so far; all six filled = enough to start. */
-export interface IdeaBrief {
-  what: string;
-  problem: string;
-  who: string;
-  different: string;
-  pays: string;
-  model: string;
-  /** What people use today instead (named tools or the manual way). */
-  competitors: string;
-}
-
-export interface IdeaState {
-  messages: IdeaMsg[];
-  brief: IdeaBrief;
-  name: string;
-  quick: string[];
 }
 
 /** candidate = found and scored, waiting for the founder to approve its fit. */
@@ -124,13 +109,27 @@ export interface ActionResult {
   at: string;
 }
 
+export interface IcpDraft {
+  title: string;
+  tag: string;
+  fit: string;
+  buyer: string;
+  signal: string;
+  skip: string;
+}
+
 export interface Icp {
+  profileKind?: "business" | "consumer";
+  characteristics?: string;
   id: string;
   name: string;
   industry: string;
   size: string;
   pain: string;
+  /** "Why we picked it": what the user shared that points to this group (generated profiles only). */
   reasoning?: string;
+  /** Card icon the AI picked for this group (see PROFILE_ICONS). */
+  icon?: string;
   sellingAngle?: string;
   signals: string[];
   objections: string[];
@@ -203,6 +202,9 @@ export interface Workspace {
 }
 
 export interface Settings {
+  provider?: import("./subscriptions").ProviderId;
+  providerConfirmed?: boolean;
+  providerModels?: Partial<Record<import("./subscriptions").ProviderId, string>>;
   hunterKey: string;
   windowDays: number;
   dropTime: string;
@@ -251,13 +253,20 @@ export interface AiTool {
 export interface IcpApi {
   getState(): Promise<State>;
   detectAi(): Promise<AiTool[]>;
+  subscriptionStatus(): Promise<import("./subscriptions").SubscriptionStatus[]>;
+  beginSubscriptionLogin(
+    provider: import("./subscriptions").ProviderId
+  ): Promise<import("./subscriptions").LoginAttempt>;
+  subscriptionLoginState(id: string): Promise<import("./subscriptions").LoginAttempt>;
+  cancelSubscriptionLogin(id: string): Promise<void>;
+  verifySubscription(): Promise<string>;
   readProduct(url: string): Promise<State>;
   updateProduct(patch: Partial<Product>): Promise<State>;
   findIcps(feedback?: string): Promise<State>;
+  addIcp(draft: IcpDraft): Promise<State>;
+  updateProfile(icpId: string, draft: IcpDraft): Promise<State>;
   saveScoring(patch: Partial<import("./scoring").Scoring> | null): Promise<State>;
-  ideaTurn(idea: IdeaState): Promise<IdeaState>;
-  ideaFinish(idea: IdeaState): Promise<State>;
-  transcribe(audio: ArrayBuffer): Promise<string>;
+  ideaFinish(description: string): Promise<State>;
   updateCard(
     icpId: string,
     key: "buyer" | "company" | "trigger" | "skip",

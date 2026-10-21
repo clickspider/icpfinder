@@ -1,0 +1,703 @@
+.ir-reveal {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  color: var(--ink);
+}
+
+.ir-exit {
+  font-size: 11px;
+  color: var(--faint);
+}
+.ir-exit {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.ir-stage {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: auto;
+  isolation: isolate;
+  padding: 32px 38px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+/* The Rich panel is the scroll box's own background, so it always fills the
+   stage and the content scrolls inside it (a pseudo-element would scroll away). */
+.ir-stage {
+  margin: 0 12px 12px;
+  border-radius: 24px;
+  background:
+    radial-gradient(ellipse at 12% 85%, #ff8fa650, transparent 70%),
+    radial-gradient(ellipse at 0% 100%, #ff6f6124, transparent 60%),
+    radial-gradient(ellipse at 95% 15%, #ffb08a50, transparent 65%), #fff5f6;
+}
+.ir-discovery {
+  margin: auto 0;
+  padding: 8px 0 36px;
+  text-align: center;
+}
+.ir-stage h1 {
+  font-size: 44px;
+  letter-spacing: -1.8px;
+  line-height: 1.12;
+  font-weight: 650;
+  margin: 0;
+}
+.ir-stage h1 em {
+  font-style: normal;
+  color: var(--accent);
+}
+.ir-intro {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #83747b;
+  margin: 19px 0 0;
+}
+.ir-orbit {
+  width: 242px;
+  height: 224px;
+  margin: 0 auto 35px;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.ir-orbit-track {
+  position: absolute;
+  border: 1px solid #ba6c8324;
+  border-radius: 50%;
+}
+.ir-outer {
+  width: 218px;
+  height: 218px;
+}
+.ir-inner {
+  width: 158px;
+  height: 158px;
+  border-style: dashed;
+}
+.ir-orbit-sweep {
+  position: absolute;
+  width: 218px;
+  height: 218px;
+  border: 2px solid transparent;
+  border-top-color: #d68a9c80;
+  border-radius: 50%;
+  animation: ir-spin 7s linear infinite;
+}
+.ir-core {
+  width: 94px;
+  height: 94px;
+  border-radius: 28px;
+  background: #fff9;
+  display: grid;
+  place-items: center;
+  box-shadow:
+    0 15px 45px #b4527020,
+    inset 0 1px 0 #fff;
+  animation: ir-breathe 4s ease-in-out infinite;
+}
+.ir-orbit-node {
+  position: absolute;
+  width: 47px;
+  height: 47px;
+  display: grid;
+  place-items: center;
+  background: #fffdfde8;
+  border: 1px solid #fff;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px #a4587010;
+}
+.ir-node-one {
+  top: 1px;
+  left: 38px;
+  animation: ir-float 5s ease-in-out infinite;
+}
+.ir-node-two {
+  top: 93px;
+  right: -9px;
+  animation: ir-float 5s 1s ease-in-out infinite;
+}
+.ir-node-three {
+  bottom: -7px;
+  left: 43px;
+  animation: ir-float 5s 2s ease-in-out infinite;
+}
+.ir-working {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  margin-top: 38px;
+  font-size: 12px;
+  color: #866571;
+  min-height: 20px;
+}
+.ir-working-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d57490;
+  animation: ir-breathe 2s ease-in-out infinite;
+}
+.ir-phase {
+  animation: ir-reveal 0.5s ease-out;
+}
+.ir-results {
+  margin: auto 0;
+  text-align: center;
+  width: min(1050px, 100%);
+  padding: 8px 0 0;
+  animation: ir-reveal 0.45s ease-out;
+}
+.ir-results h1 {
+  font-size: 38px;
+}
+.ir-results > .ir-intro {
+  margin-top: 13px;
+  font-size: 14px;
+}
+.ir-cards {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin: 26px 0 16px;
+}
+.ir-card {
+  display: block;
+  text-align: left;
+  min-width: 0;
+  border: 1px solid #fff;
+  background: #ffffffad;
+  border-radius: 21px;
+  padding: 23px;
+  box-shadow: 0 8px 25px #82304d07;
+  color: var(--ink);
+  transition:
+    transform 0.18s,
+    border-color 0.18s,
+    box-shadow 0.18s;
+}
+.ir-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.ir-profile-icon {
+  width: 45px;
+  height: 45px;
+  background: #f8eeef;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+}
+.ir-card-tag {
+  font-size: 10px;
+  color: #a48b94;
+}
+.ir-card h2 {
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+  line-height: 1.25;
+  min-height: 42px;
+  margin: 9px 0 7px;
+}
+.ir-card-fit {
+  color: #7d6c74;
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0 0 23px;
+  min-height: 39px;
+}
+.ir-card-detail {
+  margin-top: 17px;
+}
+.ir-card-detail > span {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #ac929b;
+}
+.ir-card-detail p {
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 7px 0 0;
+  color: #67535d;
+}
+.ir-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 25px;
+  margin-top: 18px;
+}
+.ir-refine {
+  border: 0;
+  background: transparent;
+  color: #8a727d;
+  font-size: 12px;
+  cursor: pointer;
+}
+.ir-hunt {
+  border: 0;
+  border-radius: 13px;
+  padding: 15px 30px;
+  min-width: 210px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 7px 20px #e0244a26;
+  cursor: pointer;
+}
+.ir-hunt span {
+  margin-left: 25px;
+  opacity: 0.7;
+}
+.ir-hunt:hover {
+  background: #cc1e42;
+}
+.ir-hunt-note {
+  color: #a88c97;
+  font-size: 11px;
+  margin: 15px 0 0;
+}
+@keyframes ir-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes ir-breathe {
+  50% {
+    opacity: 0.6;
+    transform: scale(0.96);
+  }
+}
+@keyframes ir-float {
+  50% {
+    transform: translateY(-5px);
+  }
+}
+@keyframes ir-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 1000px) {
+  .ir-card {
+    padding: 17px;
+  }
+  .ir-cards {
+    gap: 12px;
+  }
+  .ir-card h2 {
+    font-size: 19px;
+  }
+  .ir-results h1 {
+    font-size: 32px;
+  }
+}
+@media (max-height: 780px) {
+  .ir-stage {
+    padding-top: 24px;
+  }
+  .ir-cards {
+    margin-top: 18px;
+  }
+  .ir-card-top {
+    margin-bottom: 14px;
+  }
+  .ir-card-detail {
+    margin-top: 12px;
+  }
+  .ir-card-fit {
+    margin-bottom: 15px;
+  }
+  .ir-orbit {
+    transform: scale(0.85);
+    margin-bottom: 15px;
+    height: 200px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ir-reveal .ir-orbit-sweep,
+  .ir-reveal .ir-core,
+  .ir-reveal .ir-orbit-node,
+  .ir-reveal .ir-working-dot,
+  .ir-reveal .ir-phase,
+  .ir-reveal .ir-results {
+    animation: none;
+  }
+  .ir-reveal .ir-card {
+    transition: none;
+  }
+}
+
+.ir-skip {
+  border-top: 1px solid #b88a9b20;
+  padding-top: 14px;
+}
+.ir-hunt-note {
+  margin-top: 25px;
+  font-size: 12px;
+}
+.ir-editor {
+  max-width: 730px;
+  margin: 24px auto;
+  padding: 28px;
+  border: 1px solid #ead9df;
+  border-radius: 21px;
+  background: #fffdfdf0;
+  text-align: left;
+  box-shadow: 0 8px 25px #82304d07;
+}
+.ir-editor h2 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: -0.5px;
+}
+.ir-editor > p {
+  color: #83747b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.ir-editor-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 24px;
+}
+.ir-editor label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  color: #67535d;
+}
+.ir-editor input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #e5d9de;
+  border-radius: 9px;
+  padding: 12px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+}
+.ir-editor input::placeholder {
+  color: #ac969f;
+}
+.ir-editor input:focus {
+  outline: 2px solid #df8298;
+  outline-offset: 2px;
+}
+.ir-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 22px;
+  margin-top: 24px;
+}
+.ir-editor-actions .ir-hunt {
+  min-width: 130px;
+}
+@media (max-width: 720px) {
+  .ir-cards,
+  .ir-editor-fields {
+    grid-template-columns: 1fr;
+  }
+  .ir-toolbar {
+    padding-left: 80px;
+    gap: 8px;
+  }
+}
+.ir-cards .ir-card {
+  display: grid;
+  align-content: start;
+}
+.ir-card-top {
+  grid-area: icon;
+}
+.ir-card-tag {
+  grid-area: tag;
+}
+.ir-card h2 {
+  grid-area: title;
+}
+.ir-card-fit {
+  grid-area: fit;
+}
+.ir-buyer {
+  grid-area: buyer;
+}
+.ir-signal {
+  grid-area: signal;
+}
+.ir-skip {
+  grid-area: skip;
+}
+.ir-cards-portraits .ir-card {
+  grid-template-areas: "head" "summary" "buyer" "signal" "skip";
+  border-color: #eadde280;
+  background: #ffffffd9;
+  padding: 25px;
+}
+.ir-cards-portraits .ir-card-top {
+  margin-bottom: 18px;
+}
+.ir-cards-portraits .ir-profile-icon {
+  background: transparent;
+  width: 36px;
+  height: 36px;
+}
+.ir-cards-portraits .ir-card h2 {
+  min-height: 0;
+  margin: 0 0 6px;
+}
+.ir-cards-portraits .ir-card-fit {
+  margin-bottom: 6px;
+}
+.ir-cards .ir-card-tag {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #87717b;
+}
+.ir-cards .ir-card-fit {
+  font-size: 13.5px;
+  color: var(--ink-2);
+  margin-top: 12px;
+}
+/* Idea A: quiet hierarchy. Plain sentence-case labels, no caps, no label icons. */
+.ir-cards .ir-card-detail > span {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+.ir-cards .ir-card-detail p {
+  margin-top: 2px;
+}
+.ir-cards .ir-skip {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 0.5px solid #0000001a;
+}
+.ir-cards .ir-skip > span {
+  color: #9b4a5f;
+}
+.ir-why {
+  grid-area: why;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.ir-why:not(:empty) {
+  margin: 14px 0 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #0f93840d;
+}
+.ir-why i {
+  display: flex;
+  flex: 0 0 16px;
+  margin-top: 1px;
+}
+.ir-why p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #4d6b67;
+}
+.ir-why b {
+  display: block;
+  font-weight: 600;
+  color: #0b6e63;
+}
+.ir-card-detail > span i {
+  display: flex;
+  flex: 0 0 16px;
+  opacity: 0.8;
+}
+.ir-cards .ir-card-detail p {
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* Each card spans the same seven content-sized tracks. A longer field grows
+   that row for every card beside it, rather than shifting later sections. */
+.ir-cards-portraits {
+  row-gap: 0;
+}
+.ir-cards-portraits .ir-card {
+  grid-row: span 5;
+  grid-template-rows: subgrid;
+  grid-template-areas: none;
+  row-gap: 0;
+  margin-bottom: 18px;
+  overflow-wrap: anywhere;
+}
+.ir-cards-portraits .ir-card > * {
+  grid-area: auto;
+}
+.ir-results {
+  padding-bottom: 40px;
+  flex-shrink: 0;
+}
+.ir-toolbar {
+  height: 52px;
+  min-height: 52px;
+  padding: 17px 30px 0 85px;
+}
+.ir-reveal {
+  height: 100%;
+  width: 100%;
+}
+.ir-reveal .ir-stage {
+  padding: 28px 26px 12px;
+}
+.ir-reveal button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.ir-toolbar {
+  height: 84px;
+  min-height: 84px;
+  padding: 28px 38px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+@media (max-width: 1000px) {
+  .ir-toolbar {
+    padding-inline: 30px;
+  }
+}
+/* The same reason on the dashboard ICP page header. */
+.icp-why.ir-why:not(:empty) {
+  margin: 12px 0 0;
+  max-width: 640px;
+  background: #ffffff8c;
+}
+
+/* Profile card, grouped: header (icon + name), one summary, then the details. */
+.ir-card-head {
+  grid-area: head;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.ir-cards-portraits .ir-card-head .ir-profile-icon {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  margin-top: 2px;
+}
+.ir-cards-portraits .ir-card-head h2 {
+  margin: 0;
+  min-height: 0;
+  font-size: 19px;
+}
+.ir-cards .ir-card-fit {
+  margin: 0 0 4px;
+}
+/* Results page: brand red only for brand and the primary action; one neutral. */
+.ir-summary {
+  grid-area: summary;
+}
+.ir-card-why {
+  margin-top: 10px;
+}
+.ir-why-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.ir-why-label i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #d8952b;
+}
+.ir-card-why p {
+  margin: 3px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #5f565b;
+}
+.ir-cards .ir-skip > span {
+  color: var(--ink);
+}
+.ir-hunt {
+  transition:
+    transform 100ms ease-out,
+    background 0.15s;
+}
+.ir-hunt:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.ir-reveal .ir-hunt-note {
+  color: #5f565b;
+  font-size: 0.88rem;
+}
+.ir-reveal .ir-stage {
+  padding-bottom: 48px;
+}
+/* Back sits top-left, low enough to clear the window buttons. */
+.ir-reveal .ir-toolbar {
+  justify-content: flex-start;
+  align-items: flex-end;
+  padding: 0 26px 4px;
+}
+.ir-reveal .ir-exit {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--ink);
+  transition: background 0.15s;
+}
+.ir-reveal .ir-exit:hover:not(:disabled) {
+  background: #0000000a;
+}
+/* Cards arrive: fade + 8px rise, no bounce, 40ms apart. */
+.ir-cards-portraits .ir-card {
+  animation: ir-card-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+@keyframes ir-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ir-cards-portraits .ir-card {
+    animation-name: ir-card-fade;
+  }
+  @keyframes ir-card-fade {
+    from {
+      opacity: 0;
+    }
+  }
+}

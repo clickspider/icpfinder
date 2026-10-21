@@ -1,3 +1,5 @@
+import { PROVIDER_MODELS, PROVIDER_NAMES } from "../../shared/provider-models";
+import type { ProviderId } from "../../shared/subscriptions";
 // SPDX-License-Identifier: MIT
 //
 // Small shared pieces: the living stage, ICP art, proof helpers.
@@ -433,18 +435,51 @@ export const MODELS: Array<{ id: string; name: string; version: string; hint: st
   { id: "claude-haiku-5-5", name: "Haiku", version: "5.5", hint: "Fastest · lightest" },
 ];
 
-/** Claude's logo plus the exact model and version it runs on; a glass menu to switch. */
+/** Provider logo (Grok has none bundled: a small dark tile with its initial). */
+export const ProviderLogo = ({ provider, size }: { provider: ProviderId; size: number }) =>
+  provider === "xai" ? (
+    <span
+      aria-hidden="true"
+      style={{
+        width: size,
+        height: size,
+        borderRadius: Math.round(size / 4),
+        background: "#111114",
+        color: "#fff",
+        display: "inline-grid",
+        placeItems: "center",
+        fontSize: Math.round(size * 0.55),
+        fontWeight: 700,
+        flexShrink: 0,
+      }}
+    >
+      x
+    </span>
+  ) : (
+    <ToolLogo name={provider} size={size} radius={Math.round(size / 4)} />
+  );
+
+/** "Sonnet · balanced" -> ["Sonnet", "balanced"]. */
+const modelParts = (name: string) => {
+  const [main, hint] = name.split(" · ");
+  return [main ?? name, hint ?? ""] as const;
+};
+
+/** The selected provider's logo and model; a glass menu to switch. Codex can use its default. */
 export const ModelPicker = ({
   value,
   onChange,
+  provider = "claude",
   size = 16,
 }: {
   value: string;
   onChange: (id: string) => void;
+  provider?: ProviderId;
   size?: number;
 }) => {
   const [open, setOpen] = useState(false);
-  const cur = MODELS.find((m) => m.id === value) ?? MODELS[0];
+  const models = PROVIDER_MODELS[provider];
+  const cur = models.find((m) => m.id === value) ?? { id: value, name: value || "Default" };
   useEffect(() => {
     if (!open) return;
     const close = () => setOpen(false);
@@ -458,13 +493,14 @@ export const ModelPicker = ({
         className="mp-btn"
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-label={`AI model: ${PROVIDER_NAMES[provider]} ${cur.name}`}
         onClick={(e) => {
           e.stopPropagation();
           setOpen(!open);
         }}
       >
-        <ToolLogo name="claude" size={size} radius={4} />
-        {cur?.name} <span className="mp-ver">{cur?.version}</span>
+        <ProviderLogo provider={provider} size={size} />
+        {modelParts(cur.name)[0]}
         <svg
           width="9"
           height="9"
@@ -480,28 +516,29 @@ export const ModelPicker = ({
       </button>
       {open && (
         <div className="mp-menu glass pop" role="menu">
-          {MODELS.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              role="menuitemradio"
-              aria-checked={m.id === cur?.id}
-              className={`mp-item ${m.id === cur?.id ? "on" : ""}`}
-              onClick={() => {
-                onChange(m.id);
-                setOpen(false);
-              }}
-            >
-              <ToolLogo name="claude" size={22} radius={6} />
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span className="mp-name">
-                  Claude {m.name} <span className="mp-ver">{m.version}</span>
+          {models.map((m) => {
+            const [main, hint] = modelParts(m.name);
+            return (
+              <button
+                key={m.id || "default"}
+                type="button"
+                role="menuitemradio"
+                aria-checked={m.id === cur.id}
+                className={`mp-item ${m.id === cur.id ? "on" : ""}`}
+                onClick={() => {
+                  onChange(m.id);
+                  setOpen(false);
+                }}
+              >
+                <ProviderLogo provider={provider} size={22} />
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span className="mp-name">{main}</span>
+                  {hint && <span className="mp-hint">{hint}</span>}
                 </span>
-                <span className="mp-hint">{m.hint}</span>
-              </span>
-              {m.id === cur?.id && <span className="mp-check">✓</span>}
-            </button>
-          ))}
+                {m.id === cur.id && <span className="mp-check">✓</span>}
+              </button>
+            );
+          })}
         </div>
       )}
     </span>
@@ -577,13 +614,12 @@ export const Snap = ({
 /** Turn raw errors into one short line a founder understands. */
 export const friendly = (msg: string): string => {
   const m = msg.replace(/^Error invoking remote method '\w+': (Error: )?/, "");
-  if (/log ?in|not authenticated|unauthorized/i.test(m))
-    return "Sign in to Claude Code first, then try again.";
-  if (/timed out/i.test(m)) return "Claude took too long. Try again.";
+  if (/log ?in|not authenticated|unauthorized/i.test(m)) return m.slice(0, 240);
+  if (/timed out/i.test(m)) return "The AI request took too long. Try again.";
   if (/claude -p exited|claude CLI/i.test(m)) return "Claude did not answer. Try again.";
   if (/fetch failed|ENOTFOUND|ECONNRESET|network/i.test(m))
     return "No connection to the web. Check your internet.";
-  if (/JSON|Unexpected token/i.test(m)) return "Claude's answer came back broken. Try again.";
+  if (/JSON|Unexpected token/i.test(m)) return "The AI answer came back broken. Try again.";
   return m.slice(0, 140);
 };
 
