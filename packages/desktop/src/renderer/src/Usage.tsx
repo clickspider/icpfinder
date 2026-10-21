@@ -14,7 +14,7 @@ import {
   tokensOf,
   type UsageRow,
 } from "../../shared/usage";
-import { api, Mark, ProductLogo, ToolLogo } from "./ui";
+import { api, Mark, ProductLogo, ProviderLogo } from "./ui";
 
 const fmtPct = (n?: number) =>
   n === undefined ? "…" : n > 0 && n < 0.1 ? "<0.1%" : `${n < 10 ? n.toFixed(1) : Math.round(n)}%`;
@@ -173,21 +173,21 @@ export const UsageView = ({ state }: { state: State }) => {
               className={provider === "claude" ? "on" : ""}
               onClick={() => setProvider("claude")}
             >
-              <ToolLogo name="claude" size={13} radius={3} /> Claude
+              <ProviderLogo provider="claude" size={13} /> Claude
             </button>
             <button
               type="button"
               className={provider === "codex" ? "on" : ""}
               onClick={() => setProvider("codex")}
             >
-              <ToolLogo name="codex" size={13} radius={3} /> Codex
+              <ProviderLogo provider="codex" size={13} /> Codex
             </button>
             <button
               type="button"
               className={provider === "xai" ? "on" : ""}
               onClick={() => setProvider("xai")}
             >
-              Grok
+              <ProviderLogo provider="xai" size={13} /> Grok
             </button>
           </div>
           <div className="ob-seg" style={{ width: 230 }}>
