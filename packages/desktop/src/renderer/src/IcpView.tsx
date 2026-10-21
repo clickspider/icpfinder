@@ -1,5 +1,6 @@
 import { icpPresentation } from "../../shared/onboarding";
 import { AppIcon } from "./AppIcon";
+import { companyGroups } from "./dashboard-state";
 import { ProfileEditor } from "./ProfileEditor";
 // SPDX-License-Identifier: MIT
 //
@@ -483,6 +484,7 @@ export const IcpView = ({
 }) => {
   const inspector = useRef<HTMLDialogElement>(null);
   const page = useRef<HTMLDivElement>(null);
+  const lowerMatches = useRef<HTMLDetailsElement>(null);
   const nextFocus = useRef<string | null>(null);
   const [notice, setNotice] = useState("");
   useEffect(() => {
@@ -491,7 +493,10 @@ export const IcpView = ({
       page.current?.querySelectorAll<HTMLElement>("[data-company-domain]") ?? []
     ).find((el) => el.dataset.companyDomain === nextFocus.current);
     (
-      row?.querySelector<HTMLButtonElement>("button") ??
+      (row && !row.closest("details:not([open])")
+        ? row.querySelector<HTMLButtonElement>("button")
+        : null) ??
+      lowerMatches.current?.querySelector<HTMLElement>("summary") ??
       page.current?.querySelector<HTMLButtonElement>("[data-find-companies]")
     )?.focus();
     nextFocus.current = null;
@@ -499,23 +504,7 @@ export const IcpView = ({
   const icp = ws.icps.find((i) => i.id === icpId);
   if (!icp) return null;
   const bar = scoringOf(ws.scoring).bar;
-  const reach = (c: Company) =>
-    (c.warm?.length ? 2 : 0) +
-    (c.linkedin ? 1 : 0) +
-    (c.actions?.findEmail?.status === "done" ? 1 : 0);
-  const hidden =
-    icp.companies.filter((c) => (c.match ?? 0) < bar && c.approval !== "rejected").length +
-    (icp.belowBar ?? 0);
-  const shown = icp.companies
-    .filter((c) => (c.match ?? 0) >= bar && c.approval !== "rejected")
-    .sort(
-      (a, b) =>
-        Number(b.approval === "approved") - Number(a.approval === "approved") ||
-        (b.match ?? 0) - (a.match ?? 0) ||
-        // Equal fit: the one you can reach (someone you know, a LinkedIn page, a found email) first.
-        reach(b) - reach(a)
-    );
-  const rejected = icp.companies.filter((c) => c.approval === "rejected").length;
+  const { matching: shown, below } = companyGroups(icp.companies, bar);
   const crit = icp.criteria;
   const hunt = () => void api().huntIcp(icp.id).then(onState);
   const open = (c: Company) => go({ kind: "company", icpId: icp.id, domain: c.domain });
@@ -523,13 +512,14 @@ export const IcpView = ({
     const focused =
       document.activeElement?.closest<HTMLElement>("[data-company-domain]")?.dataset
         .companyDomain === c.domain;
-    const index = shown.findIndex((item) => item.domain === c.domain);
+    const visible = lowerMatches.current?.open ? [...shown, ...below] : shown;
+    const index = visible.findIndex((item) => item.domain === c.domain);
     void api()
       .approveCompany(icp.id, c.domain, ok)
       .then((state) => {
         if (!ok) {
           if (focused)
-            nextFocus.current = shown[index + 1]?.domain ?? shown[index - 1]?.domain ?? "";
+            nextFocus.current = visible[index + 1]?.domain ?? visible[index - 1]?.domain ?? "";
           setNotice(`${c.name} marked as not a fit.`);
         }
         onState(state);
@@ -603,13 +593,6 @@ export const IcpView = ({
                       : "Find companies"}
               </button>
             </div>
-            {(hidden > 0 || rejected > 0) && (
-              <p className="native-muted">
-                {hidden > 0 && `${hidden} below the match threshold`}
-                {hidden > 0 && rejected > 0 && " · "}
-                {rejected > 0 && `${rejected} not a fit`}
-              </p>
-            )}
             {icp.sourcing && (
               <HuntPanel icp={icp} timing={timing} candidates={scoringOf(ws.scoring).candidates} />
             )}
@@ -642,7 +625,7 @@ export const IcpView = ({
             )}
             {!icp.sourcing && icp.hunted && !icp.lastHunt?.error && shown.length === 0 && (
               <div className="native-empty">
-                <h2>No matches found this time.</h2>
+                <h2>No companies meet your match threshold yet.</h2>
                 <p>
                   {icp.lastHunt
                     ? `Checked ${icp.lastHunt.checked} companies in the last search. ${icp.lastHunt.gap ?? ""}`
@@ -650,9 +633,45 @@ export const IcpView = ({
                 </p>
               </div>
             )}
+            {below.length > 0 && (
+              <details
+                ref={lowerMatches}
+                key={`below-${icp.id}`}
+                className="native-disclosure native-lower-matches"
+              >
+                <summary>
+                  <span className="disclosure-closed">
+                    Show {below.length} {below.length === 1 ? "company" : "companies"} below the
+                    match threshold
+                  </span>
+                  <span className="disclosure-open">Hide companies below the match threshold</span>
+                </summary>
+                <div className="native-lower-content">
+                  <h3>Below the match threshold</h3>
+                  <p className="native-muted">
+                    These companies scored below your current threshold of {bar}. Review their fit
+                    before researching.
+                  </p>
+                  {below.map((c) => (
+                    <Row
+                      key={c.domain}
+                      c={c}
+                      onOpen={() => open(c)}
+                      onAnswer={(ok) => answer(c, ok)}
+                    />
+                  ))}
+                </div>
+              </details>
+            )}
           </section>
-          <details className="native-disclosure">
-            <summary>Search criteria</summary>
+          <details key={`criteria-${icp.id}`} className="native-disclosure">
+            <summary>
+              Search criteria{" "}
+              <span className="disclosure-hint">
+                <span className="disclosure-closed">Show details</span>
+                <span className="disclosure-open">Hide details</span>
+              </span>
+            </summary>
             <button type="button" className="btn ghost" onClick={() => go({ kind: "matching", back: { kind: "icp", icpId: icp.id } })}>
               Adjust matching for this business →
             </button>
@@ -669,8 +688,14 @@ export const IcpView = ({
             )}
           </details>
           {(shown.length > 0 || contacts.length > 0) && (
-            <details className="native-disclosure">
-              <summary>Your way in</summary>
+            <details key={`network-${icp.id}`} className="native-disclosure">
+              <summary>
+                Your way in{" "}
+                <span className="disclosure-hint">
+                  <span className="disclosure-closed">Show details</span>
+                  <span className="disclosure-open">Hide details</span>
+                </span>
+              </summary>
               <WayIn
                 icp={icp}
                 contacts={contacts}

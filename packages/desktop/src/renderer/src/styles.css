@@ -528,9 +528,17 @@ button.crow:hover {
 }
 details > summary {
   cursor: pointer;
+  list-style: disclosure-closed;
+}
+details[open] > summary {
+  list-style: disclosure-open;
+}
+details.fact > summary,
+details.native-disclosure > summary {
   list-style: none;
 }
-details > summary::-webkit-details-marker {
+details.fact > summary::-webkit-details-marker,
+details.native-disclosure > summary::-webkit-details-marker {
   display: none;
 }
 
