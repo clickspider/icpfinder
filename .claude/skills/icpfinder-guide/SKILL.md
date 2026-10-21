@@ -109,7 +109,7 @@ Prefer “customer profiles” to unexplained “ICPs” in introductory copy, �
 | Loading | Describe meaningful work without fabricated progress | “Getting to know your business…” |
 | Discovery | Build anticipation around a credible result | “Discovering who you could help.” |
 | Results | Recommend, without declaring certainty | “Here’s where we’d start.” |
-| Reassurance | State what persists or can be changed | “All these profiles will be in your dashboard. You can edit them there anytime.” |
+| Reassurance | State what persists or can be changed | “All these profiles will be in your dashboard. You can edit them or add more there anytime.” |
 | Error | Explain the known problem and an available recovery | “We couldn’t reach ChatGPT. Try again in a moment.” |
 
 ### Actions and transitions
@@ -319,7 +319,7 @@ Rotate these lines without implying measured progress:
 
 Heading: “Here’s where we’d start.” Subtitle: “A few customer groups that could benefit from what you offer.”
 
-Near actions: “All these profiles will be in your dashboard. You can edit them there anytime.” Actions: Add a profile / Go to my dashboard. Back remains available. No profile selection is required. Do not restore “Next: we’ll find real companies and check why they fit.”
+Near actions: “All these profiles will be in your dashboard. You can edit them or add more there anytime.” One action: Go to my dashboard. Back remains available. No profile selection is required. **No “Add a profile” in onboarding** (decided 2026-10-21): onboarding exists to get people to the dashboard as fast as possible; adding and editing profiles happens in the dashboard. Do not restore “Next: we’ll find real companies and check why they fit.”
 
 **Cards use approved option A**, not the dropped B or alternate row design. Each contains characteristics, recognizable group name, differentiated benefit, “Who to talk to”, “A reason to reach out”, and “May not be a fit if”. The fit concern stays inside the card. Do not number the cards.
 
@@ -360,7 +360,7 @@ Paths below are relative to the repository root.
 | Shared brand / right panels | `packages/desktop/src/renderer/src/OnboardingFrame.tsx`, `onboarding-frame.css` |
 | Overview view/edit | `packages/desktop/src/renderer/src/BusinessOverview.tsx` |
 | Provider selection and errors | `SubscriptionConnection.tsx`, `ConnectionErrorCard.tsx`, `subscription-preview.css` in the renderer directory |
-| Loader/results/add profile | `IcpReveal.tsx`, `icp-reveal-preview.css` in the renderer directory |
+| Loader/results | `IcpReveal.tsx`, `icp-reveal-preview.css` in the renderer directory |
 | Existing brand/icons | `styles.css`, `ui.tsx`, `glass.tsx` in the renderer directory |
 | Galleries | `OnboardingGallery.tsx`, `SubscriptionDesignPreview.tsx` in the renderer directory |
 | Saved business / inference contract | `packages/desktop/src/shared/business-overview.ts` |
