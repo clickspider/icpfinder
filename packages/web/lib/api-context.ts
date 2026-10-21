@@ -15,7 +15,7 @@ import {
   buildProviders,
   byokProvidersHeader,
 } from "./providers";
-import { getDefaultRateLimiter, hashClientIp, type RateLimiter } from "./rate-limit";
+import { getDefaultRateLimiter, hashClientIp, type RateLimiter, retryAfter } from "./rate-limit";
 
 export const MAX_RAW_SEED_LENGTH = 2_000;
 
@@ -113,7 +113,7 @@ export async function buildApiContext(
             remainingRuns: check.remainingRuns,
             remainingCents: check.remainingCents,
           },
-          { status: 429 },
+          { status: 429, ...retryAfter(check.retryAfterSeconds) },
         ),
       };
     }

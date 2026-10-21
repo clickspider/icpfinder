@@ -11,11 +11,20 @@ interface ContentPageProps {
   lede: string;
   /** Optional JSON-LD object(s) for this page. */
   jsonLd?: object | object[];
+  /** ISO date this page last changed. Defaults to CONTENT_UPDATED. */
+  updated?: string;
   children: ReactNode;
 }
 
 /** Shared shell for long-form text pages: skip link, nav, dated header, prose, CTA, footer. */
-export function ContentPage({ eyebrow, title, lede, jsonLd, children }: ContentPageProps) {
+export function ContentPage({
+  eyebrow,
+  title,
+  lede,
+  jsonLd,
+  updated = CONTENT_UPDATED,
+  children,
+}: ContentPageProps) {
   return (
     <>
       <a
@@ -45,7 +54,7 @@ export function ContentPage({ eyebrow, title, lede, jsonLd, children }: ContentP
           </h1>
           <p className="mt-4 text-[17px] leading-[1.6] text-[color:var(--text)]">{lede}</p>
           <p className="mt-3 text-[13px] text-[color:var(--text-muted)]">
-            Updated <time dateTime={CONTENT_UPDATED}>{formatUpdated()}</time>
+            Updated <time dateTime={updated}>{formatUpdated(updated)}</time>
           </p>
         </header>
         <div className="prose-icp mt-10">{children}</div>

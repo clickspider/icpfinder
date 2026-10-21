@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
   if (limited(`verify:${ip}`, 10))
-    return NextResponse.json({ error: "Too many tries. Wait 15 minutes." }, { status: 429 });
+    return NextResponse.json({ error: "Too many tries. Wait 15 minutes." }, { status: 429, headers: { "Retry-After": "900" } });
   const { code } = ((await req.json().catch(() => ({}))) ?? {}) as { code?: string };
   const email = checkChallenge(req.cookies.get(CHALLENGE_COOKIE)?.value, String(code ?? ""));
   if (!email)

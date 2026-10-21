@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "FAQ",
   description:
     "Answers about icpfinder: what it does, what it costs, where your API keys go, and how it compares to Apollo, Clay and ChatGPT.",
-  alternates: { canonical: "/faq" },
+  alternates: { canonical: "/faq", types: { "text/markdown": "/faq.md" } },
 };
 
 export default function FaqPage() {

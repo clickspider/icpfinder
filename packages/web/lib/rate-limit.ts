@@ -19,6 +19,8 @@ export interface RateLimitCheck {
   remainingCents: number;
   /** Runs remaining in the daily quota. */
   remainingRuns: number;
+  /** Seconds until the quota resets. Sent as Retry-After on a 429. */
+  retryAfterSeconds: number;
 }
 
 export interface RateLimiter {
@@ -69,14 +71,16 @@ export class InMemoryRateLimiter implements RateLimiter {
     const bucket = this.getBucket(clientIpHash);
     const remainingRuns = this.dailyRuns - bucket.runs;
     const remainingCents = this.dailyCapCents - bucket.costCents;
+    const retryAfterSeconds = Math.max(1, Math.ceil((bucket.resetAt - this.now()) / 1000));
     if (remainingRuns <= 0 || remainingCents <= 0) {
-      return { allowedRun: false, remainingRuns, remainingCents };
+      return { allowedRun: false, remainingRuns, remainingCents, retryAfterSeconds };
     }
     bucket.runs += 1;
     return {
       allowedRun: true,
       remainingRuns: remainingRuns - 1,
       remainingCents,
+      retryAfterSeconds,
     };
   }
 
@@ -92,6 +96,11 @@ export class InMemoryRateLimiter implements RateLimiter {
  * coarse (UTC day boundary) — sufficient for abuse mitigation without
  * preserving long-term identifiers.
  */
+/** Retry-After header for a 429, so agents and crawlers back off and return. */
+export const retryAfter = (seconds: number): { headers: Record<string, string> } => ({
+  headers: { "Retry-After": String(Math.max(1, Math.ceil(seconds))) },
+});
+
 export const hashClientIp = (ip: string, saltSource?: string): string => {
   const day = new Date().toISOString().slice(0, 10);
   const salt = saltSource ?? process.env.ICPFINDER_IP_SALT ?? "icpfinder-default-salt";

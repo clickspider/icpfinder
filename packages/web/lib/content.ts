@@ -113,3 +113,53 @@ export const COMPARISON: ComparisonRow[] = [
     chatgpt: "No",
   },
 ];
+
+/** Last change to the pricing page and its markdown mirror. */
+export const PRICING_UPDATED = "2026-10-21";
+
+export interface Plan {
+  name: string;
+  price: string;
+  forWho: string;
+  limits: string[];
+}
+
+/**
+ * Pricing as plain text (AgentReady AR-READ-11). Limits are described, not
+ * numbered: the per-visitor caps are env-configurable (docs/costs.md), so a
+ * number here could drift from production.
+ */
+export const PLANS: Plan[] = [
+  {
+    name: "Free demo",
+    price: "$0, no signup",
+    forWho: "Trying icpfinder on icpfinder.dev",
+    limits: [
+      "Runs use icpfinder's shared Gemini and Hunter keys",
+      "A daily limit of runs per visitor, and a monthly budget for the whole demo",
+      "When you reach a limit, the site asks you to add your own keys",
+    ],
+  },
+  {
+    name: "Your own keys",
+    price: "$0 on icpfinder; you pay Google or Hunter only past their free tiers",
+    forWho: "Regular use without the demo limits",
+    limits: [
+      "Unlimited runs on icpfinder.dev",
+      "Google Gemini API keys have a free tier",
+      "Hunter's free plan covers 25 domain searches a month; one run uses up to 15",
+      "Keys stay in your browser and are never saved on icpfinder's servers",
+    ],
+  },
+  {
+    name: "Self-hosted",
+    price: "$0, MIT licensed",
+    forWho: "Teams that want to run it on their own servers",
+    limits: [
+      "No icpfinder limits; you set your own budget caps",
+      "A typical run costs about $1 at Hunter's paid rates, mostly Hunter",
+      "Without contact search, a run costs under 1 cent",
+      "Self-hosted copies send no analytics",
+    ],
+  },
+];
