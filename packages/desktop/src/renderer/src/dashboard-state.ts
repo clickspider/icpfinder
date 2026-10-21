@@ -16,12 +16,17 @@ export function profileStatus(icp: Icp, ws: Pick<Workspace, "scoring">): string 
 
 /** Rejected companies never reappear when a user reveals lower-scoring results. */
 export function companyGroups(companies: Company[], threshold: number) {
+  const reach = (c: Company) =>
+    (c.warm?.length ? 2 : 0) +
+    (c.linkedin ? 1 : 0) +
+    (c.actions?.findEmail?.status === "done" ? 1 : 0);
   const available = companies
     .filter((c) => c.approval !== "rejected")
     .sort(
       (a, b) =>
         Number(b.approval === "approved") - Number(a.approval === "approved") ||
-        (b.match ?? 0) - (a.match ?? 0)
+        (b.match ?? 0) - (a.match ?? 0) ||
+        reach(b) - reach(a)
     );
   return {
     matching: available.filter((c) => (c.match ?? 0) >= threshold),

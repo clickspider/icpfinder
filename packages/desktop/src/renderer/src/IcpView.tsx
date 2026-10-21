@@ -547,7 +547,11 @@ export const IcpView = ({
           <small>{presentation.tag}</small>
           <h1>{presentation.title}</h1>
           <p>{presentation.fit}</p>
-          {icp.reasoning && <p><strong>Why we picked it</strong> {icp.reasoning}</p>}
+          {icp.reasoning && (
+            <p>
+              <strong>Why we picked it</strong> {icp.reasoning}
+            </p>
+          )}
         </div>
       </header>
       <button

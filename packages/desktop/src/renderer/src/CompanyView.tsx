@@ -862,7 +862,13 @@ export const CompanyView = ({
                       type="button"
                       className={`btn rise native-action-row ${shown === a.id ? "selected" : ""}`}
                       aria-expanded={
-                        a.id === "openLinkedIn" ? (!li ? pasting : undefined) : a.id === "live" ? undefined : shown === a.id
+                        a.id === "openLinkedIn"
+                          ? !li
+                            ? pasting
+                            : undefined
+                          : a.id === "live"
+                            ? undefined
+                            : shown === a.id
                       }
                       aria-controls={shown === a.id ? "company-action-result" : undefined}
                       onClick={() => run(a)}

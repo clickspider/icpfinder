@@ -43,12 +43,14 @@ import {
   jobs,
   linkedinFacts,
   parseConnections,
+  pauseWorkspace,
   profileForIcp,
   readIdea,
   readProduct,
   refineCriteria,
   regateIcp,
   researchCompany,
+  resumeWorkspace,
   runCompanyAction,
   setModel,
   setProvider,
@@ -733,6 +735,7 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
   },
   /** Plan limits as Claude Code reports them (no tokens used). */
   planUsage: async () => {
+    if ((state.settings.provider ?? "claude") !== "claude") return null;
     const plan = await readClaudePlan((await which("claude")) ?? "claude");
     if (!plan) return plan;
     // Split each window: IcpFinder's own runs vs everything else Claude Code ran on this Mac.

@@ -57,6 +57,24 @@ describe("company result groups", () => {
     expect(companyGroups(companies, 60).matching).toHaveLength(2);
     expect(companies).toHaveLength(4);
   });
+  it("ranks reachable companies first only when their match scores tie", () => {
+    const companies: Company[] = [
+      { name: "Tie", domain: "tie.test", status: "candidate", match: 80 },
+      {
+        name: "Reachable",
+        domain: "reachable.test",
+        status: "candidate",
+        match: 80,
+        linkedin: "https://www.linkedin.com/company/reachable",
+      },
+      { name: "Higher", domain: "higher.test", status: "candidate", match: 90 },
+    ];
+    expect(companyGroups(companies, 70).matching.map((c) => c.domain)).toEqual([
+      "higher.test",
+      "reachable.test",
+      "tie.test",
+    ]);
+  });
   it("does not present an unscored company as a qualifying match", () => {
     const company: Company = { name: "Unscored", domain: "unknown.test", status: "candidate" };
     expect(companyGroups([company], 70)).toEqual({ matching: [], below: [company] });

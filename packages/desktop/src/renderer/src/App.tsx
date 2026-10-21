@@ -171,12 +171,7 @@ export const App = () => {
             key={ws.id}
             ws={ws}
             onState={setState}
-            onBack={() =>
-              setView(
-                current.back ??
-                  (firstIcp ? { kind: "icp", icpId: firstIcp.id } : { kind: "product" })
-              )
-            }
+            onBack={() => setView(current.back ?? { kind: "overview" })}
           />
         )}
         {current?.kind === "usage" && <UsageView state={state} />}
