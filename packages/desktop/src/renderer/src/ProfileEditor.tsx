@@ -17,9 +17,9 @@ export function ProfileEditor({ icp, onState }: { icp: Icp; onState: (state: Sta
   const [error, setError] = useState("");
   const values = icpPresentation(icp);
   return (
-    <section className="panel" style={{ padding: 20 }} aria-label="Customer profile">
+    <section className={`panel pe ${draft ? "editing" : ""}`} aria-label="Customer profile">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h2 style={{ fontSize: 16 }}>Customer profile</h2>
+        <h2 className="pe-title">Customer profile</h2>
         {!draft && (
           <button
             type="button"
@@ -50,14 +50,15 @@ export function ProfileEditor({ icp, onState }: { icp: Icp; onState: (state: Sta
             }
           }}
         >
-          <div className="ir-editor-fields">
+          <div className="pe-fields">
             {FIELDS.map(([key, label]) => (
               <label key={key} htmlFor={`profile-${icp.id}-${key}`}>
                 {label}
-                <input
-                  className="field"
+                <textarea
+                  className="field pe-input"
                   id={`profile-${icp.id}-${key}`}
                   required
+                  rows={1}
                   maxLength={240}
                   disabled={busy}
                   value={draft[key]}
@@ -72,8 +73,8 @@ export function ProfileEditor({ icp, onState }: { icp: Icp; onState: (state: Sta
             </p>
           )}
           <div className="ob-overview-actions">
-            <button className="btn" type="submit" disabled={busy}>
-              Save changes
+            <button className="ob-cta pe-save" type="submit" disabled={busy}>
+              {busy ? "Saving…" : "Save changes"}
             </button>
             <button
               className="btn ghost"
@@ -86,14 +87,26 @@ export function ProfileEditor({ icp, onState }: { icp: Icp; onState: (state: Sta
           </div>
         </form>
       ) : (
-        <dl className="ob-brief">
-          {FIELDS.map(([key, label]) => (
-            <div key={key}>
-              <dt>{label}</dt>
-              <dd>{values[key]}</dd>
+        <div className="pe-view">
+          <div className="pe-summary">
+            <p className="pe-fit">{values.fit}</p>
+            <p className="pe-tag">{values.tag}</p>
+          </div>
+          <div className="pe-details">
+            <div>
+              <span className="pe-label">Who to talk to</span>
+              <p>{values.buyer}</p>
             </div>
-          ))}
-        </dl>
+            <div>
+              <span className="pe-label">A reason to reach out</span>
+              <p>{values.signal}</p>
+            </div>
+            <div className="pe-skip">
+              <span className="pe-label">May not be a fit if</span>
+              <p>{values.skip}</p>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );

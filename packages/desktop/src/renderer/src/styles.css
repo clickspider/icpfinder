@@ -1843,3 +1843,203 @@ details.fact[open] .clamp2 {
 details.fact[open] .fact-chev {
   transform: rotate(180deg);
 }
+
+/* Dashboard: AI subscription cards (Connectors). */
+.sp {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sp-head {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+.sp-head h2 {
+  margin: 0;
+  font-size: 17px;
+  letter-spacing: -0.2px;
+}
+.sp-head p {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.sp-tools {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+.sp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sp-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.12);
+}
+.sp-card.on {
+  background: #fffafb;
+  box-shadow:
+    inset 0 0 0 1px rgba(224, 36, 74, 0.35),
+    0 6px 18px rgba(224, 36, 74, 0.06);
+}
+.sp-main {
+  flex: 1;
+  min-width: 0;
+}
+.sp-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.sp-chip {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(224, 36, 74, 0.08);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.sp-desc {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.sp-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.sp-status {
+  font-size: 12px;
+  color: var(--faint);
+  white-space: nowrap;
+}
+.sp-status.sp-on {
+  color: var(--ink-2);
+}
+.sp-side .ob-cta,
+.sp-pending .ob-cta {
+  height: 32px;
+  font-size: 12.5px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+}
+.sp-link {
+  font-size: 12px;
+}
+.sp-pending {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fff8ef;
+  font-size: 13px;
+}
+.sp-pending span {
+  flex: 1;
+}
+.sp-note {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+/* Dashboard: customer profile, in the same quiet style as the onboarding cards. */
+.pe {
+  padding: 18px 20px 20px;
+}
+.pe.editing {
+  background: #fcfafb;
+}
+.pe-title {
+  margin: 0;
+  font-size: 15px;
+}
+.pe-view {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 28px;
+  margin-top: 12px;
+}
+.pe-fit {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+.pe-tag {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.pe-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pe-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.pe-details p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #5f565b;
+}
+.pe-skip {
+  padding-top: 12px;
+  border-top: 0.5px solid rgba(0, 0, 0, 0.1);
+}
+.pe-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+  margin-top: 14px;
+}
+.pe-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.pe-input {
+  height: auto;
+  resize: none;
+  field-sizing: content;
+  min-height: 0;
+  overflow: hidden;
+  font: inherit;
+  font-weight: 400;
+  font-size: 13.5px;
+  line-height: 1.45;
+  padding: 9px 11px;
+  border-radius: 10px;
+}
+.pe .ob-overview-actions {
+  align-items: center;
+  margin-top: 18px;
+}
+.pe-save {
+  height: 38px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+}
