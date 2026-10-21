@@ -634,33 +634,16 @@ export const IcpView = ({
               </div>
             )}
             {below.length > 0 && (
-              <details
-                ref={lowerMatches}
-                key={`below-${icp.id}`}
-                className="native-disclosure native-lower-matches"
-              >
-                <summary>
-                  <span className="disclosure-closed">
-                    Show {below.length} {below.length === 1 ? "company" : "companies"} below the
-                    match threshold
-                  </span>
-                  <span className="disclosure-open">Hide companies below the match threshold</span>
-                </summary>
-                <div className="native-lower-content">
-                  <h3>Below the match threshold</h3>
-                  <p className="native-muted">
-                    These companies scored below your current threshold of {bar}. Review their fit
-                    before researching.
-                  </p>
-                  {below.map((c) => (
-                    <Row
-                      key={c.domain}
-                      c={c}
-                      onOpen={() => open(c)}
-                      onAnswer={(ok) => answer(c, ok)}
-                    />
-                  ))}
-                </div>
+              <details ref={lowerMatches} key={`below-${icp.id}`} className="native-lower-matches">
+                <summary>{below.length} below the match threshold</summary>
+                {below.map((c) => (
+                  <Row
+                    key={c.domain}
+                    c={c}
+                    onOpen={() => open(c)}
+                    onAnswer={(ok) => answer(c, ok)}
+                  />
+                ))}
               </details>
             )}
           </section>

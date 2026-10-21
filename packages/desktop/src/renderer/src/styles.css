@@ -534,11 +534,13 @@ details[open] > summary {
   list-style: disclosure-open;
 }
 details.fact > summary,
-details.native-disclosure > summary {
+details.native-disclosure > summary,
+details.native-lower-matches > summary {
   list-style: none;
 }
 details.fact > summary::-webkit-details-marker,
-details.native-disclosure > summary::-webkit-details-marker {
+details.native-disclosure > summary::-webkit-details-marker,
+details.native-lower-matches > summary::-webkit-details-marker {
   display: none;
 }
 
