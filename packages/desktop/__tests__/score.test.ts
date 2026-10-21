@@ -26,6 +26,12 @@ describe("scoreChecks", () => {
     expect(scoreChecks([yes("a")], true, "2026-10-10", "uses a competitor", 120, NOW)).toBe(0);
   });
 
+  it("counts an undated signal as unconfirmed, and a newer one inside the window for more", () => {
+    const dated = scoreChecks([yes("a")], true, "2026-10-10", null, 120, NOW);
+    expect(scoreChecks([yes("a")], true, undefined, null, 120, NOW)).toBeLessThan(dated);
+    expect(scoreChecks([yes("a")], true, "2026-08-01", null, 120, NOW)).toBeLessThan(dated);
+  });
+
   it("counts an old signal for less", () => {
     const fresh = scoreChecks([yes("a")], true, "2026-10-10", null, 120, NOW);
     const old = scoreChecks([yes("a")], true, "2025-01-01", null, 120, NOW);

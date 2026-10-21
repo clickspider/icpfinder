@@ -509,6 +509,10 @@ export const IcpView = ({
   const icp = ws.icps.find((i) => i.id === icpId);
   if (!icp) return null;
   const bar = scoringOf(ws.scoring).bar;
+  const reach = (c: Company) =>
+    (c.warm?.length ? 2 : 0) +
+    (c.linkedin ? 1 : 0) +
+    (c.actions?.findEmail?.status === "done" ? 1 : 0);
   const hidden =
     icp.companies.filter(
       (c) => (c.match ?? 0) > 0 && (c.match ?? 0) < bar && c.approval !== "rejected"
@@ -518,7 +522,9 @@ export const IcpView = ({
     .sort(
       (a, b) =>
         Number(b.approval === "approved") - Number(a.approval === "approved") ||
-        (b.match ?? 0) - (a.match ?? 0)
+        (b.match ?? 0) - (a.match ?? 0) ||
+        // Equal fit: the one you can reach (someone you know, a LinkedIn page, a found email) first.
+        reach(b) - reach(a)
     );
   const rejected = icp.companies.filter((c) => c.approval === "rejected").length;
   const crit = icp.criteria;
@@ -662,7 +668,7 @@ export const IcpView = ({
               title="Snap! No strong fits yet"
               text={
                 icp.lastHunt
-                  ? `Checked ${icp.lastHunt.checked} in the last search. The ICP got sharper.`
+                  ? `Checked ${icp.lastHunt.checked} in the last search. ${icp.lastHunt.gap ?? "The ICP got sharper."}`
                   : "The ICP gets sharper each round."
               }
               cta="Search again"

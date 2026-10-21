@@ -182,6 +182,7 @@ const huntIcp = async (icpId: string): Promise<State> => {
   let checked = 0;
   let passed = 0;
   let failure: string | undefined;
+  let gap: string | undefined;
   const now = () => new Date().toISOString();
   icp.hunt = {
     startedAt: now(),
@@ -250,7 +251,17 @@ const huntIcp = async (icpId: string): Promise<State> => {
               const strong = icp.companies.filter(
                 (c) => (c.match ?? 0) >= cfg.bar && c.approval !== "rejected"
               ).length;
-              if (strong >= TARGET_STRONG || loop === cfg.rounds || batch.length === 0) break;
+              const newStrong = batch.filter((c) => (c.match ?? 0) >= cfg.bar).length;
+              if (strong >= TARGET_STRONG) break;
+              // Stop rule: never pad to hit a count. A round with no new strong fit, or the last
+              // round, ends the hunt and says why, instead of burning more searches.
+              if (loop === cfg.rounds || batch.length === 0 || (loop > 0 && newStrong === 0)) {
+                gap =
+                  batch.length === 0
+                    ? "The web search found no new companies."
+                    : `Found ${strong} of ${TARGET_STRONG} strong fits. ${newStrong === 0 ? "The last round added none, so the hunt stopped to save your AI usage." : "That was the last round."}`;
+                break;
+              }
               icp.sourcingNote = "Too few strong matches. Sharpening the ICP from what failed…";
               report("sharpen", "Too few strong fits. Sharpening one check");
               const tuned = await refineCriteria(ws.product, icp, batch);
@@ -276,7 +287,7 @@ const huntIcp = async (icpId: string): Promise<State> => {
             resumeWorkspace(huntKey(icpId));
             icp.sourcing = false;
             icp.sourcingNote = undefined;
-            icp.lastHunt = { at: new Date().toISOString(), checked, passed, error: failure };
+            icp.lastHunt = { at: new Date().toISOString(), checked, passed, error: failure, gap };
             commit();
             updateDock();
             if (stopped) {
@@ -290,7 +301,7 @@ const huntIcp = async (icpId: string): Promise<State> => {
               notify(
                 `${icp.name}: ${passed} strong ${passed === 1 ? "fit" : "fits"} found`,
                 passed
-                  ? "Approve the ones that fit to start research."
+                  ? `${gap ? `${gap} ` : ""}Approve the ones that fit to start research.`
                   : "The ICP got sharper. Search again.",
                 { kind: "icp", icpId }
               );

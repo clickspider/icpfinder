@@ -25,7 +25,7 @@ export const DEFAULT_SCORING: Scoring = {
   unknownCredit: 0.15,
   windowDays: 120,
   candidates: 15,
-  rounds: 2,
+  rounds: 1,
 };
 
 /** Every score starts with this, so a perfect fit is exactly 100. */
@@ -43,7 +43,8 @@ export interface ScoreInput {
 /**
  * 0 for any proven "no" or a deal-breaker. Otherwise:
  * base + mustWeight × (share of must-haves confirmed, unknowns get partial credit)
- * + signal points (fresh and confirmed = full, old = half, unconfirmed = a sixth).
+ * + signal points. A confirmed signal needs an event date: up to 30 days old = full,
+ * then down to half at the end of the window, older = half. No date or unconfirmed = a sixth.
  */
 export const score = (input: ScoreInput, cfg: Scoring, now = new Date()): number => {
   const { checks, signalConfirmed, signalDate, dealBreaker } = input;
@@ -54,6 +55,11 @@ export const score = (input: ScoreInput, cfg: Scoring, now = new Date()): number
     : 0.4;
   const age = signalDate ? (now.getTime() - Date.parse(signalDate)) / 86_400_000 : Number.NaN;
   const fresh = Number.isFinite(age) && age >= -2 && age <= cfg.windowDays;
-  const signal = signalConfirmed ? (fresh ? signalWeight : signalWeight / 2) : signalWeight / 6;
+  const recency = fresh
+    ? 1 - 0.5 * Math.max(0, (age - 30) / Math.max(1, cfg.windowDays - 30))
+    : 0.5;
+  // An undated signal counts as unconfirmed: the event date, not the article date, makes it real.
+  const signal =
+    signalConfirmed && Number.isFinite(age) ? signalWeight * recency : signalWeight / 6;
   return Math.round(BASE + must * cfg.mustWeight + signal);
 };

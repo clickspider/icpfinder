@@ -154,7 +154,14 @@ export interface Icp {
   /** The live (or last) hunt, step by step, for the progress panel. */
   hunt?: HuntProgress;
   /** How the last hunt ended, so an empty list can say why. */
-  lastHunt?: { at: string; checked: number; passed: number; error?: string };
+  lastHunt?: {
+    at: string;
+    checked: number;
+    passed: number;
+    error?: string;
+    /** Why the hunt stopped short of the target, in plain words. */
+    gap?: string;
+  };
   companies: Company[];
 }
 

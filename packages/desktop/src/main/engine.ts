@@ -490,7 +490,7 @@ export const regateIcp = async (p: Product, icp: Icp): Promise<IcpCriteria | nul
   const k = icp.card;
   const res = await (await llm()).generate({
     system:
-      'Derive research criteria from the reviewed customer profile, without inventing observations. Use the seller overview as context. For business profiles use publicly checkable company characteristics; for consumer profiles use relevant circumstances and needs, never force company size or professional roles. mustHave: 3-5 supported positive fit criteria; signals: possible situations to investigate later, not observed intent; dealBreakers: [] because the profile fit concern is advisory, not an automatic exclusion. Output strict JSON: {"mustHave":[],"signals":[],"dealBreakers":[]}',
+      'Derive research criteria from the reviewed customer profile, without inventing observations. Use the seller overview as context. For business profiles use publicly checkable company characteristics; for consumer profiles use relevant circumstances and needs, never force company size or professional roles. mustHave: 3-5 supported positive fit criteria; signals: possible situations to investigate later, not observed intent. Every mustHave and signal must be visible in public data, for many companies, today (website, team page, pricing page, job posts, launch posts, funding news, public social posts); never use private facts such as revenue, internal tools, or what someone pastes into an AI chat; dealBreakers: [] because the profile fit concern is advisory, not an automatic exclusion. Output strict JSON: {"mustHave":[],"signals":[],"dealBreakers":[]}',
     prompt: `For this later research-criteria task, derive only supported positive qualifications and possible signals. The fit concern is advisory; do not turn it into a hard exclusion.\nPRODUCT: ${sellerSummary(p)}\n\nPROFILE: ${icp.name} (${icp.profileKind ?? "business"})\nCARD:\n- Who to talk to: ${k.buyer.text}\n- Profile characteristics: ${k.company.text}\n- Why now: ${k.trigger.text}\n- May not be a fit if: ${k.skip.text}`,
     format: "json",
     timeoutMs: 120_000,
@@ -513,7 +513,7 @@ export const sharpenIcps = async (p: Product, icps: Icp[]): Promise<Icp[]> => {
   if (icps.length === 0) return icps;
   const res = await (await llm()).generate({
     system:
-      'You turn rough buyer personas into a precise ICP that a web researcher can verify. For each ICP give: mustHave = 3-5 yes/no gates, each checkable from ONE named public source, written as "<fact> (source: <team page|pricing page|funding news|job posts|product site>)", e.g. "2-20 people (source: team page)"; avoid internal facts like revenue. signals = 3-5 observable triggers that show they need the product NOW (ask: what must be true in this company for it to need this today?), each short. dealBreakers = 2-4 facts that rule a company out, incl. using a direct competitor. Specific, not broad: a precise ICP still has 100+ real companies. Also give card = the 4 calls a founder reads: buyer (who signs, one role), company (stage + type + size in one line), trigger (the one public sign they need it now), skip (the main deal-breakers). Each: text (max 8 words), why (one plain, readable sentence, max 14 words, that a founder understands at once; say the fact behind it in normal words, e.g. "Your pricing is $150 a call, so a founder can pay it alone."; never name a method, a page type or a source), source (where the why comes from: "pricing page", "homepage", "your product" or one gtmskills method: "gtmskills: icp-matrix-builder", "gtmskills: icp-builder", "gtmskills: website-to-signals", "gtmskills: market-finder"). Output strict JSON: {"icps":[{"id":"","mustHave":[],"signals":[],"dealBreakers":[],"card":{"buyer":{"text":"","why":"","source":""},"company":{},"trigger":{},"skip":{}}}]}',
+      'You turn rough buyer personas into a precise ICP that a web researcher can verify. For each ICP give: mustHave = 3-5 yes/no gates, each checkable from ONE named public source, written as "<fact> (source: <team page|pricing page|funding news|job posts|product site>)", e.g. "2-20 people (source: team page)"; avoid internal facts like revenue, internal tools or private habits. signals = 3-5 observable triggers, each visible in public data for many companies today that show they need the product NOW (ask: what must be true in this company for it to need this today?), each short. dealBreakers = 2-4 facts that rule a company out, incl. using a direct competitor. Specific, not broad: a precise ICP still has 100+ real companies. Also give card = the 4 calls a founder reads: buyer (who signs, one role), company (stage + type + size in one line), trigger (the one public sign they need it now), skip (the main deal-breakers). Each: text (max 8 words), why (one plain, readable sentence, max 14 words, that a founder understands at once; say the fact behind it in normal words, e.g. "Your pricing is $150 a call, so a founder can pay it alone."; never name a method, a page type or a source), source (where the why comes from: "pricing page", "homepage", "your product" or one gtmskills method: "gtmskills: icp-matrix-builder", "gtmskills: icp-builder", "gtmskills: website-to-signals", "gtmskills: market-finder"). Output strict JSON: {"icps":[{"id":"","mustHave":[],"signals":[],"dealBreakers":[],"card":{"buyer":{"text":"","why":"","source":""},"company":{},"trigger":{},"skip":{}}}]}',
     prompt: `PRODUCT: ${sellerSummary(p)}\n\nICPS:\n${icps.map((i) => `- id=${i.id} | ${i.name} | ${i.industry} | ${i.size} | pain: ${i.pain}`).join("\n")}`,
     format: "json",
     timeoutMs: 180_000,
@@ -579,12 +579,21 @@ const findCandidates = async (
   const c = icp.criteria;
   const exclude = [ws.product.url, ...icp.companies.map((x) => x.domain)].join(", ");
   const posts = await socialPosts(icp, windowDays).catch(() => "");
+  // The founder's clicks are the best data before there are customers: search for more like the approved.
+  const picked = (a: "approved" | "rejected") =>
+    icp.companies
+      .filter((x) => x.approval === a)
+      .slice(0, 8)
+      .map((x) => `${x.name} (${x.domain})${x.matchWhy ? `: ${x.matchWhy.slice(0, 120)}` : ""}`)
+      .join("\n");
+  const liked = picked("approved");
+  const disliked = picked("rejected");
   step("search", `Claude searches the web for ${candidates} companies`);
   const res = await (await llm()).generate({
     system:
       `You are an SDR researcher. If FRESH POSTS are given, start there: they are real posts fetched just now from social sites; turn the ones that fit into companies (find each company's own domain).` +
-      ` You are an SDR researcher. Use web search in tiers: first the sources where these signals show up (funding news, launch platforms, job boards, founder posts); then directories and "best X tools" roundups only if the first tier gives fewer than 10. Run at least 2 different queries per buying signal. Find ${candidates} REAL companies with their own website domain that look like this ICP and show a buying signal from the last ${windowDays} days. No GitHub repos or hosted subdomains. Never invent companies, URLs or dates. Output strict JSON: {"companies":[{"name":"","domain":"acme.com","signal":"one sentence","signalUrl":"","signalDate":"YYYY-MM-DD or empty"}]}`,
-    prompt: `SELLER: ${sellerSummary(ws.product)}\n\nICP: ${icp.name} (${icp.industry}, ${icp.size})\nPain: ${icp.pain}\nMust-haves: ${c?.mustHave.join("; ") || "-"}\nBuying signals: ${c?.signals.join("; ") || icp.signals.join("; ")}\nDeal-breakers: ${c?.dealBreakers.join("; ") || "-"}\n\nSkip: ${exclude}${posts ? `\n\nFRESH POSTS:\n${posts}` : ""}\nToday: ${new Date().toISOString().slice(0, 10)}`,
+      ` You are an SDR researcher. Use web search in tiers: first the sources where these signals show up (funding news, launch platforms, job boards, founder posts); then directories and "best X tools" roundups only if the first tier gives fewer than 10. Run at least 2 different queries per buying signal. Find ${candidates} REAL companies with their own website domain that look like this ICP and show a buying signal from the last ${windowDays} days. No GitHub repos or hosted subdomains. Never invent companies, URLs or dates. Never return the SELLER itself or a company that SELLS a product doing the same job as the SELLER's offer (a competitor or alternative); a company that only USES such a tool is fine. signalDate = the date the EVENT happened (launch, hire, raise, post), never the date an article or list was published; leave it empty if the event date is unclear. If MORE LIKE THESE is given, the founder approved those: find companies like them. If NOT LIKE THESE is given, the founder rejected those: avoid what they have in common. Output strict JSON: {"companies":[{"name":"","domain":"acme.com","signal":"one sentence","signalUrl":"","signalDate":"YYYY-MM-DD or empty"}]}`,
+    prompt: `SELLER: ${sellerSummary(ws.product)}\n\nICP: ${icp.name} (${icp.industry}, ${icp.size})\nPain: ${icp.pain}\nMust-haves: ${c?.mustHave.join("; ") || "-"}\nBuying signals: ${c?.signals.join("; ") || icp.signals.join("; ")}\nDeal-breakers: ${c?.dealBreakers.join("; ") || "-"}\n\nSkip: ${exclude}${liked ? `\n\nMORE LIKE THESE:\n${liked}` : ""}${disliked ? `\n\nNOT LIKE THESE:\n${disliked}` : ""}${posts ? `\n\nFRESH POSTS:\n${posts}` : ""}\nToday: ${new Date().toISOString().slice(0, 10)}`,
     format: "json",
     grounding: true,
     timeoutMs: 420_000,
@@ -635,7 +644,7 @@ const qualify = async (
 ): Promise<Company> => {
   const c = icp.criteria;
   const res = await (await llm()).generate({
-    system: `You check ONE company against an ICP. Open the company website and search the web briefly. For each must-have answer yes, no or unknown with a short evidence line (no means you found proof it does NOT fit). Confirm whether the buying signal is real and recent. Name a deal-breaker only if you found proof. Never guess. Output strict JSON: {"checks":[{"criterion":"","verdict":"yes|no|unknown","evidence":""}],"signalConfirmed":true,"signalDate":"YYYY-MM-DD or empty","dealBreaker":null,"oneLine":"why this company fits, in plain words"}`,
+    system: `You check ONE company against an ICP. Open the company website and search the web briefly. For each must-have answer yes, no or unknown with a short evidence line (no means you found proof it does NOT fit). Confirm whether the buying signal is real and recent; signalDate is the date the event happened, not when a page about it was published, and empty if unclear. Then look for proof that the signal does NOT mean they need the SELLER's product now (for example they already have a team or a tool doing this job); if you find it, set signalConfirmed false and say why in falsePositive. competitor = one short line if this company SELLS a product that does the same job as the SELLER's offer, else empty; a company that only USES such a tool is not a competitor. Name a deal-breaker only if you found proof. Never guess. Output strict JSON: {"checks":[{"criterion":"","verdict":"yes|no|unknown","evidence":""}],"signalConfirmed":true,"signalDate":"YYYY-MM-DD or empty","falsePositive":"","competitor":"","dealBreaker":null,"oneLine":"why this company fits, in plain words"}`,
     prompt: `COMPANY: ${cand.name} (${cand.domain})\nCLAIMED SIGNAL: ${cand.signal ?? "-"} ${cand.signalUrl ?? ""} ${cand.signalDate ?? ""}\n\nMUST-HAVES:\n${(c?.mustHave ?? []).map((m) => `- ${m}`).join("\n") || `- matches: ${icp.name}`}\nDEAL-BREAKERS:\n${(c?.dealBreakers ?? []).map((m) => `- ${m}`).join("\n") || "-"}\nSELLER (to spot competitors): ${sellerSummary(ws.product)}`,
     format: "json",
     grounding: true,
@@ -646,8 +655,13 @@ const qualify = async (
     signalConfirmed?: boolean;
     signalDate?: string;
     dealBreaker?: string | null;
+    falsePositive?: string;
+    competitor?: string;
     oneLine?: string;
   }>(res.text);
+  // A competitor is a hard gate: it can never score, whatever the checks say.
+  if (q.competitor?.trim()) q.dealBreaker = `Competitor: ${q.competitor.trim()}`;
+  const falsePositive = q.falsePositive?.trim();
   const checks = (q.checks ?? [])
     .filter((x) => x && typeof x.criterion === "string")
     .map((x) => ({
@@ -677,7 +691,7 @@ const qualify = async (
     match,
     matchWhy: q.dealBreaker
       ? `Deal-breaker: ${q.dealBreaker}`
-      : `${yes} of ${checks.length} must-haves confirmed${q.signalConfirmed ? " · signal confirmed" : ""}${q.oneLine ? ` · ${q.oneLine}` : ""}`,
+      : `${yes} of ${checks.length} must-haves confirmed${q.signalConfirmed ? " · signal confirmed" : falsePositive ? ` · signal not counted: ${falsePositive}` : ""}${q.oneLine ? ` · ${q.oneLine}` : ""}`,
     checks,
     signalConfirmed: Boolean(q.signalConfirmed),
     dealBreaker: q.dealBreaker || undefined,
@@ -715,7 +729,7 @@ export const sourceCompanies = async (
         const co = await qualify(ws, icp, cand, cfg);
         step(
           (co.match ?? 0) >= cfg.bar ? "pass" : "skip",
-          `${co.name} · ${co.match ?? 0}`,
+          co.dealBreaker ? `${co.name} · ${co.dealBreaker}` : `${co.name} · ${co.match ?? 0}`,
           co.logo
         );
         if ((co.match ?? 0) > 0) {
