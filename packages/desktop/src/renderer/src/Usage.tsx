@@ -145,8 +145,7 @@ export const UsageView = ({ state }: { state: State }) => {
   const all = groupBy(rows, days, () => "all")[0]?.[1] ?? emptyTotals();
   const total = tokensOf(all);
   const ws = (id: string) => state.workspaces.find((w) => w.id === id);
-  const name = (id: string) =>
-    ws(id)?.product.name ?? (id === "app" ? "Before a product" : "Archived");
+  const name = (id: string) => ws(id)?.product.name ?? "Archived";
   const toggle = (id: string) =>
     setPicked(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]);
 
@@ -218,33 +217,36 @@ export const UsageView = ({ state }: { state: State }) => {
             <small>{fmtTokens(allTokens)}</small>
           </span>
         </button>
-        {products.map(([id, t]) => {
-          const w = ws(id);
-          return (
-            <button
-              key={id}
-              type="button"
-              className={`use-prod ${picked.includes(id) ? "on" : ""}`}
-              aria-pressed={picked.includes(id)}
-              onClick={() => toggle(id)}
-            >
-              {w ? (
-                <ProductLogo product={w.product} size={30} radius={8} />
-              ) : id === "app" ? (
-                <Mark size={30} radius={8} />
-              ) : (
-                <span className="use-prod-logo">?</span>
-              )}
-              <span>
-                <b>{name(id)}</b>
-                <small>
-                  {fmtTokens(tokensOf(t))} ·{" "}
-                  {allTokens ? Math.round((tokensOf(t) / allTokens) * 100) : 0}%
-                </small>
-              </span>
-            </button>
-          );
-        })}
+        {/* Setup before a product exists (connection test, reading the site) counts in All only. */}
+        {products
+          .filter(([id]) => id !== "app")
+          .map(([id, t]) => {
+            const w = ws(id);
+            return (
+              <button
+                key={id}
+                type="button"
+                className={`use-prod ${picked.includes(id) ? "on" : ""}`}
+                aria-pressed={picked.includes(id)}
+                onClick={() => toggle(id)}
+              >
+                {w ? (
+                  <ProductLogo product={w.product} size={30} radius={8} />
+                ) : id === "app" ? (
+                  <Mark size={30} radius={8} />
+                ) : (
+                  <span className="use-prod-logo">?</span>
+                )}
+                <span>
+                  <b>{name(id)}</b>
+                  <small>
+                    {fmtTokens(tokensOf(t))} ·{" "}
+                    {allTokens ? Math.round((tokensOf(t) / allTokens) * 100) : 0}%
+                  </small>
+                </span>
+              </button>
+            );
+          })}
       </div>
 
       <section
