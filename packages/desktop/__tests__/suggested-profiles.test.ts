@@ -65,6 +65,8 @@ describe("suggested customer profiles", () => {
     expect(PROFILE_GUIDANCE).toContain("WHY WE PICKED IT");
     expect(PROFILE_GUIDANCE).toContain("Never mention methods");
     expect(PROFILE_GUIDANCE).toContain("NO REPETITION ACROSS FIELDS");
+    expect(PROFILE_GUIDANCE).toContain("You're at the idea stage");
+    expect(PROFILE_GUIDANCE).toContain('Never write "the individual"');
   });
   it("asks for differentiated hypotheses rather than research or exclusion rules", () => {
     expect(PROFILE_GUIDANCE).toContain("Do not repeat the same generic benefit");

@@ -1,3 +1,4 @@
+import type React from "react";
 import { useEffect, useState } from "react";
 import type { IcpDraft } from "../../shared/types";
 import { DUO } from "./glass";
@@ -11,6 +12,37 @@ const PHRASES = [
 ];
 
 type Profile = IcpDraft & { icon: string; id: string; why?: string };
+
+/** Ink-only icons, one per kind of group, chosen from the group's own words. */
+const GROUP_ICONS = {
+  shop: "M4 9h16l-1.5-5h-13zM5 9v11h14V9M9 20v-6h6v6",
+  phone: "M8 3h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM11 18h2",
+  chat: "M4 5h16v11H9l-5 4zM8 10h.01M12 10h.01M16 10h.01",
+  code: "M9 8l-4 4 4 4M15 8l4 4-4 4",
+  people:
+    "M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20c.6-3.5 3-5 6-5s5.4 1.5 6 5M16 11a3 3 0 1 0-1-5.8M17 15c2.2.4 3.6 2 4 5",
+} as const;
+const groupIcon = (title: string, index: number): keyof typeof GROUP_ICONS => {
+  const t = title.toLowerCase();
+  if (/shop|store|e-?commerce|retail|salon|restaurant|clinic|service business|agenc/.test(t))
+    return "shop";
+  if (/non-technical|consumer|parent|household|everyday|personal|famil|people who/.test(t))
+    return "phone";
+  if (/whatsapp|chat|messag|community|group/.test(t)) return "chat";
+  if (/develop|coder|engineer|dev |dev$|programm|technical/.test(t)) return "code";
+  return (["people", "chat", "shop"] as const)[index % 3] ?? "people";
+};
+const GroupIcon = ({ title, index }: { title: string; index: number }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d={GROUP_ICONS[groupIcon(title, index)]}
+      stroke="#1d1a1c"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 type LiveReveal = {
   finding: boolean;
   profiles: Profile[];
@@ -77,18 +109,32 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live: LiveReve
               className={`ir-cards ir-cards-${tab}`}
               aria-label="Your ideal customer profiles"
             >
-              {profiles.map((profile) => (
-                <article key={profile.id} className="ir-card">
+              {profiles.map((profile, index) => (
+                <article
+                  key={profile.id}
+                  className="ir-card"
+                  style={{ "--i": index } as React.CSSProperties}
+                >
                   {/* Icon and name belong together: one header row. */}
                   <header className="ir-card-head">
-                    <span className="ir-profile-icon">{DUO[profile.icon]?.(26)}</span>
+                    <span className="ir-profile-icon">
+                      <GroupIcon title={profile.title} index={index} />
+                    </span>
                     <h2>{profile.title}</h2>
                   </header>
                   {/* One clear text: what gets easier for them, then why we picked them. */}
-                  <p className="ir-card-fit">
-                    {profile.fit}
-                    {profile.why && <span className="ir-card-why"> {profile.why}</span>}
-                  </p>
+                  <div className="ir-summary">
+                    <p className="ir-card-fit">{profile.fit}</p>
+                    {profile.why && (
+                      <div className="ir-card-why">
+                        <span className="ir-why-label">
+                          <i aria-hidden="true" />
+                          Why we picked it
+                        </span>
+                        <p>{profile.why}</p>
+                      </div>
+                    )}
+                  </div>
                   <div className="ir-card-detail ir-buyer">
                     <span>Who to talk to</span>
                     <p>{profile.buyer}</p>
@@ -120,7 +166,7 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live: LiveReve
                 disabled={Boolean(live.busy) || profiles.length === 0}
                 onClick={live.onStart}
               >
-                {live.busy || "Go to my dashboard"} <span aria-hidden="true">↗</span>
+                {live.busy || "Go to my dashboard"} <span aria-hidden="true">→</span>
               </button>
             </div>
           </section>

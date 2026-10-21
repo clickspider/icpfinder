@@ -450,7 +450,7 @@
   grid-area: skip;
 }
 .ir-cards-portraits .ir-card {
-  grid-template-areas: "head" "fit" "buyer" "signal" "skip";
+  grid-template-areas: "head" "summary" "buyer" "signal" "skip";
   border-color: #eadde280;
   background: #ffffffd9;
   padding: 25px;
@@ -617,6 +617,87 @@
 .ir-cards .ir-card-fit {
   margin: 0 0 4px;
 }
+/* Results page: brand red only for brand and the primary action; one neutral. */
+.ir-summary {
+  grid-area: summary;
+}
 .ir-card-why {
-  color: #4d7b74;
+  margin-top: 10px;
+}
+.ir-why-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.ir-why-label i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #d8952b;
+}
+.ir-card-why p {
+  margin: 3px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #5f565b;
+}
+.ir-cards .ir-skip > span {
+  color: var(--ink);
+}
+.ir-hunt {
+  transition:
+    transform 100ms ease-out,
+    background 0.15s;
+}
+.ir-hunt:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.ir-reveal .ir-hunt-note {
+  color: #5f565b;
+  font-size: 0.88rem;
+}
+.ir-reveal .ir-stage {
+  padding-bottom: 48px;
+}
+/* Back sits top-left, low enough to clear the window buttons. */
+.ir-reveal .ir-toolbar {
+  justify-content: flex-start;
+  align-items: flex-end;
+  padding: 0 26px 4px;
+}
+.ir-reveal .ir-exit {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--ink);
+  transition: background 0.15s;
+}
+.ir-reveal .ir-exit:hover:not(:disabled) {
+  background: #0000000a;
+}
+/* Cards arrive: fade + 8px rise, no bounce, 40ms apart. */
+.ir-cards-portraits .ir-card {
+  animation: ir-card-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+@keyframes ir-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ir-cards-portraits .ir-card {
+    animation-name: ir-card-fade;
+  }
+  @keyframes ir-card-fade {
+    from {
+      opacity: 0;
+    }
+  }
 }
