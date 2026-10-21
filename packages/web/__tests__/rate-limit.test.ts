@@ -23,6 +23,16 @@ describe("InMemoryRateLimiter", () => {
     expect(denied.remainingRuns).toBe(0);
   });
 
+  it("reports seconds until the quota resets, for Retry-After", async () => {
+    let now = 0;
+    const limiter = new InMemoryRateLimiter({ dailyCapCents: 100, dailyRuns: 1, now: () => now });
+    await limiter.reserveRun("ip");
+    now = 60 * 60 * 1000;
+    const denied = await limiter.reserveRun("ip");
+    expect(denied.allowedRun).toBe(false);
+    expect(denied.retryAfterSeconds).toBe(23 * 60 * 60);
+  });
+
   it("refuses runs when cost cap is exhausted", async () => {
     const limiter = new InMemoryRateLimiter({ dailyCapCents: 10, dailyRuns: 10 });
     await limiter.reserveRun("ip");

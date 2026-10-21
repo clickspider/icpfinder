@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 
 import { describe, expect, it } from "vitest";
+import { GET as catalogGet } from "../app/.well-known/ai-catalog.json/route";
 import robots from "../app/robots";
 import sitemap from "../app/sitemap";
-import { CONTENT_UPDATED, FAQS, formatUpdated } from "../lib/content";
+import { CONTENT_UPDATED, FAQS, formatUpdated, PLANS } from "../lib/content";
 import { faqJsonLd } from "../lib/content-jsonld";
+import { faqMarkdown, pricingMarkdown } from "../lib/markdown";
 import { AI_CRAWLERS } from "../lib/site";
 
 describe("robots", () => {
@@ -25,6 +27,7 @@ describe("sitemap", () => {
       "/guides/icp-vs-buyer-persona",
       "/alternatives",
       "/faq",
+      "/pricing",
     ]) {
       expect(urls).toContain(`https://icpfinder.dev${path}`);
     }
@@ -41,5 +44,22 @@ describe("content", () => {
     const ld = faqJsonLd(FAQS);
     expect(ld["@type"]).toBe("FAQPage");
     expect(ld.mainEntity).toHaveLength(FAQS.length);
+  });
+});
+
+describe("agent-facing files", () => {
+  it("mirrors every FAQ and plan in markdown", () => {
+    const faq = faqMarkdown();
+    for (const f of FAQS) expect(faq).toContain(`## ${f.q}`);
+    const pricing = pricingMarkdown();
+    for (const p of PLANS) expect(pricing).toContain(`## ${p.name}`);
+  });
+
+  it("lists llms.txt, the sitemap and pricing in the AI catalog", async () => {
+    const catalog = (await catalogGet().json()) as { resources: { url: string }[] };
+    const urls = catalog.resources.map((r) => r.url);
+    for (const path of ["/llms.txt", "/sitemap.xml", "/pricing"]) {
+      expect(urls).toContain(`https://icpfinder.dev${path}`);
+    }
   });
 });

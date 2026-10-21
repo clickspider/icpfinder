@@ -108,10 +108,11 @@ export class UpstashRateLimiter implements RateLimiter {
         allowedRun: false,
         remainingRuns: Math.max(0, remainingRuns + 1),
         remainingCents,
+        retryAfterSeconds: ONE_DAY_SECONDS,
       };
     }
 
-    return { allowedRun: true, remainingRuns, remainingCents };
+    return { allowedRun: true, remainingRuns, remainingCents, retryAfterSeconds: ONE_DAY_SECONDS };
   }
 
   async recordCost(clientIpHash: string, cents: number): Promise<void> {
