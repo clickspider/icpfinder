@@ -10,6 +10,7 @@ import { evidenceLabel, findingLabel, findingReason } from "../../shared/evidenc
 import { LINKEDIN, linkedinFor } from "../../shared/people";
 import type { ActionId, State, Workspace } from "../../shared/types";
 import type { View } from "./App";
+import { ReachCard } from "./ReachCard";
 import { api, friendly, host, initial, Snap, Spinner, ToolLogo } from "./ui";
 
 const KIND: Record<FindingKind, { title: string; path: string }> = {
@@ -395,7 +396,7 @@ export const CompanyView = ({
   };
   const copy = async (what: string, t: string) => {
     try {
-      await navigator.clipboard.writeText(t);
+      await api().copyText(t);
       setCopied(what);
       setTimeout(() => setCopied(null), 1500);
     } catch {
@@ -841,91 +842,98 @@ export const CompanyView = ({
                 </div>
               )}
 
-              <div className="lbl" style={{ padding: "4px 2px 0" }}>
-                Next steps
-              </div>
-              <div
-                className="native-action-list"
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                  gap: 8,
-                }}
-              >
-                {ACTIONS.map((a) => {
-                  const st =
-                    a.id !== "openLinkedIn" && a.id !== "live" ? c.actions?.[a.id] : undefined;
-                  const unverified = a.id === "openLinkedIn" && !li;
-                  return (
-                    <button
-                      key={a.id}
-                      type="button"
-                      className={`btn rise native-action-row ${shown === a.id ? "selected" : ""}`}
-                      aria-expanded={
-                        a.id === "openLinkedIn"
-                          ? !li
-                            ? pasting
-                            : undefined
-                          : a.id === "live"
-                            ? undefined
-                            : shown === a.id
-                      }
-                      aria-controls={shown === a.id ? "company-action-result" : undefined}
-                      onClick={() => run(a)}
-                      title={unverified ? "We could not verify a LinkedIn page" : undefined}
-                      style={{
-                        opacity: unverified && !pasting ? 0.55 : 1,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 8,
-                        padding: 12,
-                        borderRadius: 14,
-                        background: "#fff",
-                        textAlign: "left",
-                        boxShadow:
-                          shown === a.id
-                            ? `inset 0 0 0 2px ${a.ink}`
-                            : "inset 0 0 0 0.5px rgba(0,0,0,0.12)",
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, width: "100%" }}>
+              <ReachCard icpId={icpId} c={c} person={person?.name} onState={onState} />
+
+              <details className="reach-more">
+                <summary className="lbl">More · your AI writes or searches (uses tokens)</summary>
+                <div
+                  className="native-action-list"
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                    gap: 8,
+                    marginTop: 10,
+                  }}
+                >
+                  {ACTIONS.map((a) => {
+                    const st =
+                      a.id !== "openLinkedIn" && a.id !== "live" ? c.actions?.[a.id] : undefined;
+                    const unverified = a.id === "openLinkedIn" && !li;
+                    return (
+                      <button
+                        key={a.id}
+                        type="button"
+                        className={`btn rise native-action-row ${shown === a.id ? "selected" : ""}`}
+                        onClick={() => run(a)}
+                        aria-expanded={
+                          a.id === "openLinkedIn"
+                            ? !li
+                              ? pasting
+                              : undefined
+                            : a.id === "live"
+                              ? undefined
+                              : shown === a.id
+                        }
+                        aria-controls={shown === a.id ? "company-action-result" : undefined}
+                        title={unverified ? "We could not verify a LinkedIn page" : undefined}
+                        style={{
+                          opacity: unverified && !pasting ? 0.55 : 1,
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 8,
+                          padding: 12,
+                          borderRadius: 14,
+                          background: "#fff",
+                          textAlign: "left",
+                          boxShadow:
+                            shown === a.id
+                              ? `inset 0 0 0 2px ${a.ink}`
+                              : "inset 0 0 0 0.5px rgba(0,0,0,0.12)",
+                        }}
+                      >
                         <div
-                          style={{
-                            width: 30,
-                            height: 30,
-                            borderRadius: 9,
-                            background: a.tint,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
+                          style={{ display: "flex", alignItems: "center", gap: 8, width: "100%" }}
                         >
-                          {a.brand ? (
-                            <ToolLogo name={a.brand} size={30} radius={9} />
-                          ) : (
-                            <Icon path={a.path} size={16} color={a.ink} />
-                          )}
+                          <div
+                            style={{
+                              width: 30,
+                              height: 30,
+                              borderRadius: 9,
+                              background: a.tint,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {a.brand ? (
+                              <ToolLogo name={a.brand} size={30} radius={9} />
+                            ) : (
+                              <Icon path={a.path} size={16} color={a.ink} />
+                            )}
+                          </div>
+                          <div style={{ marginLeft: "auto" }}>
+                            {st?.status === "running" ? (
+                              <Spinner />
+                            ) : st?.status === "done" ? (
+                              <span
+                                style={{ color: "var(--green)", fontSize: 12, fontWeight: 700 }}
+                              >
+                                ✓
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
-                        <div style={{ marginLeft: "auto" }}>
-                          {st?.status === "running" ? (
-                            <Spinner />
-                          ) : st?.status === "done" ? (
-                            <span style={{ color: "var(--green)", fontSize: 12, fontWeight: 700 }}>
-                              ✓
-                            </span>
-                          ) : null}
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: 13 }}>{a.title}</div>
+                          <div className="ellipsis" style={{ fontSize: 11, color: "var(--muted)" }}>
+                            {a.id === "openLinkedIn" ? liSub : a.sub}
+                          </div>
                         </div>
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 600, fontSize: 13 }}>{a.title}</div>
-                        <div className="ellipsis" style={{ fontSize: 11, color: "var(--muted)" }}>
-                          {a.id === "openLinkedIn" ? liSub : a.sub}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </details>
 
               {pasting && !li && (
                 <div

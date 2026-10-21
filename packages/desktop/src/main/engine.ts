@@ -19,6 +19,7 @@ import {
   type PersonProfile,
   peopleAt,
 } from "../shared/people";
+import { classify, mergeReach, type ReachLink, reachIn } from "../shared/reach";
 import { type Scoring, score, scoringOf } from "../shared/scoring";
 import type { ProviderId } from "../shared/subscriptions";
 import type {
@@ -379,6 +380,63 @@ const siteEmail = async (
   }
   const best = pickEmail(all, c.domain, person);
   return best ? { email: best, page } : null;
+};
+
+const fetchText = async (url: string): Promise<string> => {
+  const res = await safeFetch(url, {
+    timeoutMs: 8_000,
+    maxRedirects: 5,
+    maxBytes: 3_000_000,
+  }).catch(() => null);
+  return res && res.status < 400 ? res.body : "";
+};
+
+/**
+ * Where to reach them, found by code only (no AI): their post and profiles from the research,
+ * the links on their website, and the links in their public Hacker News and GitHub profiles.
+ */
+export const findReach = async (c: Company): Promise<ReachLink[]> => {
+  const links: ReachLink[] = [];
+  const add = (url: string | undefined, source: string) => {
+    const kind = url ? classify(url) : null;
+    if (url && kind) links.push({ kind, url, source });
+  };
+  add(c.trigger?.url, "the post we found them by");
+  for (const f of c.research?.findings ?? []) {
+    add(f.person?.profileUrl, "their research");
+    for (const e of f.evidence) add(e.url, "their research");
+  }
+  links.push(...reachIn(await fetchText(`https://${c.domain}`), "their website"));
+  // Public profiles often list the rest: X, a site or an email.
+  const hn = links.find((l) => l.kind === "hn")?.url.match(/[?&]id=([\w-]+)/)?.[1];
+  if (hn) {
+    const about = await fetchText(`https://hacker-news.firebaseio.com/v0/user/${hn}.json`);
+    const text = (() => {
+      try {
+        return String(JSON.parse(about)?.about ?? "");
+      } catch {
+        return "";
+      }
+    })();
+    links.push(...reachIn(text.replace(/&#x2F;/g, "/"), "their Hacker News profile"));
+  }
+  const gh = links.find((l) => l.kind === "github")?.url.match(/github\.com\/([\w-]+)/)?.[1];
+  if (gh) {
+    try {
+      const u = JSON.parse(await fetchText(`https://api.github.com/users/${gh}`)) as {
+        twitter_username?: string | null;
+        email?: string | null;
+        blog?: string | null;
+      };
+      if (u.twitter_username) add(`https://x.com/${u.twitter_username}`, "their GitHub profile");
+      if (u.email) add(`mailto:${u.email}`, "their GitHub profile");
+      if (u.blog)
+        add(u.blog.startsWith("http") ? u.blog : `https://${u.blog}`, "their GitHub profile");
+    } catch {
+      // A rate limit or a missing user: the other places still count.
+    }
+  }
+  return mergeReach(links);
 };
 
 /** The address to write to: the company's own website first (free), then Hunter if connected. */

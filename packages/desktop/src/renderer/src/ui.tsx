@@ -550,3 +550,26 @@ export const friendly = (msg: string): string => {
 
 export const cleanError = (e: unknown): string =>
   friendly(e instanceof Error ? e.message : String(e));
+
+export const ProviderLogo = ({ provider, size }: { provider: ProviderId; size: number }) =>
+  provider === "xai" ? (
+    <span
+      aria-hidden="true"
+      style={{
+        width: size,
+        height: size,
+        borderRadius: Math.round(size / 4),
+        background: "#111114",
+        color: "#fff",
+        display: "inline-grid",
+        placeItems: "center",
+        fontSize: Math.round(size * 0.55),
+        fontWeight: 700,
+        flexShrink: 0,
+      }}
+    >
+      x
+    </span>
+  ) : (
+    <ToolLogo name={provider} size={size} radius={Math.round(size / 4)} />
+  );

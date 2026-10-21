@@ -134,6 +134,8 @@ This is a writing contract for generated content, not a set of static sample sen
 - The check step looks for proof that the signal does NOT mean need (a false positive) and then does not count it.
 - The next search uses the user's approved companies as "more like these" and the rejected ones as "not like these".
 - Lean by default, for $20 Claude or Codex plans: 10 candidates per round, at most 6 web searches in the search step (no site visits there), at most 4 searches or page opens per company check, and a round stops checking once 5 strong fits are in. A timed-out AI call is never retried.
+- Copy buttons (2026-10-21): never call `navigator.clipboard` in the desktop renderer; it is denied when the window is not focused. Use `api().copyText(text)`, which copies through Electron's clipboard in the main process.
+- Company page (decided 2026-10-21): IcpFinder finds WHERE to reach someone; the user writes and sends the outreach. "Where to reach them" comes first: their own post (answer where they already post), then X, LinkedIn, email, GitHub and other public profiles, each with its source. It is found by code from their site, their research, and public Hacker News and GitHub profiles, with no AI. Missing places get a search button that opens the user's browser. AI actions (write the email, warm intros, call brief, live LinkedIn) sit under a closed "More".
 - Equal scores: the company the user can reach (someone they know, a LinkedIn page, a found email) ranks first.
 
 Each profile needs:

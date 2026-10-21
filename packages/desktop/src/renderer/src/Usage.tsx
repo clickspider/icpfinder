@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { State } from "../../shared/types";
 import { emptyTotals, groupBy, type Provider, tokensOf } from "../../shared/usage";
-import { ToolLogo } from "./ui";
+import { ProviderLogo } from "./ui";
 
 const PERIODS = [
   { days: 1, label: "Today" },
@@ -42,7 +42,7 @@ export const UsageView = ({ state }: { state: State }) => {
                 aria-pressed={provider === item.id}
                 onClick={() => setProvider(item.id)}
               >
-                {item.id !== "xai" && <ToolLogo name={item.id} size={13} radius={3} />}
+                <ProviderLogo provider={item.id} size={13} />
                 {item.label}
               </button>
             ))}

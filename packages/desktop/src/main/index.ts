@@ -4,7 +4,16 @@
 
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { app, BrowserWindow, dialog, ipcMain, safeStorage, session, shell } from "electron";
+import {
+  app,
+  BrowserWindow,
+  clipboard,
+  dialog,
+  ipcMain,
+  safeStorage,
+  session,
+  shell,
+} from "electron";
 import {
   type CompanyFacts,
   companiesForLinkedIn,
@@ -37,6 +46,7 @@ import {
   createLlm,
   detectAi,
   findIcps,
+  findReach,
   huntSteps,
   isPaused,
   jobKeys,
@@ -856,6 +866,19 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
     if (c && !clean) c.linkedin = undefined;
     else if (c && clean && LINKEDIN.test(clean)) c.linkedin = clean;
     return commit();
+  },
+  /** Where to reach them: code only, no AI, so it can run whenever the page opens. */
+  findReach: async (icpId: string, domain: string) => {
+    const c = activeWorkspace(state)
+      ?.icps.find((i) => i.id === icpId)
+      ?.companies.find((x) => x.domain === domain);
+    if (!c) return state;
+    c.reach = await findReach(c);
+    c.reachAt = new Date().toISOString();
+    return commit();
+  },
+  copyText: (text: string) => {
+    if (typeof text === "string") clipboard.writeText(text);
   },
   openExternal: (url: string) => {
     if (/^https:\/\//.test(url)) void shell.openExternal(url);

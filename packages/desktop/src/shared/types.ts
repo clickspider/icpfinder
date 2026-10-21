@@ -99,6 +99,9 @@ export interface Company {
   signals?: Array<Trigger & { found: string; seen?: boolean }>;
   /** Last time the watcher checked this company. */
   watchedAt?: string;
+  /** Where to reach them (their post, profiles, site links), found by code; no AI. */
+  reach?: import("./reach").ReachLink[];
+  reachAt?: string;
   /** Results of next-step actions, by action id. */
   actions?: Partial<Record<ActionId, ActionResult>>;
 }
@@ -306,6 +309,9 @@ export interface IcpApi {
   watchNow(icpId: string, domain: string): Promise<State>;
   markSeen(icpId: string, domain: string): Promise<State>;
   saveLinkedIn(icpId: string, domain: string, url: string | null): Promise<State>;
+  findReach(icpId: string, domain: string): Promise<State>;
+  /** Copy through the main process: the web clipboard API is denied when the window is not focused. */
+  copyText(text: string): Promise<void>;
   openExternal(url: string): Promise<void>;
   newWorkspace(): Promise<State>;
   switchWorkspace(id: string): Promise<State>;
