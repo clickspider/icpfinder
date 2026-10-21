@@ -18,14 +18,12 @@ import {
   sseHeaders,
 } from "@/lib/api-context";
 import { rememberArchetypes } from "@/lib/run-cache";
-import { scanUrl } from "@/lib/scan-url";
-import { classifySeed } from "@/lib/seed-input";
+import { resolveSeed } from "@/lib/resolve-seed";
 import { sseStreamFromEvents } from "@/lib/sse";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const MAX_SEED_LENGTH = 8_000;
 const FREE_TIER_ARCHETYPE_LIMIT = 3;
 const BYOK_DEFAULT_ARCHETYPE_LIMIT = 3;
 
@@ -54,15 +52,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   const { bundle, seed: rawSeed } = ctx;
 
   // Scan + normalize seed if URL.
-  const classified = classifySeed(rawSeed);
-  let effectiveSeed = rawSeed;
-  if (classified.kind === "url" && classified.url) {
-    const scanned = await scanUrl(classified.url);
-    if (scanned.seed && scanned.seed.length > 0) effectiveSeed = scanned.seed;
-  }
-  if (effectiveSeed.length > MAX_SEED_LENGTH) {
-    effectiveSeed = effectiveSeed.slice(0, MAX_SEED_LENGTH);
-  }
+  const effectiveSeed = await resolveSeed(rawSeed);
 
   const archetypeLimit = clampInt(
     body.archetypeLimit,
