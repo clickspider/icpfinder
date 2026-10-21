@@ -6,9 +6,10 @@
 
 ## What this repo is
 
-icpfinder is a free, open-source first-customer-discovery tool. Paste a product idea, stream 3 ICP archetypes + verified contact emails in 30 seconds. MIT. No signup wall.
+IcpFinder helps users explore suggested customer profiles, research companies that could fit, and find ways to reach them. The Mac app uses connected provider accounts and a local workspace. The separate web app and TypeScript libraries provide API-based discovery flows. The software is MIT licensed; provider subscriptions, charges, and limits depend on the chosen service.
 
 - **Monorepo:** Turbo + Bun. Workspaces under `packages/`.
+- **`packages/desktop`** — Electron Mac app, subscription connections, and local workspace.
 - **`packages/core`** — provider-agnostic streaming engine (`@icpfinder/core`).
 - **`packages/providers`** — Gemini + Hunter adapters.
 - **`packages/web`** — Next.js 15 + React 19 app (marketing landing + `/find` run UI + `/api/find` SSE endpoint).

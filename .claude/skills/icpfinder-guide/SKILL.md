@@ -407,3 +407,5 @@ Use this language to align the dashboard and other non-onboarding surfaces. Thei
 ## README presentation
 
 Use a compact identity header and direct product screenshots rather than gradient banners, floating-card posters, or oversized badge stacks. Screenshot captions must disclose synthetic example companies, signals, and source material. Do not ship capture fixtures or review-page scaffolding. Clearly separate Mac subscription connections and workspace features from web API-key discovery, MCP, and developer-library examples. Avoid blanket timing, unlimited-usage, verified-contact-count, or fixed-cost promises across these surfaces.
+
+README prose should use the product’s conversational, useful voice throughout, including developer and contribution sections. Keep the Mac workflow prominent, retain useful SDK examples, and move deployment recipes into setup documentation. Avoid rhetorical em dashes, stock community slogans, pricing grievances, and promotional author signatures. Preserve required attribution and license notices. Describe cache bypass accurately: it does not imply device-only processing.

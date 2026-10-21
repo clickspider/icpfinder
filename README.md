@@ -2,9 +2,9 @@
 
 # IcpFinder
 
-Discover who could benefit from what you offer, find relevant companies, and explore how to reach them.
+IcpFinder helps you work out who could benefit from what you offer, research companies that could fit, and find ways to reach them.
 
-[Mac app](https://github.com/clickspider/icpfinder/releases) · [Web demo](https://icpfinder.dev) · [Documentation](./docs/quickstart.md) · [npm](https://www.npmjs.com/package/@icpfinder/core)
+[Mac releases](https://github.com/clickspider/icpfinder/releases) · [Web app](https://icpfinder.dev) · [Web quickstart](./docs/quickstart.md) · [npm](https://www.npmjs.com/package/@icpfinder/core)
 
 ![Company research in IcpFinder: fit criteria, a supporting source, and where to reach the company](.github/assets/company-research.jpg)
 
@@ -14,7 +14,7 @@ Free and open source · [MIT license](./LICENSE)
 
 ## Explore companies that could fit
 
-Review the reason each company surfaced, then choose which ones to research further.
+See why each company could fit, then choose which ones to research further.
 
 ![A customer profile with three example companies, recent signals, and research actions](.github/assets/company-shortlist.jpg)
 
@@ -22,17 +22,15 @@ Review the reason each company surfaced, then choose which ones to research furt
 
 ## IcpFinder for Mac
 
-The Mac app helps you turn a website or written business description into suggested customer profiles. Review your business overview, refine the profiles, then choose when to search for and research companies.
+Start with your website or a description of your business. IcpFinder suggests customer profiles you can review and refine. From there, find companies to explore, choose which ones to research, and review the sources and possible ways to reach them.
 
-- Connect your Claude, ChatGPT/Codex, or eligible Grok account. Model and tool access depend on your subscription.
-- Review why a company could fit, the sources behind its findings, and possible ways to reach it.
-- Keep your businesses and customer profiles in a local workspace. Research sends relevant information to your selected provider and enabled services.
+Connect your Claude, ChatGPT, or eligible Grok account to power IcpFinder. Your provider’s subscription limits apply, and access to models and tools depends on your plan. The software is free; provider subscriptions and optional services have their own requirements.
 
-Suggested profiles are starting points, not confirmed buyers. Opening the dashboard does not automatically start company research.
+Your businesses and profiles are saved in a local workspace. Research sends relevant information to your selected provider and any services you enable. Company search is for business customer profiles; consumer profiles do not enable consumer sourcing.
 
 [Mac releases](https://github.com/clickspider/icpfinder/releases) · [Mac setup and provider details](./packages/desktop/README.md)
 
-To run the Mac app from source:
+Run the Mac app from source. See the [Mac setup guide](./packages/desktop/README.md) for requirements and provider setup:
 
 ```bash
 git clone https://github.com/clickspider/icpfinder.git
@@ -43,11 +41,9 @@ bun run dev:desktop
 
 ## Web app and developer libraries
 
-The [web app](https://icpfinder.dev) is a separate experience from the Mac workspace shown above. Its streaming discovery flow uses server-configured providers or API keys supplied by the user; it does not use the Mac app’s subscription sign-in flow.
+The [web app](https://icpfinder.dev) offers a separate discovery flow for suggesting customer profiles and finding contact information for candidate companies. It uses providers configured by the host or API keys you supply. See the [web quickstart](./docs/quickstart.md) for setup and requirements.
 
-The web flow can suggest customer profiles and enrich candidate companies with Hunter contact results. Availability, verification results, provider charges, and usage limits depend on configuration and provider responses. Stub mode uses illustrative data rather than live research.
-
-The TypeScript libraries expose the discovery pipeline through provider interfaces, with streaming events and budget controls. The examples below concern these libraries and the web app, not Mac subscription usage.
+Use the TypeScript libraries to build discovery into your own application. They provide a streaming pipeline, provider interfaces, and budget controls.
 
 ## Install the libraries
 
@@ -60,19 +56,17 @@ bun add @icpfinder/core @icpfinder/providers
 pnpm add @icpfinder/core @icpfinder/providers
 ```
 
-Both packages ship as ESM + TypeScript-first, with zero side effects on import and [npm provenance attestations](https://docs.npmjs.com/generating-provenance-statements) (built via OIDC Trusted Publishing on GitHub Actions — every published tarball is cryptographically tied to the commit that produced it).
+Both packages include TypeScript types and use ES modules. Published packages include [npm provenance attestations](https://docs.npmjs.com/generating-provenance-statements).
 
 ## Run the web app or terminal demo
 
+After cloning the repository and running `bun install`, try the terminal demo:
+
 ```bash
-git clone https://github.com/clickspider/icpfinder.git
-cd icpfinder
-bun install
-bun run demo                       # zero keys, stub providers
-cd packages/web && bun run dev     # full web UI on localhost:3000
+bun run demo
 ```
 
-The terminal demo uses stub providers and does not perform real research. The web app also needs its environment and database configured for the selected mode; see [the web quickstart](./docs/quickstart.md) and [self-hosting guide](./docs/self-host.md).
+The demo uses sample data and needs no API keys. To run the web app, follow the [web quickstart](./docs/quickstart.md) to configure its environment, database, and providers before starting the development server.
 
 ## Library usage
 
@@ -99,11 +93,11 @@ for await (const event of finder.find({
 }
 ```
 
-## Web MCP endpoint
+## Use the web discovery tool through MCP
 
-The web app exposes an MCP server at `https://icpfinder.dev/mcp` (Streamable HTTP, no sign-in). It has one tool, `find_icp`. Give it a product idea or URL, and it returns 3 ICP archetypes.
+The web app exposes an MCP server at `https://icpfinder.dev/mcp` (Streamable HTTP, no sign-in). It has one tool, `find_icp`. Give it a product idea or URL, and it returns suggested customer profiles.
 
-- **Claude (web or desktop):** Settings → Connectors → Add custom connector → `https://icpfinder.dev/mcp`.
+- **MCP clients:** add `https://icpfinder.dev/mcp` as a Streamable HTTP server using your client’s connector setup.
 - **Claude Code:**
 
   ```bash
@@ -112,7 +106,7 @@ The web app exposes an MCP server at `https://icpfinder.dev/mcp` (Streamable HTT
   claude mcp add --transport http icpfinder https://icpfinder.dev/mcp --header "X-Gemini-Api-Key: $GEMINI_API_KEY"
   ```
 
-Shared-key runs use the website’s limits. The MCP tool returns profiles; the [web discovery UI](https://icpfinder.dev/find) handles contact enrichment separately. This endpoint is independent of the Mac app’s provider connection.
+Shared-key runs use the website’s limits. The MCP tool returns profiles; the [web discovery UI](https://icpfinder.dev/find) handles contact enrichment separately.
 
 ## Repository layout
 
@@ -129,28 +123,27 @@ packages/
 The software is MIT licensed. AI subscriptions and external services may have their own charges and limits.
 
 - **Mac:** research uses your connected provider account. Optional services such as Hunter have separate requirements.
-- **Web and libraries:** stub providers need no keys; live providers may charge for requests. Configured budgets and rate limits apply. See [web/library costs and budget controls](./docs/costs.md).
-
-## Web run cache (optional)
-
-In operator mode, the `/api/find` endpoint can cache complete SSE event streams in Vercel KV (Upstash Redis), keyed by `sha256(seed)` with a 15-minute TTL. Duplicate seeds replay instantly with zero Gemini calls — useful when the shared free-tier key keeps hitting rate limits. To enable, set:
-
-```bash
-KV_REST_API_URL=…
-KV_REST_API_TOKEN=…
-```
-
-Unset → cache is a graceful no-op (every request goes live). BYOK runs always bypass the cache so user data stays user-side.
+- **Web and libraries:** live providers may charge for requests. Configured budgets and rate limits apply. See [web/library costs and budget controls](./docs/costs.md).
 
 ## Self-host the web app
 
-Vercel + Postgres + Upstash, three steps: [docs/self-host.md](./docs/self-host.md).
+See the [self-hosting guide](./docs/self-host.md) for web deployment and optional caching.
 
-## Telemetry
+## Telemetry and data
 
-The hosted website uses Vercel Web Analytics. See [web telemetry documentation](./docs/telemetry.md) for its configuration and verification steps. These web deployment details do not describe the Mac app’s local storage or provider connections; those are documented in the [Mac README](./packages/desktop/README.md#data).
+The hosted website uses Vercel Web Analytics. See the [web telemetry documentation](./docs/telemetry.md) and the [Mac app’s data-storage details](./packages/desktop/README.md#data).
 
-## Tests
+## Contributing
+
+Contributions are welcome. You can report a bug, improve the documentation, or help add a provider.
+
+- Report bugs and suggest features using the [issue templates](./.github/ISSUE_TEMPLATE).
+- Discuss design changes in [GitHub Discussions](https://github.com/clickspider/icpfinder/discussions) before starting an implementation.
+- For provider integrations, see the [interfaces](./packages/providers/src/types.ts) and the existing adapters and tests.
+
+Read [CONTRIBUTING](./CONTRIBUTING.md) for development setup and pull request guidelines. The [Code of Conduct](./CODE_OF_CONDUCT.md) applies to project participation.
+
+## Development checks
 
 ```bash
 bun run test       # vitest across workspaces
@@ -158,40 +151,18 @@ bun run typecheck  # tsc --noEmit across workspaces
 bun run lint       # biome
 ```
 
-The CI workflow runs these checks; lint is currently informational. See [`.github/workflows/ci.yml`](./.github/workflows/ci.yml). Publishing to npm is automated via [Changesets](https://github.com/changesets/changesets) + OIDC Trusted Publishing — see [CONTRIBUTING.md](./CONTRIBUTING.md#releasing--versioning).
+The CI workflow runs these checks; lint is currently informational. See the [CI workflow](./.github/workflows/ci.yml) for automated checks and [CONTRIBUTING](./CONTRIBUTING.md#releasing--versioning) for release instructions.
 
 ## Roadmap
 
 See [ROADMAP.md](./ROADMAP.md) for planned work and [GitHub issues](https://github.com/clickspider/icpfinder/issues) for current discussions.
 
-## Contributing
-
-PRs, issues, and ideas are all welcome — this project gets better when more eyes find more edges. Whether you're fixing a typo, wiring up a new provider, or asking a question that turns into the next docs page, you belong here.
-
-A few places to start:
-
-- **Good first PR — add a new provider in under 50 lines.** Implement the `LlmProvider` or `EmailProvider` interface in `packages/providers/src/types.ts`, drop tests in `packages/providers/__tests__/`, ship. Apollo, Clearbit, OpenAI, Anthropic, Snov.io — all great candidates.
-- **Open an issue.** Bug, idea, half-formed thought — all fine. See the [issue templates](./.github/ISSUE_TEMPLATE).
-- **Discussions for design questions** — [GitHub Discussions](https://github.com/clickspider/icpfinder/discussions) is the right place for "should we do X?" before you write code.
-
-Full developer setup, PR conventions, and how Changesets / OIDC publishing work: [CONTRIBUTING.md](./CONTRIBUTING.md). By participating you're agreeing to the [Code of Conduct](./CODE_OF_CONDUCT.md).
-
 ## Contributors
-
-Built by people who got tired of paying $400/month for sales tools that should be commodity infrastructure.
 
 <a href="https://github.com/clickspider/icpfinder/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=clickspider/icpfinder" alt="icpfinder contributors" />
 </a>
 
-See [Contributing](#contributing) to get involved.
-
 ## License
 
-MIT. Use it. Fork it. Sell it. Don't sue. — See [LICENSE](./LICENSE).
-
-<br/>
-
-<p align="center">
-  <sub>Made with ( · ) by <a href="https://github.com/clickspider">Daniel Frey (@clickspider)</a> · <a href="https://icpfinder.dev">icpfinder.dev</a></sub>
-</p>
+Licensed under the [MIT License](./LICENSE).

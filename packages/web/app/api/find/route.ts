@@ -79,7 +79,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   });
   const byokHeader = byokProvidersHeader(byokProviders);
 
-  // Operator-mode cache lookup. Skips entirely for BYOK (user data stays user-side)
+  // Operator-mode cache lookup. Requests using their own API keys bypass the shared run cache.
   // and for stub (no real data anyway).
   if (mode === "operator") {
     const cached = await getCachedRun(body.seed);

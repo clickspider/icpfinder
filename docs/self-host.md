@@ -111,3 +111,15 @@ for await (const event of finder.find({ seed: "my product" })) {
 
 Both packages are published as ESM, TypeScript-first, zero side
 effects on import.
+
+
+## Optional shared run cache
+
+In operator mode, `/api/find` can cache completed event streams in Vercel KV (Upstash Redis) for 15 minutes, using a hash of the normalized seed. Repeated requests can replay a cached result without another provider request. To enable caching, set:
+
+```bash
+KV_REST_API_URL=…
+KV_REST_API_TOKEN=…
+```
+
+Without these variables, caching is disabled. Requests using your own API keys bypass the shared run cache. These requests still pass through the web server and the selected providers; bypassing the cache does not mean processing stays on the user’s device.
