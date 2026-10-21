@@ -11,7 +11,7 @@ Decisions recorded: 2026-10-21 (Europe/Amsterdam). Recheck current PR/branch sta
 
 This is the single, ongoing reference for work on IcpFinder: product decisions, design language, brand voice, copywriting, and approved experiences. Keep this material together in this one skill; do not split it into separate design and copy references. Use this reference for all IcpFinder work, regardless of which surface or feature is being changed.
 
-Read the relevant sections before changing or extending IcpFinder. Add future approved decisions here, update superseded guidance in place, and distinguish durable principles from dated delivery notes. Later explicit user decisions take precedence. Preserve unrelated engineering and design guidance when updating copy, and vice versa.
+Read the relevant sections before changing or extending IcpFinder. Add future approved decisions here, update superseded guidance in place, and distinguish durable principles from dated delivery notes. A PR that changes an approved decision updates this file in the same PR, so the guide on `main` is always current. Later explicit user decisions take precedence. Preserve unrelated engineering and design guidance when updating copy, and vice versa.
 
 The brand and editorial principles apply to future IcpFinder work. Screen-specific layouts and strings below record the approved onboarding implementation, not blanket approval of unreviewed surfaces. These decisions supersede earlier design experiments and outdated comments describing marble/tie-dye backgrounds.
 
