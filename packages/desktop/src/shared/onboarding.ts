@@ -34,17 +34,24 @@ export function productStage(value: unknown, evidence = ""): Stage | undefined {
   return undefined;
 }
 
+/** Generated text can start lowercase or miss its full stop; show it as a sentence. */
+const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+const sentence = (t: string) => {
+  const v = t.trim();
+  return v ? cap(/[.!?…]$/.test(v) ? v : `${v}.`) : v;
+};
+
 export function icpPresentation(icp: Icp) {
   if (icp.profileKind)
     return {
       id: icp.id,
       title: icp.name,
-      tag: icp.characteristics || "Customer profile",
-      buyer: icp.card?.buyer.text || icp.name,
-      fit: icp.sellingAngle || icp.pain,
-      signal: icp.card?.trigger.text || icp.signals[0] || "To be refined",
-      skip: icp.card?.skip.text || "To be refined",
-      why: icp.reasoning ?? "",
+      tag: cap(icp.characteristics || "Customer profile"),
+      buyer: cap(icp.card?.buyer.text || icp.name),
+      fit: sentence(icp.sellingAngle || icp.pain),
+      signal: cap(icp.card?.trigger.text || icp.signals[0] || "To be refined"),
+      skip: cap(icp.card?.skip.text || "To be refined"),
+      why: sentence(icp.reasoning ?? ""),
     };
   const company = icp.card?.company.text || [icp.industry, icp.size].filter(Boolean).join(" · ");
   const buyer = icp.card?.buyer.text || icp.name;

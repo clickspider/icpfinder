@@ -79,24 +79,16 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live: LiveReve
             >
               {profiles.map((profile) => (
                 <article key={profile.id} className="ir-card">
-                  <div className="ir-card-top">
-                    <span className="ir-profile-icon">{DUO[profile.icon]?.(31)}</span>
-                  </div>
-                  <h2>{profile.title}</h2>
-                  <span className="ir-card-tag">{profile.tag}</span>
-                  {/* Always rendered so rows stay aligned when a card has no reason. */}
-                  <div className="ir-why">
-                    {profile.why && (
-                      <>
-                        <i aria-hidden="true">{DUO.Idea?.(16)}</i>
-                        <p>
-                          <b>Why we picked it</b>
-                          {profile.why}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                  <p className="ir-card-fit">{profile.fit}</p>
+                  {/* Icon and name belong together: one header row. */}
+                  <header className="ir-card-head">
+                    <span className="ir-profile-icon">{DUO[profile.icon]?.(26)}</span>
+                    <h2>{profile.title}</h2>
+                  </header>
+                  {/* One clear text: what gets easier for them, then why we picked them. */}
+                  <p className="ir-card-fit">
+                    {profile.fit}
+                    {profile.why && <span className="ir-card-why"> {profile.why}</span>}
+                  </p>
                   <div className="ir-card-detail ir-buyer">
                     <span>Who to talk to</span>
                     <p>{profile.buyer}</p>

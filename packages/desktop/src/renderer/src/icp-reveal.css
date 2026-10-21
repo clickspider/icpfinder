@@ -450,7 +450,7 @@
   grid-area: skip;
 }
 .ir-cards-portraits .ir-card {
-  grid-template-areas: "icon" "title" "tag" "why" "fit" "buyer" "signal" "skip";
+  grid-template-areas: "head" "fit" "buyer" "signal" "skip";
   border-color: #eadde280;
   background: #ffffffd9;
   padding: 25px;
@@ -544,7 +544,7 @@
   row-gap: 0;
 }
 .ir-cards-portraits .ir-card {
-  grid-row: span 8;
+  grid-row: span 5;
   grid-template-rows: subgrid;
   grid-template-areas: none;
   row-gap: 0;
@@ -593,4 +593,30 @@
   margin: 12px 0 0;
   max-width: 640px;
   background: #ffffff8c;
+}
+
+/* Profile card, grouped: header (icon + name), one summary, then the details. */
+.ir-card-head {
+  grid-area: head;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.ir-cards-portraits .ir-card-head .ir-profile-icon {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  margin-top: 2px;
+}
+.ir-cards-portraits .ir-card-head h2 {
+  margin: 0;
+  min-height: 0;
+  font-size: 19px;
+}
+.ir-cards .ir-card-fit {
+  margin: 0 0 4px;
+}
+.ir-card-why {
+  color: #4d7b74;
 }
