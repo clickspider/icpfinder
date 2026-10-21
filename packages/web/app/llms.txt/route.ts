@@ -27,13 +27,15 @@ ${KEY_FACTS.map((f) => `- ${f}`).join("\n")}
 - [Run an ICP search](${SITE_URL}/find): paste a product idea or URL, get archetypes + contacts
 - [Bring your own keys](${SITE_URL}/find#keys): Gemini + Hunter keys stay in your browser
 - [Roadmap](${SITE_URL}/roadmap): what is planned, vote on GitHub
+- [MCP server](${SITE_URL}/mcp): Streamable HTTP, tool \`find_icp\` returns 3 ICP archetypes for a product idea or URL. Optional header \`X-Gemini-Api-Key\` for unlimited runs
 
 ## Guides
 
 - [How to find your ICP as a solo founder](${SITE_URL}/guides/find-your-icp): 6 steps, before you have customers
 - [ICP vs buyer persona](${SITE_URL}/guides/icp-vs-buyer-persona): side-by-side table
 - [icpfinder vs Apollo, Clay and ChatGPT](${SITE_URL}/alternatives): comparison table and when to use each
-- [FAQ](${SITE_URL}/faq)
+- [FAQ](${SITE_URL}/faq): also as [markdown](${SITE_URL}/faq.md)
+- [Pricing](${SITE_URL}/pricing): free demo, own keys, self-host, and their limits; also as [markdown](${SITE_URL}/pricing.md)
 
 ## FAQ
 
@@ -45,6 +47,7 @@ ${FAQS.map((f) => `### ${f.q}\n\n${f.a}`).join("\n\n")}
 - [@icpfinder/core on npm](${NPM_URL}): provider-agnostic streaming engine
 - [Self-host guide](${REPO_URL}/blob/main/docs/self-host.md)
 - [Quickstart](${REPO_URL}/blob/main/docs/quickstart.md)
+- [AI catalog](${SITE_URL}/.well-known/ai-catalog.json): every agent-facing resource
 
 ## Maker
 

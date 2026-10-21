@@ -26,15 +26,25 @@ export interface DeepenQuotaCheck {
   allowed: boolean;
   remaining: number;
   limit: number;
+  /** Seconds until the quota resets. Sent as Retry-After on a 429. */
+  retryAfterSeconds: number;
 }
 
 export function reserveDeepen(clientIpHash: string, byok: boolean): DeepenQuotaCheck {
-  if (byok) return { allowed: true, remaining: Number.POSITIVE_INFINITY, limit: Number.POSITIVE_INFINITY };
+  if (byok)
+    return {
+      allowed: true,
+      remaining: Number.POSITIVE_INFINITY,
+      limit: Number.POSITIVE_INFINITY,
+      retryAfterSeconds: 0,
+    };
   const limit = Number(process.env.ICPFINDER_DEEPEN_PER_IP_PER_DAY ?? DEFAULT_DAILY);
-  const b = bucketFor(clientIpHash, Date.now());
+  const now = Date.now();
+  const b = bucketFor(clientIpHash, now);
+  const retryAfterSeconds = Math.max(1, Math.ceil((b.resetAt - now) / 1000));
   if (b.count >= limit) {
-    return { allowed: false, remaining: 0, limit };
+    return { allowed: false, remaining: 0, limit, retryAfterSeconds };
   }
   b.count += 1;
-  return { allowed: true, remaining: limit - b.count, limit };
+  return { allowed: true, remaining: limit - b.count, limit, retryAfterSeconds };
 }

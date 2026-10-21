@@ -141,7 +141,7 @@ Implemented in `packages/web/components/brand/Logo.tsx`. SVG viewBox 64×64. Str
 
 - **`app/page.tsx`** — marketing landing (Nav + Hero + Integration + FinalCta + Footer). No fake testimonials. No press strip. No icon-grid feature cards. Code preview is the proof.
 - **`app/find/page.tsx`** — product run UI (Nav + RunHeader + input + progress + ArchetypeCard grid + Footer).
-- **`app/guides/*`, `app/alternatives`, `app/faq`** — long-form text pages on `ContentPage`. Body text uses `--text` (not `--text-muted`) for AAA. Facts and FAQ live in `lib/content.ts` so pages, JSON-LD and `/llms.txt` stay in sync. Bump `CONTENT_UPDATED` when copy changes.
+- **`app/guides/*`, `app/alternatives`, `app/faq`, `app/pricing`** — long-form text pages on `ContentPage`. Body text uses `--text` (not `--text-muted`) for AAA. Facts, FAQ and plans live in `lib/content.ts` so pages, JSON-LD, `/llms.txt` and the markdown mirrors (`/faq.md`, `/pricing.md`) stay in sync. Bump `CONTENT_UPDATED` (or `PRICING_UPDATED` for pricing) when copy changes. New agent-facing files go in `/.well-known/ai-catalog.json`.
 - **`app/icon.tsx`** — Next dynamic favicon (32×32 PNG via `ImageResponse`).
 - **`app/opengraph-image.tsx`** — OG card (1200×630, brand mark + gradient headline + meta strip).
 

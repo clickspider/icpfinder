@@ -24,10 +24,12 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "demo": "bun run scripts/demo.ts",
+    "research": "bun run scripts/research.ts",
     "changeset": "changeset",
     "version-packages": "changeset version && bun install --lockfile-only",
     "prepublish:strip-workspace": "bun run scripts/strip-workspace-protocol.ts",
-    "release": "turbo run build --filter=@icpfinder/core --filter=@icpfinder/providers && bun run prepublish:strip-workspace && changeset publish"
+    "release": "turbo run build --filter=@icpfinder/core --filter=@icpfinder/providers && bun run prepublish:strip-workspace && changeset publish",
+    "dev:desktop": "bun run --filter @icpfinder/providers build && bun run --filter @icpfinder/core build && bun run --filter @icpfinder/desktop dev"
   },
   "dependencies": {
     "@icpfinder/core": "workspace:*",

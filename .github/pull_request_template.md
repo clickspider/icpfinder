@@ -12,6 +12,8 @@
 - [ ] All commits signed off via `git commit -s` ([DCO](../DCO.md))
 - [ ] Added a changeset (`bunx changeset`) if this touches `@icpfinder/core` or `@icpfinder/providers`
 - [ ] Updated docs / README if behavior or API changed
+- [ ] Read [`icpfinder-guide`](../.claude/skills/icpfinder-guide/SKILL.md) and followed it for any UI, copy, flow or generated content
+- [ ] Updated `icpfinder-guide` in this PR if it changes an approved decision
 - [ ] Linked any related issue or discussion
 
 ## Notes for reviewers

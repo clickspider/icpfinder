@@ -42,6 +42,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <link rel="ai-catalog" href="/.well-known/ai-catalog.json" />
+        <link rel="alternate" type="text/plain" href="/llms.txt" title="llms.txt" />
         <link rel="preconnect" href="https://fonts.bunny.net" crossOrigin="anonymous" />
         <link
           rel="stylesheet"

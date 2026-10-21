@@ -1,5 +1,6 @@
 node_modules/
 dist/
+packages/desktop/out/
 .turbo/
 coverage/
 .env
@@ -18,3 +19,7 @@ private/
 
 # local beta applications (next dev without a database)
 packages/web/.data/
+packages/desktop/release/
+
+# Pinned native runtime downloaded by desktop build
+packages/desktop/resources/runtime/

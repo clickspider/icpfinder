@@ -5,7 +5,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getMonthlyBudget } from "@/lib/monthly-budget";
 import { getRunRecorder } from "@/lib/prisma";
 import { buildProviders, byokProvidersHeader } from "@/lib/providers";
-import { getDefaultRateLimiter, hashClientIp } from "@/lib/rate-limit";
+import { getDefaultRateLimiter, hashClientIp, retryAfter } from "@/lib/rate-limit";
 import { getCachedRun, setCachedRun } from "@/lib/run-cache";
 import { streamRun } from "@/lib/run-stream";
 import { scanUrl } from "@/lib/scan-url";
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest): Promise<Response> {
           remainingRuns: check.remainingRuns,
           remainingCents: check.remainingCents,
         },
-        { status: 429 }
+        { status: 429, ...retryAfter(check.retryAfterSeconds) }
       );
     }
     if (!(await monthlyBudget.isAvailable())) {

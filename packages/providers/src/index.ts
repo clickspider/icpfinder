@@ -1,5 +1,11 @@
 // SPDX-License-Identifier: MIT
 
+export {
+  ClaudeCliLlmProvider,
+  type ClaudeCliOptions,
+  type CliUsage,
+  parseCliResult,
+} from "./claude-cli";
 export { FakeEmailProvider, FakeLlmProvider } from "./fake";
 export {
   type GeminiCostLogger,

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 import type { MetadataRoute } from "next";
-import { CONTENT_UPDATED } from "../lib/content";
+import { CONTENT_UPDATED, PRICING_UPDATED } from "../lib/content";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = "https://icpfinder.dev";
@@ -30,6 +30,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     { url: `${base}/faq`, lastModified: updated, changeFrequency: "monthly", priority: 0.7 },
+    {
+      url: `${base}/pricing`,
+      lastModified: new Date(`${PRICING_UPDATED}T00:00:00Z`),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
     { url: `${base}/llms.txt`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
   ];
 }

@@ -153,6 +153,21 @@ for await (const event of finder.find({
 
 <https://icpfinder.dev> — free, IP-capped, no signup. Bring your own keys to remove caps and see real archetypes (or self-host / fork).
 
+## Use it from AI agents (MCP)
+
+icpfinder.dev runs an MCP server at `https://icpfinder.dev/mcp` (Streamable HTTP, no sign-in). It has one tool, `find_icp`. Give it a product idea or URL, and it returns 3 ICP archetypes.
+
+- **Claude (web or desktop):** Settings → Connectors → Add custom connector → `https://icpfinder.dev/mcp`.
+- **Claude Code:**
+
+  ```bash
+  claude mcp add --transport http icpfinder https://icpfinder.dev/mcp
+  # unlimited runs on your own Gemini key:
+  claude mcp add --transport http icpfinder https://icpfinder.dev/mcp --header "X-Gemini-Api-Key: $GEMINI_API_KEY"
+  ```
+
+Free runs share the website's daily limit. Contact emails stay on [icpfinder.dev/find](https://icpfinder.dev/find), because each Hunter search costs money.
+
 ## Architecture
 
 ```

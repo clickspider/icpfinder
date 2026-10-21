@@ -11,16 +11,12 @@
 //   - Provenance URL is sanitized by sanitize-url.ts BEFORE returning —
 //     anything not http(s) becomes null.
 
-import { type NextRequest, NextResponse } from "next/server";
 import type { DeepenResult } from "@icpfinder/core";
-import {
-  asString,
-  buildApiContext,
-  debitOperatorCost,
-  getClientIp,
-} from "@/lib/api-context";
+import type { LlmProvider } from "@icpfinder/providers";
+import { type NextRequest, NextResponse } from "next/server";
+import { asString, buildApiContext, debitOperatorCost, getClientIp } from "@/lib/api-context";
 import { reserveDeepen } from "@/lib/deepen-quota";
-import { hashClientIp } from "@/lib/rate-limit";
+import { hashClientIp, retryAfter } from "@/lib/rate-limit";
 import { getCachedDeepen, setCachedDeepen } from "@/lib/run-cache";
 import { sanitizeProvenanceUrl } from "@/lib/sanitize-url";
 
@@ -56,7 +52,7 @@ const DEEPEN_TIMEOUT_MS = 12_000;
 
 async function callGeminiGrounded(
   apiKey: string,
-  prompt: string,
+  prompt: string
 ): Promise<{ text: string; firstUrl: string | null }> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
   const controller = new AbortController();
@@ -81,19 +77,24 @@ async function callGeminiGrounded(
     const json = (await res.json()) as GeminiGroundedResponse;
     const text = json.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
     const firstUrl =
-      json.candidates?.[0]?.groundingMetadata?.groundingChunks?.find((c) => c.web?.uri)?.web
-        ?.uri ?? null;
+      json.candidates?.[0]?.groundingMetadata?.groundingChunks?.find((c) => c.web?.uri)?.web?.uri ??
+      null;
     return { text, firstUrl };
   } finally {
     clearTimeout(timeout);
   }
 }
 
-function buildPrompt(
-  companyName: string,
-  domain: string,
-  contactRole: string | null,
-): string {
+// Self-host path: local `claude -p` with WebSearch on the Claude subscription.
+async function callClaudeCliGrounded(
+  llm: LlmProvider,
+  prompt: string
+): Promise<{ text: string; firstUrl: string | null }> {
+  const { text } = await llm.generate({ system: "", prompt, grounding: true, format: "text" });
+  return { text: text.trim(), firstUrl: text.match(/https?:\/\/[^\s)\]>"']+/)?.[0] ?? null };
+}
+
+function buildPrompt(companyName: string, domain: string, contactRole: string | null): string {
   const role = contactRole ? ` (${contactRole})` : "";
   return `Find the most recent concrete trigger (within the last 90 days if possible) showing why ${companyName} (${domain})${role} is a strong buyer RIGHT NOW. Cite one source URL. Output two short paragraphs:
 
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   if (!candidateId || !companyName || !domain) {
     return NextResponse.json(
       { error: "candidateId, companyName, and domain are required" },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -148,14 +149,15 @@ export async function POST(request: NextRequest): Promise<Response> {
         provider: "gemini",
         remaining: 0,
       },
-      { status: 429 },
+      { status: 429, ...retryAfter(quota.retryAfterSeconds) }
     );
   }
 
   // If we have no Gemini key at all (stub mode), return a synthesized
   // placeholder so the UI stays alive in local dev. Note: name is hardcoded
   // "gemini" even when the provider is in stub mode, so check `.stub`.
-  const hasGemini = bundle.llm.name === "gemini" && !bundle.llm.stub;
+  const isClaudeCli = bundle.llm.name === "claude-cli";
+  const hasGemini = (bundle.llm.name === "gemini" || isClaudeCli) && !bundle.llm.stub;
 
   let result: DeepenResult;
   const contactRole = asString(body.contactRole) ?? null;
@@ -170,7 +172,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     // Pull the API key the bundle is using. GeminiLlmProvider doesn't expose
     // it directly, so we re-read from body / env to avoid a deeper refactor.
     const apiKey = asString(body.geminiApiKey) || process.env.GEMINI_API_KEY || "";
-    if (!apiKey) {
+    if (!apiKey && !isClaudeCli) {
       result = {
         candidateId,
         trigger: buildOperatorTriggerFallback(companyName),
@@ -179,15 +181,18 @@ export async function POST(request: NextRequest): Promise<Response> {
       };
     } else {
       try {
-        const { text, firstUrl } = await callGeminiGrounded(
-          apiKey,
-          buildPrompt(companyName, domain, contactRole),
-        );
+        const prompt = buildPrompt(companyName, domain, contactRole);
+        const { text, firstUrl } = isClaudeCli
+          ? await callClaudeCliGrounded(bundle.llm, prompt)
+          : await callGeminiGrounded(apiKey, prompt);
         const triggerMatch = text.match(/TRIGGER[:\s-]*([^\n]+)/i);
         const dossierMatch = text.match(/DOSSIER[:\s-]*([\s\S]+)/i);
         const trigger =
           triggerMatch?.[1]?.trim() ||
-          text.split("\n").find((l) => l.trim())?.trim() ||
+          text
+            .split("\n")
+            .find((l) => l.trim())
+            ?.trim() ||
           `No public signal found this week for ${companyName}.`;
         const dossier =
           dossierMatch?.[1]?.trim() || text.slice(0, 500) || "No additional context found.";
@@ -198,18 +203,15 @@ export async function POST(request: NextRequest): Promise<Response> {
           dossier,
         };
         // Record cost (best-effort fixed estimate — grounding doesn't return tokens).
-        debitOperatorCost(ctx, bundle, "gemini", 0.5);
+        if (!isClaudeCli) debitOperatorCost(ctx, bundle, "gemini", 0.5);
       } catch (err) {
         return NextResponse.json(
           {
-            error:
-              err instanceof Error
-                ? `Deepen failed: ${err.message}`
-                : "Deepen failed",
+            error: err instanceof Error ? `Deepen failed: ${err.message}` : "Deepen failed",
             code: "network",
             provider: "gemini",
           },
-          { status: 502 },
+          { status: 502 }
         );
       }
     }
@@ -217,8 +219,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   // Never cache stub results — they would poison the cache for subsequent
   // real runs once keys come online.
-  const isStubResult =
-    result.trigger.includes("[STUB]") || result.dossier.includes("[STUB]");
+  const isStubResult = result.trigger.includes("[STUB]") || result.dossier.includes("[STUB]");
   if (!isStubResult) await setCachedDeepen(result);
   return NextResponse.json(result, {
     headers: { "x-icpfinder-cache": isStubResult ? "skip-stub" : "miss" },
