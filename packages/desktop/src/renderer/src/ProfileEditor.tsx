@@ -15,11 +15,23 @@ export function ProfileEditor({ icp, onState }: { icp: Icp; onState: (state: Sta
   const [draft, setDraft] = useState<IcpDraft | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  // Collapsed by default: one line with the key facts; open to see everything.
+  const [open, setOpen] = useState(false);
   const values = icpPresentation(icp);
   return (
     <section className={`panel pe ${draft ? "editing" : ""}`} aria-label="Customer profile">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h2 className="pe-title">Customer profile</h2>
+        {!draft && open && (
+          <button
+            type="button"
+            className="ghost btn pe-less"
+            style={{ marginLeft: "auto" }}
+            onClick={() => setOpen(false)}
+          >
+            Show less ⌃
+          </button>
+        )}
         {!draft && (
           <button
             type="button"
@@ -86,6 +98,23 @@ export function ProfileEditor({ icp, onState }: { icp: Icp; onState: (state: Sta
             </button>
           </div>
         </form>
+      ) : !open ? (
+        <button
+          type="button"
+          className="pe-line"
+          aria-expanded={false}
+          onClick={() => setOpen(true)}
+        >
+          <span className="pe-line-item">
+            <b>Talk to</b> {values.buyer}
+          </span>
+          <span className="pe-line-item">
+            <b>Reach out when</b> {values.signal}
+          </span>
+          <span className="pe-more" aria-hidden="true">
+            Show all ⌄
+          </span>
+        </button>
       ) : (
         <div className="pe-view">
           <div className="pe-summary">
