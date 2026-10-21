@@ -6,7 +6,7 @@
 // (15 per run), ~30s, Hunter free plan 25 searches/month. See docs/costs.md.
 
 /** Shown as "Updated Oct 2026" on every text page. Bump when copy changes. */
-export const CONTENT_UPDATED = "2026-10-19";
+export const CONTENT_UPDATED = "2026-10-21";
 
 export function formatUpdated(iso: string = CONTENT_UPDATED): string {
   return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", {
@@ -54,6 +54,10 @@ export const FAQS: Faq[] = [
   {
     q: "Where do my API keys go?",
     a: "Keys stay in your browser memory by default. They are sent with each request and passed on to Google and Hunter, and they are never logged or saved on icpfinder's servers. If you tick 'Remember on this device', they are saved in your browser's localStorage.",
+  },
+  {
+    q: "Can AI agents use icpfinder?",
+    a: "Yes. icpfinder has an MCP server at https://icpfinder.dev/mcp with one tool, find_icp. Add it as a custom connector in Claude or another MCP client, then ask your chat who your customer is. It uses the same free daily limit as the website. Contact emails stay on the website.",
   },
   {
     q: "Can I self-host it?",

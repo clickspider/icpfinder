@@ -27,6 +27,7 @@ ${KEY_FACTS.map((f) => `- ${f}`).join("\n")}
 - [Run an ICP search](${SITE_URL}/find): paste a product idea or URL, get archetypes + contacts
 - [Bring your own keys](${SITE_URL}/find#keys): Gemini + Hunter keys stay in your browser
 - [Roadmap](${SITE_URL}/roadmap): what is planned, vote on GitHub
+- [MCP server](${SITE_URL}/mcp): Streamable HTTP, tool \`find_icp\` returns 3 ICP archetypes for a product idea or URL. Optional header \`X-Gemini-Api-Key\` for unlimited runs
 
 ## Guides
 
