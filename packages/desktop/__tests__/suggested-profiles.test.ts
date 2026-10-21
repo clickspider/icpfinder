@@ -48,6 +48,23 @@ describe("suggested customer profiles", () => {
       )
     ).toHaveLength(2);
   });
+  it("keeps a short 'why we picked it' reason, and never fails the set without one", () => {
+    const why = "You said you plan a garden with your family every spring.";
+    const [withWhy, without] = parseSuggestedProfiles(
+      {
+        profiles: [
+          { ...entry, why },
+          { ...entry, title: "Balcony growers", why: "" },
+        ],
+      },
+      p
+    );
+    expect(withWhy?.reasoning).toBe(why);
+    expect(icpPresentation(withWhy as never).why).toBe(why);
+    expect(without?.reasoning).toBeUndefined();
+    expect(PROFILE_GUIDANCE).toContain("WHY WE PICKED IT");
+    expect(PROFILE_GUIDANCE).toContain("never mention methods");
+  });
   it("asks for differentiated hypotheses rather than research or exclusion rules", () => {
     expect(PROFILE_GUIDANCE).toContain("Do not repeat the same generic benefit");
     expect(PROFILE_GUIDANCE).toContain("LOOK FOR LATER");

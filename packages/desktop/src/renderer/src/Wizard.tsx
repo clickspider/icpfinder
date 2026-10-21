@@ -152,10 +152,11 @@ export const Wizard = ({ state, onState }: { state: State; onState: (s: State) =
             error,
             profiles: (ws?.icps ?? []).map((profile, index) => ({
               ...icpPresentation(profile),
+              // A different icon on each card, so the groups don't all look the same.
               icon:
-                profile.profileKind === "consumer"
-                  ? "buyer"
-                  : (["buyer", "company", "site"][index % 3] ?? "buyer"),
+                (profile.profileKind === "consumer"
+                  ? ["buyer", "chat", "site"]
+                  : ["company", "buyer", "site"])[index % 3] ?? "buyer",
             })),
             onAdd: async (draft) => {
               onState(await api().addIcp(draft));

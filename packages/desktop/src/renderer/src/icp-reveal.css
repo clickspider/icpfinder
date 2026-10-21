@@ -450,7 +450,7 @@
   grid-area: skip;
 }
 .ir-cards-portraits .ir-card {
-  grid-template-areas: "icon" "tag" "title" "fit" "buyer" "signal" "skip";
+  grid-template-areas: "icon" "title" "tag" "why" "fit" "buyer" "signal" "skip";
   border-color: #eadde280;
   background: #ffffffd9;
   padding: 25px;
@@ -464,7 +464,8 @@
   height: 36px;
 }
 .ir-cards-portraits .ir-card h2 {
-  min-height: 53px;
+  min-height: 0;
+  margin: 0 0 6px;
 }
 .ir-cards-portraits .ir-card-fit {
   margin-bottom: 6px;
@@ -475,16 +476,57 @@
   color: #87717b;
 }
 .ir-cards .ir-card-fit {
-  font-size: 13px;
+  font-size: 13.5px;
+  color: var(--ink-2);
+  margin-top: 12px;
 }
+/* Idea A: quiet hierarchy. Plain sentence-case labels, no caps, no label icons. */
 .ir-cards .ir-card-detail > span {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 9px;
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
   line-height: 1.5;
-  letter-spacing: 0.55px;
-  color: #92737f;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+.ir-cards .ir-card-detail p {
+  margin-top: 2px;
+}
+.ir-cards .ir-skip {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 0.5px solid #0000001a;
+}
+.ir-cards .ir-skip > span {
+  color: #9b4a5f;
+}
+.ir-why {
+  grid-area: why;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.ir-why:not(:empty) {
+  margin: 14px 0 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #0f93840d;
+}
+.ir-why i {
+  display: flex;
+  flex: 0 0 16px;
+  margin-top: 1px;
+}
+.ir-why p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #4d6b67;
+}
+.ir-why b {
+  display: block;
+  font-weight: 600;
+  color: #0b6e63;
 }
 .ir-card-detail > span i {
   display: flex;
@@ -502,7 +544,7 @@
   row-gap: 0;
 }
 .ir-cards-portraits .ir-card {
-  grid-row: span 7;
+  grid-row: span 8;
   grid-template-rows: subgrid;
   grid-template-areas: none;
   row-gap: 0;
@@ -545,4 +587,10 @@
   .ir-toolbar {
     padding-inline: 30px;
   }
+}
+/* The same reason on the dashboard ICP page header. */
+.icp-why.ir-why:not(:empty) {
+  margin: 12px 0 0;
+  max-width: 640px;
+  background: #ffffff8c;
 }

@@ -4,8 +4,9 @@ import { customIcp } from "./custom-icp";
 export const PROFILE_GUIDANCE = `CRITICAL: Suggest three distinct customer groups worth exploring for the user's reviewed business. These are hypotheses, NOT researched companies, named contacts, confirmed intent, or guaranteed buyers. No web research or example companies.
 Each profile must earn its place: connect a specific need of this group to the user's actual offer. Do not repeat the same generic benefit on every card. Never invent product capabilities or pricing. Use saved corrections, the user's audience and business progress. Progress describes the seller, not the buyers.
 For Businesses use relevant company characteristics and professional roles. For Consumers use relevant life circumstances, interests, needs or household characteristics, and the person making the decision; do not force company size or job titles. For Both include business and consumer groups when both are supported.
+WHY WE PICKED IT: one short sentence that names what the user shared (their offer, the problem they solve, who they sell to, their business progress, or their own words) that points to this group. Write it to the user ("you"), quote only what they gave, never mention methods, research, sources or how the suggestion was made, and never claim a company, contact or buying signal was found.
 A signal is a situation to LOOK FOR LATER, never an event you claim has already happened at a named company. A fit concern is a reason for judgment, NOT an automatic exclusion or hard filter.
-Output strict JSON {"profiles":[{"kind":"business or consumer","title":"recognizable customer group","tag":"relevant characteristics","fit":"one differentiated sentence about how this group could benefit","buyer":"who to talk to / relevant role or person","signal":"a possible situation to look for","skip":"a meaningful fit concern"}]}. Every text field must be nonempty and at most 240 characters. No company names, contact names, URLs or exampleCompanies fields.`;
+Output strict JSON {"profiles":[{"kind":"business or consumer","title":"recognizable customer group","tag":"relevant characteristics","fit":"one differentiated sentence about how this group could benefit","buyer":"who to talk to / relevant role or person","signal":"a possible situation to look for","skip":"a meaningful fit concern","why":"what you shared that points to this group"}]}. Every text field must be nonempty and at most 240 characters. No company names, contact names, URLs or exampleCompanies fields.`;
 
 export function parseSuggestedProfiles(value: unknown, product: Product): Icp[] {
   const profiles =
@@ -22,6 +23,9 @@ export function parseSuggestedProfiles(value: unknown, product: Product): Icp[] 
     )
       throw new Error("The suggested profiles did not match your audience. Please try again.");
     const icp = customIcp(entry, index, entry.kind);
+    // "Why we picked it": optional, so one weak sentence never fails the whole set.
+    if (typeof entry.why === "string" && entry.why.trim() && entry.why.length <= 240)
+      icp.reasoning = entry.why.trim();
     const key = icp.name.toLowerCase();
     if (seen.has(key)) throw new Error("The suggestions repeated a profile. Please try again.");
     seen.add(key);

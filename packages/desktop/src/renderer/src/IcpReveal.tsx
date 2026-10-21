@@ -10,7 +10,7 @@ const PHRASES = [
   "Shaping your suggested customer profiles",
 ];
 
-type Profile = IcpDraft & { icon: string; id: string };
+type Profile = IcpDraft & { icon: string; id: string; why?: string };
 type LiveReveal = {
   finding: boolean;
   profiles: Profile[];
@@ -101,25 +101,31 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live: LiveReve
                   <div className="ir-card-top">
                     <span className="ir-profile-icon">{DUO[profile.icon]?.(31)}</span>
                   </div>
-                  <span className="ir-card-tag">{profile.tag}</span>
                   <h2>{profile.title}</h2>
+                  <span className="ir-card-tag">{profile.tag}</span>
+                  {/* Always rendered so rows stay aligned when a card has no reason. */}
+                  <div className="ir-why">
+                    {profile.why && (
+                      <>
+                        <i aria-hidden="true">{DUO.Idea?.(16)}</i>
+                        <p>
+                          <b>Why we picked it</b>
+                          {profile.why}
+                        </p>
+                      </>
+                    )}
+                  </div>
                   <p className="ir-card-fit">{profile.fit}</p>
                   <div className="ir-card-detail ir-buyer">
-                    <span>
-                      <i aria-hidden="true">{DUO.buyer?.(16)}</i>WHO TO TALK TO
-                    </span>
+                    <span>Who to talk to</span>
                     <p>{profile.buyer}</p>
                   </div>
                   <div className="ir-card-detail ir-signal">
-                    <span>
-                      <i aria-hidden="true">{DUO.trigger?.(16)}</i>A REASON TO REACH OUT
-                    </span>
+                    <span>A reason to reach out</span>
                     <p>{profile.signal}</p>
                   </div>
                   <div className="ir-card-detail ir-skip">
-                    <span>
-                      <i aria-hidden="true">{DUO.skip?.(16)}</i>MAY NOT BE A FIT IF
-                    </span>
+                    <span>May not be a fit if</span>
                     <p>{profile.skip}</p>
                   </div>
                 </article>

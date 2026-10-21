@@ -126,6 +126,7 @@ export interface Icp {
   industry: string;
   size: string;
   pain: string;
+  /** "Why we picked it": what the user shared that points to this group (generated profiles only). */
   reasoning?: string;
   sellingAngle?: string;
   signals: string[];

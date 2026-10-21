@@ -10,6 +10,7 @@ import { scoringOf } from "../../shared/scoring";
 import type { Company, Contact, HuntStepKind, Icp, State, Workspace } from "../../shared/types";
 import type { View } from "./App";
 import { Criteria } from "./Criteria";
+import { DUO } from "./glass";
 import { api, best, friendly, IcpArt, initial, proven, Snap, Spinner, ToolLogo } from "./ui";
 
 const I = {
@@ -557,6 +558,15 @@ export const IcpView = ({
             {icp.name}
           </h1>
           <div style={{ fontSize: 13, color: "var(--ink-2)", marginTop: 4 }}>{icp.industry}</div>
+          {icp.reasoning && (
+            <div className="ir-why icp-why">
+              <i aria-hidden="true">{DUO.Idea?.(16)}</i>
+              <p>
+                <b>Why we picked it</b>
+                {icp.reasoning}
+              </p>
+            </div>
+          )}
         </div>
         <button type="button" className="primary btn nodrag" disabled={icp.sourcing} onClick={hunt}>
           {icp.sourcing ? (

@@ -44,6 +44,7 @@ export function icpPresentation(icp: Icp) {
       fit: icp.sellingAngle || icp.pain,
       signal: icp.card?.trigger.text || icp.signals[0] || "To be refined",
       skip: icp.card?.skip.text || "To be refined",
+      why: icp.reasoning ?? "",
     };
   const company = icp.card?.company.text || [icp.industry, icp.size].filter(Boolean).join(" · ");
   const buyer = icp.card?.buyer.text || icp.name;
@@ -67,5 +68,6 @@ export function icpPresentation(icp: Icp) {
     fit: icp.sellingAngle || icp.pain,
     signal: icp.card?.trigger.text || icp.criteria?.signals[0] || icp.signals[0] || "To be refined",
     skip: icp.card?.skip.text || icp.criteria?.dealBreakers[0] || "To be refined",
+    why: icp.reasoning ?? "",
   };
 }
