@@ -47,6 +47,7 @@ const api: IcpApi = {
   watchNow: call("watchNow") as IcpApi["watchNow"],
   markSeen: call("markSeen") as IcpApi["markSeen"],
   saveLinkedIn: call("saveLinkedIn") as IcpApi["saveLinkedIn"],
+  findReach: call("findReach") as IcpApi["findReach"],
   openExternal: call("openExternal") as IcpApi["openExternal"],
   newWorkspace: call("newWorkspace") as IcpApi["newWorkspace"],
   switchWorkspace: call("switchWorkspace") as IcpApi["switchWorkspace"],
