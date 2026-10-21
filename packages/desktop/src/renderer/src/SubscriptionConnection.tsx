@@ -236,7 +236,7 @@ export function SubscriptionConnection({
                   <p>
                     {attempt.code
                       ? "Enter this code on the sign-in page in your browser."
-                      : "Continue in your browser. We’ll bring you back here when you’re connected."}
+                      : "Continue in your browser, then return to IcpFinder."}
                   </p>
                   {attempt.code && <div className="sp-device-code">{attempt.code}</div>}
                   {attempt.url &&

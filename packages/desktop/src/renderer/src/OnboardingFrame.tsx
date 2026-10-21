@@ -47,7 +47,8 @@ export function OnboardingAside({
               <li>
                 <b>Discover who to focus on</b>
                 <p>
-                  Get suggested customer profiles, with roles to look for and reasons to reach out.
+                  Get suggested customer profiles, with reasons they could be a fit and
+                  opportunities to reach out.
                 </p>
               </li>
             </ol>

@@ -95,7 +95,7 @@ export function SubscriptionDesignPreview({ onExit }: { onExit: () => void }) {
     },
     browser: {
       title: `Finish signing in to ${name}`,
-      text: "Continue in your browser. We’ll bring you back here when you’re connected.",
+      text: "Continue in your browser, then return to IcpFinder.",
     },
     device: {
       title: "Connect your Grok account",

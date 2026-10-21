@@ -174,7 +174,7 @@ export function BusinessOverview({
             }}
           >
             <h2>Edit overview</h2>
-            <p className="ob-form-help">Make it sound like your business.</p>
+            <p className="ob-form-help">Check that the details reflect your business.</p>
             {fields.map(([key, label]) => (
               <div className="ob-form-field" key={key}>
                 <label htmlFor={`overview-${key}`}>{label}</label>

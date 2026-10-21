@@ -193,7 +193,7 @@ export const Wizard = ({
                     Who could be your <em>next customer?</em>
                   </h1>
                   <p className="ob-sub" style={{ fontSize: 15 }}>
-                    You know what you offer. Let’s find the companies that need it.
+                    You know what you offer. Let’s find who could need it.
                   </p>
                 </>
               )}
@@ -240,7 +240,7 @@ export const Wizard = ({
                   ) : (
                     <>
                       <p className="ob-sub" id="idea-description-hint">
-                        Describe what you offer and the problem it helps solve. A few sentences is
+                        Describe what you offer and the problem it helps solve. A few sentences are
                         enough to get started.
                       </p>
                       <textarea
@@ -276,11 +276,16 @@ export const Wizard = ({
                     disabled={!briefReady || Boolean(busy) || savingOverview || editingOverview}
                   >
                     <legend>Who do you sell to?</legend>
-                    {product?.audience && !product.confirmedFields?.includes("audience") && (
-                      <p className="ob-suggested-answer">
-                        Suggested from what you shared — change it if needed.
-                      </p>
-                    )}
+                    {briefReady &&
+                      !busy &&
+                      !savingOverview &&
+                      !editingOverview &&
+                      product?.audience &&
+                      !product.confirmedFields?.includes("audience") && (
+                        <p className="ob-suggested-answer">
+                          Suggested from what you shared — change it if needed.
+                        </p>
+                      )}
                     <div className="ob-grid ob-audiences">
                       {AUDIENCES.map((audience) => (
                         <button
@@ -303,11 +308,16 @@ export const Wizard = ({
                     disabled={!briefReady || Boolean(busy) || savingOverview || editingOverview}
                   >
                     <legend>Where is your business today?</legend>
-                    {product?.progress && !product.confirmedFields?.includes("progress") && (
-                      <p className="ob-suggested-answer">
-                        Suggested from what you shared — change it if needed.
-                      </p>
-                    )}
+                    {briefReady &&
+                      !busy &&
+                      !savingOverview &&
+                      !editingOverview &&
+                      product?.progress &&
+                      !product.confirmedFields?.includes("progress") && (
+                        <p className="ob-suggested-answer">
+                          Suggested from what you shared — change it if needed.
+                        </p>
+                      )}
                     <div className="ob-grid">
                       {PROGRESS.map((progress) => (
                         <button
@@ -377,7 +387,6 @@ export const Wizard = ({
                 <button type="button" className="ob-cta" disabled={!canNext} onClick={next}>
                   {cta[step]}
                 </button>
-                {step === "welcome" && <span className="ob-time-estimate">About 1 minute</span>}
               </div>
             </div>
           </section>
