@@ -16,9 +16,6 @@ import {
 } from "../../shared/usage";
 import { api, Mark, ProductLogo, ToolLogo } from "./ui";
 
-const fmtPct = (n?: number) =>
-  n === undefined ? "…" : n > 0 && n < 0.1 ? "<0.1%" : `${n < 10 ? n.toFixed(1) : Math.round(n)}%`;
-
 const PERIODS = [
   { days: 1, label: "Today" },
   { days: 7, label: "7 days" },
@@ -52,14 +49,18 @@ const Table = ({
       <span className="use-dim" style={{ fontSize: 11.5 }}>
         Tokens
       </span>
-      <span className="use-dim" style={{ fontSize: 11.5 }}>
-        Cache
+      <span className="use-dim" title="Cached-token share" style={{ fontSize: 11.5 }}>
+        Cached
       </span>
-      <span className="use-dim" style={{ fontSize: 11.5 }}>
+      <span className="use-dim" title="Share of recorded tokens" style={{ fontSize: 11.5 }}>
         Share
       </span>
     </div>
-    {rows.length === 0 && <div style={{ fontSize: 13, color: "var(--muted)" }}>Nothing yet.</div>}
+    {rows.length === 0 && (
+      <div style={{ fontSize: 13, color: "var(--muted)" }}>
+        No usage recorded for this selection.
+      </div>
+    )}
     {rows.map(([k, t]) => {
       const n = tokensOf(t);
       const share = total ? n / total : 0;
@@ -121,16 +122,33 @@ export const UsageView = ({ state }: { state: State }) => {
   // Products to show; empty = all of them.
   const [picked, setPicked] = useState<string[]>([]);
   const [plan, setPlan] = useState<PlanUsage | null>(null);
+  const [planLoading, setPlanLoading] = useState(false);
+  const [planAt, setPlanAt] = useState("");
   useEffect(() => {
+    setPlan(null);
+    setPlanAt("");
     if (provider !== "claude") {
       setPlan(null);
       return;
     }
     let live = true;
-    const load = () =>
+    const load = () => {
+      setPlanLoading(true);
       void api()
         .planUsage()
-        .then((p) => live && setPlan(p));
+        .then((p) => {
+          if (live) {
+            setPlan(p);
+            setPlanAt(new Date().toLocaleTimeString());
+          }
+        })
+        .catch(() => {
+          if (live) setPlan(null);
+        })
+        .finally(() => {
+          if (live) setPlanLoading(false);
+        });
+    };
     load();
     const t = setInterval(load, 120_000);
     return () => {
@@ -145,62 +163,67 @@ export const UsageView = ({ state }: { state: State }) => {
   const all = groupBy(rows, days, () => "all")[0]?.[1] ?? emptyTotals();
   const total = tokensOf(all);
   const ws = (id: string) => state.workspaces.find((w) => w.id === id);
-  const name = (id: string) => ws(id)?.product.name ?? "Archived";
+  const name = (id: string) =>
+    ws(id)?.product.name ?? (id === "app" ? "Setup activity" : "Archived");
   const toggle = (id: string) =>
     setPicked(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]);
 
   return (
     <div
-      className="enter scroll"
-      style={{ flex: 1, padding: 16, display: "flex", flexDirection: "column", gap: 14 }}
+      className="enter scroll native-page native-usage"
+      style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14 }}
     >
       <header
         className="drag"
         style={{ padding: "8px 4px 0", display: "flex", alignItems: "flex-end", gap: 12 }}
       >
         <div>
-          <h1 className="ob-h1">
-            Your <em>usage</em>
-          </h1>
-          <p className="ob-sub" style={{ marginTop: 4 }}>
-            Only what IcpFinder used from your plan. Your own chats are not counted.
+          <h1>IcpFinder usage</h1>
+          <p style={{ marginTop: 4 }}>
+            Recorded activity in IcpFinder, filtered by provider and period.
           </p>
         </div>
-        <div className="nodrag" style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-          <div className="ob-seg" style={{ width: 250 }}>
-            <button
-              type="button"
-              className={provider === "claude" ? "on" : ""}
-              onClick={() => setProvider("claude")}
-            >
-              <ToolLogo name="claude" size={13} radius={3} /> Claude
-            </button>
-            <button
-              type="button"
-              className={provider === "codex" ? "on" : ""}
-              onClick={() => setProvider("codex")}
-            >
-              <ToolLogo name="codex" size={13} radius={3} /> Codex
-            </button>
-            <button
-              type="button"
-              className={provider === "xai" ? "on" : ""}
-              onClick={() => setProvider("xai")}
-            >
-              Grok
-            </button>
-          </div>
-          <div className="ob-seg" style={{ width: 230 }}>
-            {PERIODS.map((p) => (
+        <div className="nodrag native-usage-filters">
+          <div>
+            <div className="native-muted">Provider</div>
+            <fieldset className="ob-seg" aria-label="Provider">
               <button
-                key={p.days}
                 type="button"
-                className={days === p.days ? "on" : ""}
-                onClick={() => setDays(p.days)}
+                className={provider === "claude" ? "on" : ""}
+                onClick={() => setProvider("claude")}
               >
-                {p.label}
+                <ToolLogo name="claude" size={13} radius={3} /> Claude
               </button>
-            ))}
+              <button
+                type="button"
+                className={provider === "codex" ? "on" : ""}
+                onClick={() => setProvider("codex")}
+              >
+                <ToolLogo name="codex" size={13} radius={3} /> ChatGPT
+              </button>
+              <button
+                type="button"
+                className={provider === "xai" ? "on" : ""}
+                onClick={() => setProvider("xai")}
+              >
+                Grok
+              </button>
+            </fieldset>
+          </div>
+          <div>
+            <div className="native-muted">Period</div>
+            <fieldset className="ob-seg" aria-label="Period">
+              {PERIODS.map((p) => (
+                <button
+                  key={p.days}
+                  type="button"
+                  className={days === p.days ? "on" : ""}
+                  onClick={() => setDays(p.days)}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </fieldset>
           </div>
         </div>
       </header>
@@ -213,78 +236,43 @@ export const UsageView = ({ state }: { state: State }) => {
         >
           <span className="use-prod-logo all">All</span>
           <span>
-            <b>All products</b>
-            <small>{fmtTokens(allTokens)}</small>
+            <b>All businesses</b>
+            <small>{fmtTokens(allTokens)} tokens</small>
           </span>
         </button>
-        {/* Setup before a product exists (connection test, reading the site) counts in All only. */}
-        {products
-          .filter(([id]) => id !== "app")
-          .map(([id, t]) => {
-            const w = ws(id);
-            return (
-              <button
-                key={id}
-                type="button"
-                className={`use-prod ${picked.includes(id) ? "on" : ""}`}
-                aria-pressed={picked.includes(id)}
-                onClick={() => toggle(id)}
-              >
-                {w ? (
-                  <ProductLogo product={w.product} size={30} radius={8} />
-                ) : id === "app" ? (
-                  <Mark size={30} radius={8} />
-                ) : (
-                  <span className="use-prod-logo">?</span>
-                )}
-                <span>
-                  <b>{name(id)}</b>
-                  <small>
-                    {fmtTokens(tokensOf(t))} ·{" "}
-                    {allTokens ? Math.round((tokensOf(t) / allTokens) * 100) : 0}%
-                  </small>
-                </span>
-              </button>
-            );
-          })}
+        {[
+          ...products,
+          ...picked
+            .filter((id) => !products.some(([key]) => key === id))
+            .map((id) => [id, emptyTotals()] as [string, ReturnType<typeof emptyTotals>]),
+        ].map(([id, t]) => {
+          const w = ws(id);
+          return (
+            <button
+              key={id}
+              type="button"
+              className={`use-prod ${picked.includes(id) ? "on" : ""}`}
+              aria-pressed={picked.includes(id)}
+              onClick={() => toggle(id)}
+            >
+              {w ? (
+                <ProductLogo product={w.product} size={30} radius={8} />
+              ) : id === "app" ? (
+                <Mark size={30} radius={8} />
+              ) : (
+                <span className="use-prod-logo">?</span>
+              )}
+              <span>
+                <b>{name(id)}</b>
+                <small>
+                  {fmtTokens(tokensOf(t))} tokens ·{" "}
+                  {allTokens ? Math.round((tokensOf(t) / allTokens) * 100) : 0}%
+                </small>
+              </span>
+            </button>
+          );
+        })}
       </div>
-
-      <section
-        className="panel"
-        style={{ padding: 18, display: "flex", flexDirection: "column", gap: 12 }}
-      >
-        <div style={{ display: "flex", alignItems: "baseline" }}>
-          <div className="lbl">
-            Your {provider === "claude" ? "Claude" : provider === "codex" ? "Codex" : "Grok"} plan
-          </div>
-          <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--muted)" }}>
-            {plan ? `${plan.plan} · as Claude Code reports it` : ""}
-          </span>
-        </div>
-        {plan?.windows.map((w) => (
-          <div key={w.label} className="plan-row">
-            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-              <b>{w.label}</b>
-              <span style={{ fontSize: 12, color: "var(--muted)" }}>
-                {w.resets && `resets ${w.resets}`}
-              </span>
-              <span style={{ marginLeft: "auto", fontSize: 12.5 }}>
-                <b style={{ color: "#e0244a" }}>IcpFinder ≈ {fmtPct(w.appPct)}</b>
-                <span style={{ color: "var(--muted)" }}> of {w.pct}% used</span>
-              </span>
-            </div>
-            <div className="plan-bar">
-              <i className="app" style={{ width: `${Math.min(100, w.appPct ?? 0)}%` }} />
-              <i className="rest" style={{ width: `${Math.max(0, w.pct - (w.appPct ?? 0))}%` }} />
-            </div>
-          </div>
-        ))}
-        {!plan?.windows.length && (
-          <div style={{ fontSize: 13, color: "var(--muted)" }}>
-            Plan limits are unavailable here. Recorded IcpFinder usage is shown below.
-          </div>
-        )}
-      </section>
 
       <section
         className="panel"
@@ -292,19 +280,19 @@ export const UsageView = ({ state }: { state: State }) => {
       >
         <div>
           <div className="use-big">{fmtTokens(total)}</div>
-          <div className="use-cap">tokens IcpFinder used</div>
+          <div className="use-cap">Tokens recorded</div>
         </div>
         <div>
           <div className="use-big">{all.calls}</div>
-          <div className="use-cap">AI runs</div>
+          <div className="use-cap">AI runs recorded</div>
         </div>
         <div>
           <div className="use-big">{total ? Math.round((all.cacheRead / total) * 100) : 0}%</div>
-          <div className="use-cap">cache hit (lighter on your plan)</div>
+          <div className="use-cap">Cached-token share</div>
         </div>
         <div>
           <div className="use-big">{all.webSearches}</div>
-          <div className="use-cap">web searches</div>
+          <div className="use-cap">Web searches recorded</div>
         </div>
       </section>
 
@@ -321,12 +309,41 @@ export const UsageView = ({ state }: { state: State }) => {
           )
         }
       />
-      <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.5 }}>
-        Red is IcpFinder's part, grey is everything else on your account. IcpFinder's part is an
-        estimate: its own runs are counted exactly and set against Claude Code's other work on this
-        Mac. Use on claude.ai or other devices is not visible here, so the real part is a bit
-        smaller.
-      </div>
+      <p className="native-muted">
+        This view shows recorded activity, which may not include every request. Cached-token share
+        is the proportion of recorded tokens read from cache.
+      </p>
+      {provider === "claude" && (
+        <details className="native-disclosure">
+          <summary>Account usage reported by Claude</summary>
+          {planAt && <p>Last checked: {planAt}</p>}
+          {planLoading && <p role="status">Checking account usage…</p>}
+          {!planLoading && !plan?.windows.length && (
+            <p>Account usage is unavailable. Recorded IcpFinder activity is shown above.</p>
+          )}
+          {plan?.windows.map((w) => (
+            <div className="native-plan-row" key={w.label}>
+              <h2>{w.label}</h2>
+              <p>
+                Account usage: {w.pct}%{w.resets ? ` · resets ${w.resets}` : ""}
+              </p>
+              <p>
+                Estimated IcpFinder contribution:{" "}
+                {w.appPct === undefined
+                  ? "Unavailable"
+                  : `${Number(w.appPct.toFixed(1))} percentage points`}
+              </p>
+            </div>
+          ))}
+          {Boolean(plan?.windows.length) && (
+            <p>
+              IcpFinder’s share is estimated from recorded IcpFinder activity and local Claude
+              activity. Activity on other devices or services may be missing, so this is not an
+              exact breakdown.
+            </p>
+          )}
+        </details>
+      )}
     </div>
   );
 };

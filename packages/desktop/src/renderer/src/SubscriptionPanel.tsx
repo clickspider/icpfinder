@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { PROVIDER_NAMES } from "../../shared/provider-models";
+
+const PROVIDER_NAMES = { claude: "Claude", codex: "ChatGPT", xai: "Grok" };
+
 import type { LoginAttempt, ProviderId, SubscriptionStatus } from "../../shared/subscriptions";
 import type { State } from "../../shared/types";
-import { api, cleanError, ModelPicker, ProviderLogo } from "./ui";
+import { api, cleanError, ModelPicker } from "./ui";
 
 export function SubscriptionPanel({
   state,
@@ -19,7 +21,21 @@ export function SubscriptionPanel({
   const [error, setError] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
-  const refresh = useCallback(async () => setStatuses(await api().subscriptionStatus()), []);
+  const [testing, setTesting] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(true);
+  const [statusError, setStatusError] = useState("");
+  const refresh = useCallback(async () => {
+    setCheckingStatus(true);
+    setStatusError("");
+    try {
+      setStatuses(await api().subscriptionStatus());
+    } catch {
+      setStatuses([]);
+      setStatusError("We couldn’t check your provider connections. Try again.");
+    } finally {
+      setCheckingStatus(false);
+    }
+  }, []);
   useEffect(() => {
     void refresh().catch((e) => setError(cleanError(e)));
   }, [refresh]);
@@ -36,7 +52,11 @@ export function SubscriptionPanel({
           if (!live) return;
           setAttempt(next);
           if (next.status === "complete") {
-            setNote("Signed in. Select this provider to use it.");
+            setNote(
+              next.provider === selected
+                ? "Signed in. This provider is selected."
+                : "Signed in. Select this provider to use it."
+            );
             await refresh();
           }
           if (next.status === "failed") setError(next.error ?? "Sign-in failed.");
@@ -52,7 +72,7 @@ export function SubscriptionPanel({
       live = false;
       clearInterval(timer);
     };
-  }, [attempt?.id, attempt?.status, refresh]);
+  }, [attempt?.id, attempt?.status, refresh, selected]);
 
   const act = async (fn: () => Promise<void>) => {
     setBusy(true);
@@ -72,152 +92,117 @@ export function SubscriptionPanel({
       setAttempt(await api().beginSubscriptionLogin(provider));
     });
   const connected = statuses.find((status) => status.provider === selected)?.connected;
-  const DESCRIPTION: Record<ProviderId, string> = {
-    claude: "Uses your Claude Code subscription login on this Mac.",
-    codex: "Uses your ChatGPT account through Codex.",
-    xai: "Your Grok subscription. Model and tool access depend on your plan.",
-  };
   return (
-    <section className="subscription-panel sp" aria-label="AI subscriptions">
-      <div className="sp-head">
-        <div>
-          <h2>Your AI subscription</h2>
-          <p>Choose the account that powers your research and browser tasks.</p>
-        </div>
-        <div className="sp-tools">
-          <button
-            className="ghost btn"
-            type="button"
-            disabled={busy}
-            onClick={() => void act(refresh)}
-          >
-            Refresh
-          </button>
-          <button
-            className="ghost btn"
-            type="button"
-            disabled={busy || !connected || attempt?.status === "pending"}
-            title="Makes one small request using the selected subscription"
-            onClick={() =>
-              void act(async () => {
-                setNote(await api().verifySubscription());
-              })
-            }
-          >
-            {busy ? "Working…" : "Test connection"}
-          </button>
-        </div>
-      </div>
-      <div className="sp-list">
+    <section className="subscription-panel" aria-label="AI subscriptions">
+      <h2>Choose your provider</h2>
+      <p>Choose which provider powers IcpFinder.</p>
+      {statusError && (
+        <p className="error" role="alert">
+          {statusError}
+        </p>
+      )}
+      <div style={{ display: "grid", gap: 12, marginTop: 20 }}>
         {(["claude", "codex", "xai"] as const).map((provider) => {
           const status = statuses.find((item) => item.provider === provider);
-          const inUse = selected === provider;
           return (
-            <div key={provider} className={`sp-card ${inUse ? "on" : ""}`}>
-              <ProviderLogo provider={provider} size={36} />
-              <div className="sp-main">
-                <div className="sp-name">
-                  {PROVIDER_NAMES[provider]}
-                  {inUse && <span className="sp-chip">In use</span>}
-                </div>
-                <div className="sp-desc">{DESCRIPTION[provider]}</div>
-                {inUse && (
-                  <div style={{ marginTop: 10 }}>
-                    <ModelPicker
-                      provider={provider}
-                      value={state.settings.model}
-                      onChange={(model) =>
-                        void act(async () => {
-                          onState(await api().saveSettings({ model }));
-                        })
-                      }
-                    />
-                  </div>
-                )}
-                {status?.error && (
-                  <p className="sp-desc" role="status">
-                    {status.error}
-                  </p>
-                )}
-              </div>
-              <div className="sp-side">
-                <span className={`sp-status ${status?.connected ? "sp-on" : ""}`}>
-                  {!status
+            <div
+              key={provider}
+              style={{
+                padding: 16,
+                border: `1px solid ${selected === provider ? "var(--accent)" : "var(--line, #ddd)"}`,
+                borderRadius: 14,
+                background: "var(--card)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <strong style={{ flex: 1 }}>{PROVIDER_NAMES[provider]}</strong>
+                <span>
+                  {checkingStatus
                     ? "Checking…"
-                    : status.connected
-                      ? "Signed in"
-                      : !status.installed
-                        ? "Not available"
-                        : "Not signed in"}
+                    : !status
+                      ? "Status unavailable"
+                      : status.connected
+                        ? "Signed in"
+                        : !status.installed
+                          ? "Connection unavailable"
+                          : status.error && status.failure !== "signin"
+                            ? "Status unavailable"
+                            : "Not signed in"}
                 </span>
-                {status && !status.installed ? (
+                <button
+                  className="secondary btn"
+                  type="button"
+                  disabled={
+                    checkingStatus || busy || !status?.installed || attempt?.status === "pending"
+                  }
+                  onClick={() => void signIn(provider)}
+                >
+                  {status?.connected ? "Change account" : "Sign in"}
+                </button>
+                {status?.connected && (
                   <button
-                    className="ghost btn"
+                    className="secondary btn"
                     type="button"
+                    disabled={
+                      checkingStatus ||
+                      busy ||
+                      attempt?.status === "pending" ||
+                      selected === provider
+                    }
                     onClick={() =>
-                      void api().openExternal(
-                        provider === "claude"
-                          ? "https://code.claude.com/docs/en/setup"
-                          : "https://developers.openai.com/codex/cli/"
-                      )
+                      void act(async () => {
+                        onState(await api().saveSettings({ provider }));
+                      })
                     }
                   >
-                    How to set up
-                  </button>
-                ) : status?.connected ? (
-                  <>
-                    {!inUse && (
-                      <button
-                        className="ob-cta"
-                        type="button"
-                        disabled={busy || attempt?.status === "pending"}
-                        onClick={() =>
-                          void act(async () => {
-                            onState(await api().saveSettings({ provider }));
-                          })
-                        }
-                      >
-                        Use this account
-                      </button>
-                    )}
-                    <button
-                      className="ghost btn sp-link"
-                      type="button"
-                      disabled={busy || attempt?.status === "pending"}
-                      onClick={() => void signIn(provider)}
-                    >
-                      Change account
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    className="ob-cta"
-                    type="button"
-                    disabled={busy || !status?.installed || attempt?.status === "pending"}
-                    onClick={() => void signIn(provider)}
-                  >
-                    Sign in
+                    {selected === provider ? "Selected" : "Use this provider"}
                   </button>
                 )}
               </div>
+              <p style={{ fontSize: 13, color: "var(--muted)", margin: "8px 0 0" }}>
+                {provider === "claude"
+                  ? "Use your Claude account with IcpFinder."
+                  : provider === "codex"
+                    ? "Uses your ChatGPT account through Codex."
+                    : "Sign in with your eligible Grok subscription. Model and tool access depend on your plan."}
+              </p>
+              {status && !status.installed && (
+                <p role="alert">
+                  IcpFinder couldn’t start the component needed to connect to{" "}
+                  {PROVIDER_NAMES[provider]}. Choose another provider to continue. Your business
+                  details are saved.
+                </p>
+              )}
+              {status?.error && <p role="status">{status.error}</p>}
+              {selected === provider && (
+                <div style={{ marginTop: 10 }}>
+                  <ModelPicker
+                    label="Model"
+                    provider={provider}
+                    value={state.settings.model}
+                    onChange={(model) =>
+                      void act(async () => {
+                        onState(await api().saveSettings({ model }));
+                      })
+                    }
+                  />
+                </div>
+              )}
             </div>
           );
         })}
       </div>
       {attempt?.status === "pending" && (
-        <div className="sp-pending" role="status">
-          <span>
-            Finish signing in to {PROVIDER_NAMES[attempt.provider]} in your browser.
-            {attempt.code && (
-              <>
-                {" "}
-                Enter this code: <strong>{attempt.code}</strong>
-              </>
-            )}
-          </span>
+        <div role="status" style={{ marginTop: 16 }}>
+          <p>Finish signing in to {PROVIDER_NAMES[attempt.provider]} in your browser.</p>
+          {attempt.code && (
+            <p>
+              Enter this code: <strong>{attempt.code}</strong>
+            </p>
+          )}
           {attempt.url && (
             <button
-              className="ob-cta"
+              className="secondary btn"
               type="button"
               onClick={() => void api().openExternal(attempt.url ?? "")}
             >
@@ -225,7 +210,7 @@ export function SubscriptionPanel({
             </button>
           )}
           <button
-            className="ghost btn"
+            className="secondary btn"
             type="button"
             onClick={() =>
               void act(async () => {
@@ -244,22 +229,47 @@ export function SubscriptionPanel({
           {error}
         </p>
       )}
-      {note && (
-        <p className="sp-note" role="status">
-          {note}
-        </p>
-      )}
-      {onContinue && (
+      {note && <p role="status">{note}</p>}
+      <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
         <button
-          className="ob-cta"
+          className="secondary btn"
           type="button"
-          style={{ alignSelf: "flex-start" }}
-          disabled={busy || !connected || attempt?.status === "pending"}
-          onClick={onContinue}
+          disabled={busy || checkingStatus}
+          onClick={() => void act(refresh)}
         >
-          Continue with {PROVIDER_NAMES[selected]}
+          {statusError ? "Retry status check" : "Refresh status"}
         </button>
-      )}
+        <button
+          className="secondary btn"
+          type="button"
+          disabled={busy || !connected || attempt?.status === "pending"}
+          onClick={() =>
+            void act(async () => {
+              setTesting(true);
+              try {
+                setNote(await api().verifySubscription());
+              } finally {
+                setTesting(false);
+              }
+            })
+          }
+        >
+          {testing ? "Testing…" : "Test connection"}
+        </button>
+        {onContinue && (
+          <button
+            className="btn primary"
+            type="button"
+            disabled={busy || !connected || attempt?.status === "pending"}
+            onClick={onContinue}
+          >
+            Continue with {PROVIDER_NAMES[selected]}
+          </button>
+        )}
+      </div>
+      <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 12 }}>
+        Test connection sends a small request through the selected provider using your account.
+      </p>
     </section>
   );
 }

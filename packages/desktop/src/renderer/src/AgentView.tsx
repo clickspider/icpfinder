@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { AgentRun, AgentStep } from "../../shared/types";
-import { api, Spinner, ToolLogo } from "./ui";
+import { api, Spinner } from "./ui";
 
 const STEP_ICON: Record<AgentStep["kind"], string> = {
   open: "M12 3a9 9 0 100 18 9 9 0 000-18z M3 12h18 M12 3c2.5 3 2.5 15 0 18 M12 3c-2.5 3-2.5 15 0 18",
@@ -93,15 +93,22 @@ export const AgentView = ({
   const [run, setRun] = useState<AgentRun | null>(null);
   const [custom, setCustom] = useState("");
   const [reason, setReason] = useState("");
+  const [error, setError] = useState("");
   const panel = useRef<HTMLDivElement>(null);
   const started = useRef(false);
 
   useEffect(() => {
     const off = api().onAgent(setRun);
-    void api().agentCurrent().then(setRun);
+    void api()
+      .agentCurrent()
+      .then(setRun)
+      .catch(() => setError("Couldn’t start or continue this browser task. Please try again."));
     if (task && !started.current) {
       started.current = true;
-      void api().agentStart(task, startUrl).then(setRun);
+      void api()
+        .agentStart(task, startUrl)
+        .then(setRun)
+        .catch(() => setError("Couldn’t start or continue this browser task. Please try again."));
     }
     return off;
   }, [task, startUrl]);
@@ -133,7 +140,7 @@ export const AgentView = ({
 
   return (
     <div
-      className="enter"
+      className="enter native-agent"
       style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}
     >
       <div
@@ -179,9 +186,17 @@ export const AgentView = ({
                   boxShadow: "0 0 0 4px rgba(224,36,74,0.18)",
                 }}
               />
-              <ToolLogo name="claude" size={16} radius={4} />
-              Your AI is driving · live
+              {run?.status === "waiting" ? "Waiting for your approval" : "Browser task running"}
             </>
+          )}
+          {!active && run && (
+            <span role="status">
+              {run.status === "done"
+                ? "Task complete"
+                : run.status === "stopped"
+                  ? "Task stopped"
+                  : "Task failed"}
+            </span>
           )}
           {run?.url && (
             <span
@@ -197,6 +212,11 @@ export const AgentView = ({
           )}
         </div>
       </div>
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
         <div
           ref={panel}
@@ -214,7 +234,7 @@ export const AgentView = ({
             fontSize: 13,
           }}
         >
-          The browser appears here
+          The browser will appear here.
         </div>
         <aside
           style={{
@@ -259,13 +279,13 @@ export const AgentView = ({
                 }}
               >
                 <Spinner />
-                working…
+                Working…
               </div>
             )}
           </div>
           {run?.status === "waiting" && run.ask && (
             <div
-              className="pop"
+              className="pop native-approval"
               style={{
                 margin: 12,
                 padding: 14,
@@ -275,7 +295,7 @@ export const AgentView = ({
               }}
             >
               <div className="lbl" style={{ color: "var(--accent)" }}>
-                Your AI needs your OK
+                Review this action
               </div>
               <div style={{ marginTop: 6, fontWeight: 600, lineHeight: 1.4 }}>{run.ask.action}</div>
               {run.ask.preview && (
@@ -290,6 +310,8 @@ export const AgentView = ({
                     lineHeight: 1.5,
                     whiteSpace: "pre-wrap",
                     userSelect: "text",
+                    maxHeight: "25vh",
+                    overflowY: "auto",
                   }}
                 >
                   {run.ask.preview}
@@ -308,7 +330,11 @@ export const AgentView = ({
                   type="button"
                   className="primary btn"
                   style={{ flex: 1, height: 40 }}
-                  onClick={() => void api().agentAnswer(true)}
+                  onClick={() =>
+                    void api()
+                      .agentAnswer(true)
+                      .catch(() => setError("Couldn’t submit your response. Try again."))
+                  }
                 >
                   Approve
                 </button>
@@ -317,7 +343,9 @@ export const AgentView = ({
                   className="secondary btn"
                   style={{ height: 40 }}
                   onClick={() => {
-                    void api().agentAnswer(false, reason);
+                    void api()
+                      .agentAnswer(false, reason)
+                      .catch(() => setError("Couldn’t submit your response. Try again."));
                     setReason("");
                   }}
                 >
@@ -353,9 +381,13 @@ export const AgentView = ({
                 type="button"
                 className="secondary btn"
                 style={{ flex: 1, height: 40 }}
-                onClick={() => void api().agentStop()}
+                onClick={() =>
+                  void api()
+                    .agentStop()
+                    .catch(() => setError("Couldn’t stop the task. Try again."))
+                }
               >
-                Stop agent
+                Stop task
               </button>
             ) : (
               <>
@@ -363,18 +395,20 @@ export const AgentView = ({
                   className="field"
                   style={{ height: 40, fontSize: 13 }}
                   placeholder={
-                    run
-                      ? "Reply to your AI, it keeps the task"
-                      : "Tell your AI what to do in the browser"
+                    run ? "Add instructions for this task" : "Describe a task for the browser"
                   }
                   value={custom}
                   onChange={(e) => setCustom(e.target.value)}
                   aria-label="Task for browser agent"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && custom.trim()) {
-                      void (
-                        run ? api().agentReply(custom.trim()) : api().agentStart(custom.trim())
-                      ).then(setRun);
+                      void (run ? api().agentReply(custom.trim()) : api().agentStart(custom.trim()))
+                        .then(setRun)
+                        .catch(() =>
+                          setError(
+                            "Couldn’t start or continue this browser task. Please try again."
+                          )
+                        );
                       setCustom("");
                     }
                   }}
@@ -385,13 +419,15 @@ export const AgentView = ({
                   style={{ height: 40 }}
                   disabled={!custom.trim()}
                   onClick={() => {
-                    void (
-                      run ? api().agentReply(custom.trim()) : api().agentStart(custom.trim())
-                    ).then(setRun);
+                    void (run ? api().agentReply(custom.trim()) : api().agentStart(custom.trim()))
+                      .then(setRun)
+                      .catch(() =>
+                        setError("Couldn’t start or continue this browser task. Please try again.")
+                      );
                     setCustom("");
                   }}
                 >
-                  Go
+                  {run ? "Send instructions" : "Start task"}
                 </button>
               </>
             )}

@@ -289,7 +289,7 @@ export interface IcpApi {
   planUsage(): Promise<import("./usage").PlanUsage | null>;
   openLogin(url: string): Promise<void>;
   busyWork(): Promise<{ hunts: number; research: number; actions: number; agent: boolean }>;
-  recalibrate(): Promise<State>;
+  previewBusiness(): Promise<Product>;
   archiveWorkspace(id: string): Promise<State>;
   verifyHunter(
     key: string

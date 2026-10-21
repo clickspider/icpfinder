@@ -43,14 +43,12 @@ import {
   jobs,
   linkedinFacts,
   parseConnections,
-  pauseWorkspace,
   profileForIcp,
   readIdea,
   readProduct,
   refineCriteria,
   regateIcp,
   researchCompany,
-  resumeWorkspace,
   runCompanyAction,
   setModel,
   setProvider,
@@ -458,7 +456,7 @@ const TASK_OF: Record<string, string> = {
   findIcps: "Setup",
   addIcp: "Setup",
   ideaFinish: "Setup",
-  recalibrate: "Setup",
+  previewBusiness: "Setup",
   updateCard: "Setup",
   huntIcp: "Hunting",
   finishSetup: "Setup",
@@ -735,7 +733,6 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
   },
   /** Plan limits as Claude Code reports them (no tokens used). */
   planUsage: async () => {
-    if ((state.settings.provider ?? "claude") !== "claude") return null;
     const plan = await readClaudePlan((await which("claude")) ?? "claude");
     if (!plan) return plan;
     // Split each window: IcpFinder's own runs vs everything else Claude Code ran on this Mac.
@@ -744,8 +741,12 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
         const start = windowStart(w.label, w.resets);
         if (!start) return w;
         const mine = appWeight(start);
-        const other = await localWeight(start).catch(() => 0);
-        return { ...w, appPct: mine + other ? (w.pct * mine) / (mine + other) : 0 };
+        const other = await localWeight(start).catch(() => undefined);
+        return {
+          ...w,
+          appPct:
+            other === undefined || !(mine + other) ? undefined : (w.pct * mine) / (mine + other),
+        };
       })
     );
     return { ...plan, windows };
@@ -867,37 +868,12 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
   agentThumb: () => agent?.thumb() ?? null,
   /** What re-calibrate would stop right now in the active workspace. */
   busyWork: () => busyWork(activeWorkspace(state)),
-  recalibrate: async () => {
+  // Read-only proposal: never overwrite corrections or regenerate existing profiles.
+  previewBusiness: async () => {
     const ws = activeWorkspace(state);
-    if (!ws) return state;
-    pauseWorkspace(ws.id);
-    agent?.stop();
-    for (let i = queue.length - 1; i >= 0; i--) if (queue[i]?.wsId === ws.id) queue.splice(i, 1);
-    for (const icp of ws.icps) {
-      icp.sourcing = false;
-      icp.sourcingNote = undefined;
-      for (const c of icp.companies) if (c.status === "researching") c.status = "queued";
-    }
-    ws.recalibrating = true;
-    commit();
-    try {
-      ws.product = await readProduct(ws.product.url);
-      commit();
-      await rebuildIcps(ws);
-    } finally {
-      ws.recalibrating = false;
-      resumeWorkspace(ws.id);
-      for (const icp of ws.icps)
-        enqueue(
-          ws.id,
-          icp.id,
-          icp.companies
-            .filter((c) => c.status === "queued" && c.approval === "approved")
-            .map((c) => c.domain)
-        );
-      commit();
-    }
-    return state;
+    if (!ws?.product.url || !/^https?:\/\//.test(ws.product.url))
+      throw new Error("This business has no website. Edit its overview instead.");
+    return readProduct(ws.product.url);
   },
   /** Hide a workspace (data stays on disk). Never the last one. */
   archiveWorkspace: (id: string) => {

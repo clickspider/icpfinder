@@ -87,25 +87,36 @@ export const MatchingView = ({
   onBack: () => void;
 }) => {
   const [cfg, setCfg] = useState<Scoring>(scoringOf(ws.scoring));
-  useEffect(() => setCfg(scoringOf(ws.scoring)), [ws.scoring]);
 
+  const [saveError, setSaveError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [retry, setRetry] = useState(0);
   // Save shortly after the last move; the main process re-scores every company.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: retry explicitly re-attempts a failed save without changing the draft.
   useEffect(() => {
     const same = JSON.stringify(cfg) === JSON.stringify(scoringOf(ws.scoring));
     if (same) return;
-    const t = setTimeout(() => void api().saveScoring(cfg).then(onState), 350);
+    const t = setTimeout(() => {
+      setSaving(true);
+      setSaveError("");
+      void api()
+        .saveScoring(cfg)
+        .then(onState)
+        .catch(() => setSaveError("Couldn’t save matching settings."))
+        .finally(() => setSaving(false));
+    }, 350);
     return () => clearTimeout(t);
-  }, [cfg, ws.scoring, onState]);
+  }, [cfg, ws.scoring, onState, retry]);
 
   const set = (patch: Partial<Scoring>) => setCfg({ ...cfg, ...patch });
   const all = ws.icps.flatMap((i) => i.companies).filter((c) => c.approval !== "rejected");
-  const strong = all.filter((c) => (c.match ?? 0) >= cfg.bar).length;
+  const strong = all.filter((c) => (c.match ?? 0) >= scoringOf(ws.scoring).bar).length;
   const signal = 100 - BASE - cfg.mustWeight;
 
   return (
     <div
-      className="enter scroll"
-      style={{ flex: 1, padding: 16, display: "flex", flexDirection: "column", gap: 16 }}
+      className="enter scroll native-page native-matching"
+      style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16 }}
     >
       <header
         className="drag"
@@ -115,12 +126,10 @@ export const MatchingView = ({
           <button type="button" className="ghost btn nodrag page-back" onClick={onBack}>
             ← Back
           </button>
-          <h1 className="ob-h1">
-            How we <em>match</em>
-          </h1>
-          <p className="ob-sub" style={{ marginTop: 4 }}>
-            For {ws.product.name} only. Same facts, same score. Changes re-score without a new
-            search.
+          <h1>Matching settings</h1>
+          <p style={{ marginTop: 4 }}>
+            Applies to all customer profiles for {ws.product.name}. Changes save automatically.
+            Match settings recalculate scores; search settings apply to future searches.
           </p>
         </div>
         <button
@@ -129,21 +138,43 @@ export const MatchingView = ({
           style={{ marginLeft: "auto" }}
           onClick={() => {
             setCfg(DEFAULT_SCORING);
-            void api().saveScoring(null).then(onState);
           }}
         >
-          Reset
+          Reset to defaults
         </button>
       </header>
 
-      <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+      <div role="status">
+        {saving
+          ? "Saving…"
+          : JSON.stringify(cfg) !== JSON.stringify(scoringOf(ws.scoring))
+            ? "Unsaved changes"
+            : "Saved"}
+        {saveError && (
+          <span className="error">
+            {" "}
+            {saveError}{" "}
+            <button
+              type="button"
+              className="native-secondary"
+              onClick={() => setRetry((v) => v + 1)}
+            >
+              Try again
+            </button>
+          </span>
+        )}
+      </div>
+      <div
+        className="native-columns"
+        style={{ display: "flex", gap: 24, alignItems: "flex-start" }}
+      >
         <section
           className="panel"
           style={{ flex: 1.3, padding: 18, display: "flex", flexDirection: "column", gap: 18 }}
         >
           <Knob
-            label="Show companies from"
-            hint="Lower shows more companies. Higher shows only the best."
+            label="Minimum match score"
+            hint="Lower includes more results. Higher requires a higher match score."
             value={cfg.bar}
             min={40}
             max={95}
@@ -151,8 +182,8 @@ export const MatchingView = ({
             onChange={(v) => set({ bar: v })}
           />
           <Knob
-            label="Fit vs. timing"
-            hint={`Fit = the must-haves. Timing = a fresh buying signal. Every score starts at ${BASE}.`}
+            label="Fit and timing"
+            hint={`Fit = the must-haves. Timing = a recent confirmed signal. Every score starts at ${BASE}.`}
             value={cfg.mustWeight}
             min={30}
             max={80}
@@ -161,8 +192,8 @@ export const MatchingView = ({
             onChange={(v) => set({ mustWeight: v })}
           />
           <Knob
-            label="Benefit of the doubt"
-            hint="Credit for a must-have that no public page confirms or rules out."
+            label="Credit for unknown criteria"
+            hint="Partial credit when a criterion hasn’t been confirmed or ruled out."
             value={Math.round(cfg.unknownCredit * 100)}
             min={0}
             max={50}
@@ -171,8 +202,8 @@ export const MatchingView = ({
             onChange={(v) => set({ unknownCredit: v / 100 })}
           />
           <Knob
-            label="A signal is fresh for"
-            hint="Older signals count half."
+            label="Recent-signal window"
+            hint="Confirmed signals outside this window, or without a usable date, receive half the timing points."
             value={cfg.windowDays}
             min={30}
             max={365}
@@ -182,8 +213,8 @@ export const MatchingView = ({
           />
           <div style={{ height: 0.5, background: "rgba(0,0,0,0.08)" }} />
           <Knob
-            label="Companies per search"
-            hint="More finds more, and uses more Claude time."
+            label="Companies per search round"
+            hint="Higher limits can take longer and use more of your provider’s allowance."
             value={cfg.candidates}
             min={8}
             max={30}
@@ -191,8 +222,8 @@ export const MatchingView = ({
             onChange={(v) => set({ candidates: v })}
           />
           <Knob
-            label="Sharpen rounds"
-            hint="When too few pass, Claude sharpens one check and searches again."
+            label="Additional search rounds"
+            hint="When too few companies meet the threshold, IcpFinder can adjust a criterion and search again."
             value={cfg.rounds}
             min={0}
             max={4}
@@ -205,7 +236,7 @@ export const MatchingView = ({
           className="panel"
           style={{ flex: 1, padding: 18, display: "flex", flexDirection: "column", gap: 12 }}
         >
-          <div className="lbl">Live preview</div>
+          <div className="lbl">Example scores</div>
           {SAMPLES.map((s) => {
             const v = score(
               { ...s.input, checks: s.input.checks.map((x) => ({ verdict: x })) },
@@ -227,11 +258,11 @@ export const MatchingView = ({
           })}
           <div style={{ height: 0.5, background: "rgba(0,0,0,0.08)" }} />
           <div style={{ fontSize: 13 }}>
-            <b style={{ color: "#1f8a43" }}>{strong}</b> of {all.length} companies you found show
-            with this setup.
+            <b style={{ color: "#1f8a43" }}>{strong}</b> of {all.length} companies meet the saved
+            match threshold.
           </div>
           <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.5 }}>
-            A proven "no" or a deal-breaker is always 0.
+            A failed required criterion or a deal-breaker sets the score to 0.
           </div>
         </aside>
       </div>
