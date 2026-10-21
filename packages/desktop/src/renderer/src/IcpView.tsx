@@ -601,7 +601,7 @@ export const IcpView = ({
                 alignItems: "center",
                 gap: 5,
               }}
-              onClick={() => go({ kind: "matching" })}
+              onClick={() => go({ kind: "matching", back: { kind: "icp", icpId: icp.id } })}
             >
               <svg
                 width="13"

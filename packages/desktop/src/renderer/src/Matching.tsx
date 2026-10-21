@@ -77,7 +77,15 @@ const Knob = ({
   </label>
 );
 
-export const MatchingView = ({ ws, onState }: { ws: Workspace; onState: (s: State) => void }) => {
+export const MatchingView = ({
+  ws,
+  onState,
+  onBack,
+}: {
+  ws: Workspace;
+  onState: (s: State) => void;
+  onBack: () => void;
+}) => {
   const [cfg, setCfg] = useState<Scoring>(scoringOf(ws.scoring));
   useEffect(() => setCfg(scoringOf(ws.scoring)), [ws.scoring]);
 
@@ -104,6 +112,9 @@ export const MatchingView = ({ ws, onState }: { ws: Workspace; onState: (s: Stat
         style={{ padding: "8px 4px 0", display: "flex", alignItems: "flex-end" }}
       >
         <div>
+          <button type="button" className="ghost btn nodrag page-back" onClick={onBack}>
+            ← Back
+          </button>
           <h1 className="ob-h1">
             How we <em>match</em>
           </h1>

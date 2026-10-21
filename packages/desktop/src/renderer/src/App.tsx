@@ -23,7 +23,7 @@ export type View =
   | { kind: "product" }
   | { kind: "connectors" }
   | { kind: "network" }
-  | { kind: "matching" }
+  | { kind: "matching"; back?: View }
   | { kind: "usage" }
   | { kind: "agent"; task?: string; url?: string; title: string; back: View };
 
@@ -143,7 +143,18 @@ export const App = () => {
             onNetwork={() => setView({ kind: "network" })}
           />
         )}
-        {current?.kind === "matching" && <MatchingView ws={ws} onState={setState} />}
+        {current?.kind === "matching" && (
+          <MatchingView
+            ws={ws}
+            onState={setState}
+            onBack={() =>
+              setView(
+                current.back ??
+                  (firstIcp ? { kind: "icp", icpId: firstIcp.id } : { kind: "product" })
+              )
+            }
+          />
+        )}
         {current?.kind === "usage" && <UsageView state={state} />}
         {current?.kind === "network" && (
           <NetworkView state={state} ws={ws} onState={setState} go={setView} />

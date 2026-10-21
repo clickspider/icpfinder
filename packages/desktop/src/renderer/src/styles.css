@@ -2043,3 +2043,54 @@ details.fact[open] .fact-chev {
   display: inline-flex;
   align-items: center;
 }
+.pe-line {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: #faf7f8;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+  color: #5f565b;
+}
+.pe-line:hover {
+  background: #f5eff1;
+}
+.pe-line-item {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pe-line-item b {
+  color: var(--ink);
+  font-weight: 600;
+  margin-right: 4px;
+}
+.pe-more {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.pe-less {
+  align-self: flex-end;
+  font-size: 12px;
+}
+/* Back link on pages opened from another screen. */
+.page-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  margin: 0 0 6px -10px;
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
