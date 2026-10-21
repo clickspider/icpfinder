@@ -4,6 +4,7 @@ import type { IcpDraft, State, Workspace } from "../../shared/types";
 import type { View } from "./App";
 import { profileStatus } from "./dashboard-state";
 import { api, cleanError } from "./ui";
+import { useDialogDismiss } from "./useDialogDismiss";
 
 const fields = [
   ["title", "Profile name"],
@@ -30,6 +31,9 @@ export function Overview({
   }, [adding]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const dismissDialog = useDialogDismiss(() => {
+    if (!busy) setAdding(false);
+  });
   return (
     <div className="native-page scroll">
       <header className="native-page-head">
@@ -75,6 +79,7 @@ export function Overview({
         </p>
       )}
       <dialog
+        {...dismissDialog}
         ref={dialog}
         onCancel={(e) => {
           if (busy) e.preventDefault();
@@ -84,65 +89,63 @@ export function Overview({
         aria-labelledby="add-profile-title"
         className="native-add-dialog"
       >
-        {adding && (
-          <>
-            <h2 id="add-profile-title">Add a profile</h2>
-            <p>You can refine the details later.</p>
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const data = new FormData(e.currentTarget);
-                const draft = Object.fromEntries(
-                  fields.map(([key]) => [key, String(data.get(key) ?? "").trim()])
-                ) as unknown as IcpDraft;
-                setBusy(true);
-                setError("");
-                try {
-                  onState(await api().addIcp(draft));
-                  setAdding(false);
-                } catch (e) {
-                  setError(cleanError(e));
-                } finally {
-                  setBusy(false);
-                }
-              }}
-            >
-              <div className="ir-editor-fields">
-                {fields.map(([key, label]) => (
-                  <label key={key}>
-                    {label}
-                    <input
-                      autoFocus={key === "title"}
-                      className="field"
-                      name={key}
-                      required
-                      maxLength={240}
-                      disabled={busy}
-                    />
-                  </label>
-                ))}
-              </div>
-              {error && (
-                <p className="error" role="alert">
-                  {error}
-                </p>
-              )}
-              <div className="native-form-actions">
-                <button
-                  type="button"
-                  className="btn ghost"
+        <h2 id="add-profile-title">Add a profile</h2>
+        <p>You can refine the details later.</p>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            const form = e.currentTarget;
+            const data = new FormData(form);
+            const draft = Object.fromEntries(
+              fields.map(([key]) => [key, String(data.get(key) ?? "").trim()])
+            ) as unknown as IcpDraft;
+            setBusy(true);
+            setError("");
+            try {
+              onState(await api().addIcp(draft));
+              form.reset();
+              setAdding(false);
+            } catch (e) {
+              setError(cleanError(e));
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <div className="ir-editor-fields">
+            {fields.map(([key, label]) => (
+              <label key={key}>
+                {label}
+                <input
+                  autoFocus={key === "title"}
+                  className="field"
+                  name={key}
+                  required
+                  maxLength={240}
                   disabled={busy}
-                  onClick={() => setAdding(false)}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn primary" disabled={busy}>
-                  {busy ? "Adding…" : "Add profile"}
-                </button>
-              </div>
-            </form>
-          </>
-        )}
+                />
+              </label>
+            ))}
+          </div>
+          {error && (
+            <p className="error" role="alert">
+              {error}
+            </p>
+          )}
+          <div className="native-form-actions">
+            <button
+              type="button"
+              className="btn ghost"
+              disabled={busy}
+              onClick={() => setAdding(false)}
+            >
+              Cancel
+            </button>
+            <button type="submit" className="btn primary" disabled={busy}>
+              {busy ? "Adding…" : "Add profile"}
+            </button>
+          </div>
+        </form>
       </dialog>
     </div>
   );

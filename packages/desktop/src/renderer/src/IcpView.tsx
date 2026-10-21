@@ -2,6 +2,7 @@ import { icpPresentation } from "../../shared/onboarding";
 import { AppIcon } from "./AppIcon";
 import { companyGroups } from "./dashboard-state";
 import { ProfileEditor } from "./ProfileEditor";
+import { useDialogDismiss } from "./useDialogDismiss";
 // SPDX-License-Identifier: MIT
 //
 // Main screen in the context of one ICP: who exactly (as short gates), and the
@@ -150,6 +151,20 @@ const Row = ({
           <span className="clamp2">{signal ?? "No recent signal found"}</span>
         )}
       </button>
+      <div
+        style={{
+          fontWeight: 800,
+          fontSize: 16,
+          textAlign: "right",
+          fontVariantNumeric: "tabular-nums",
+          color: (c.match ?? 0) >= 85 ? "#1f8a43" : "var(--ink)",
+        }}
+      >
+        <small style={{ display: "block", fontSize: 10, fontWeight: 400, color: "var(--muted)" }}>
+          Match score
+        </small>
+        {c.match ?? "–"}
+      </div>
       <div className="native-company-actions">
         {pending ? (
           <>
@@ -164,12 +179,12 @@ const Row = ({
             </button>
             <button
               type="button"
-              className="btn native-row-action native-row-action-muted"
+              className="btn native-icon-button native-dismiss-company"
               aria-label={`Not a fit: ${c.name}`}
               title="Not a fit"
               onClick={() => onAnswer(false)}
             >
-              Not a fit
+              <AppIcon name="close" size={14} />
             </button>
           </>
         ) : c.status === "researching" || c.status === "queued" ? (
@@ -185,20 +200,6 @@ const Row = ({
         ) : (
           <span className="pill p-red">Research failed</span>
         )}
-      </div>
-      <div
-        style={{
-          fontWeight: 800,
-          fontSize: 16,
-          textAlign: "right",
-          fontVariantNumeric: "tabular-nums",
-          color: (c.match ?? 0) >= 85 ? "#1f8a43" : "var(--ink)",
-        }}
-      >
-        <small style={{ display: "block", fontSize: 10, fontWeight: 400, color: "var(--muted)" }}>
-          Match score
-        </small>
-        {c.match ?? "–"}
       </div>
     </div>
   );
@@ -483,6 +484,7 @@ export const IcpView = ({
   onState: (s: State) => void;
 }) => {
   const inspector = useRef<HTMLDialogElement>(null);
+  const dismissInspector = useDialogDismiss(() => inspector.current?.close());
   const page = useRef<HTMLDivElement>(null);
   const lowerMatches = useRef<HTMLDetailsElement>(null);
   const nextFocus = useRef<string | null>(null);
@@ -554,7 +556,12 @@ export const IcpView = ({
       >
         Profile details ↗
       </button>
-      <dialog ref={inspector} className="native-inspector" aria-label="Profile details">
+      <dialog
+        {...dismissInspector}
+        ref={inspector}
+        className="native-inspector"
+        aria-label="Profile details"
+      >
         <div className="native-inspector-head">
           <h2>Profile details</h2>
           <button
@@ -600,8 +607,8 @@ export const IcpView = ({
               <div className="native-company-labels" aria-hidden="true">
                 <span>Company</span>
                 <span>Recent signal</span>
-                <span>Research</span>
                 <span>Score</span>
+                <span>Research</span>
               </div>
             )}
             {shown.map((c) => (

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { icpPresentation } from "../../shared/onboarding";
 import type { State, Workspace } from "../../shared/types";
 import type { View } from "./App";
@@ -32,6 +32,31 @@ export function Sidebar({
   onState: (s: State) => void;
 }) {
   const [menu, setMenu] = useState(false);
+  const menuElement = useRef<HTMLDivElement>(null);
+  const menuTrigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!menu) return;
+    const dismiss = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        !menuElement.current?.contains(event.target) &&
+        !menuTrigger.current?.contains(event.target)
+      )
+        setMenu(false);
+    };
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenu(false);
+        menuTrigger.current?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", dismiss, true);
+    document.addEventListener("keydown", onEscape);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss, true);
+      document.removeEventListener("keydown", onEscape);
+    };
+  }, [menu]);
   const [finding, setFinding] = useState(false);
   const provider = { claude: "Claude", codex: "ChatGPT", xai: "Grok" }[
     state.settings.provider ?? "claude"
@@ -56,6 +81,7 @@ export function Sidebar({
         </button>
         <button
           type="button"
+          ref={menuTrigger}
           className="btn native-switch"
           aria-label="Switch business"
           aria-expanded={menu}
@@ -65,7 +91,7 @@ export function Sidebar({
         </button>
       </div>
       {menu && (
-        <div className="popover pop" role="menu">
+        <div ref={menuElement} className="popover pop" role="menu">
           <div style={{ display: "flex", alignItems: "center", padding: "4px 4px 6px 8px" }}>
             <span style={{ fontSize: 11, color: "var(--faint)" }}>Workspaces</span>
             <button

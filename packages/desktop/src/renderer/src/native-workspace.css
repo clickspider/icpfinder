@@ -387,7 +387,7 @@
   transform: rotate(225deg) translate(-1px, -1px);
 }
 .native-lower-matches > summary:hover {
-  background: #f5f5f3;
+  background: transparent;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -495,7 +495,7 @@
 }
 
 .native-icp .native-company-row {
-  grid-template-columns: minmax(130px, 1.2fr) minmax(150px, 2fr) 240px 65px;
+  grid-template-columns: minmax(130px, 1.2fr) minmax(150px, 2fr) 65px 190px;
   column-gap: 16px;
 }
 
@@ -898,7 +898,7 @@
 
 .native-company-labels {
   display: grid;
-  grid-template-columns: minmax(130px, 1.2fr) minmax(150px, 2fr) 240px 65px;
+  grid-template-columns: minmax(130px, 1.2fr) minmax(150px, 2fr) 65px 190px;
   gap: 16px;
   padding: 0 16px 10px;
   font-size: 11px;
@@ -982,4 +982,12 @@
   clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
+}
+
+.native-dismiss-company:hover:not(:disabled) {
+  background: transparent;
+  color: var(--ink);
+}
+.native-lower-matches > .native-company-row {
+  color: var(--muted);
 }
