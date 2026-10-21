@@ -303,18 +303,12 @@ const Approval = ({
       ))}
     </div>
     <div style={{ display: "flex", gap: 10 }}>
-      <button
-        type="button"
-        className="primary btn"
-        style={{ flex: 1 }}
-        onClick={() => onAnswer(true)}
-      >
+      <button type="button" className="btn native-row-action" onClick={() => onAnswer(true)}>
         Research company
       </button>
       <button
         type="button"
-        className="secondary btn"
-        style={{ height: 44 }}
+        className="btn native-row-action native-row-action-muted"
         onClick={() => onAnswer(false)}
       >
         Not a fit

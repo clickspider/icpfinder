@@ -1,4 +1,5 @@
 import { icpPresentation } from "../../shared/onboarding";
+import { AppIcon } from "./AppIcon";
 import { ProfileEditor } from "./ProfileEditor";
 // SPDX-License-Identifier: MIT
 //
@@ -12,30 +13,6 @@ import type { Company, Contact, HuntStepKind, Icp, State, Workspace } from "../.
 import type { View } from "./App";
 import { Criteria } from "./Criteria";
 import { api, best, friendly, initial, proven, Spinner, ToolLogo } from "./ui";
-
-const I = {
-  check: "M5 12l5 5 9-10",
-  bolt: "M13 2L4 14h7l-1 8 9-12h-7z",
-  x: "M6 6l12 12 M18 6L6 18",
-  pain: "M12 3a9 9 0 100 18 9 9 0 000-18z M12 7a5 5 0 100 10 5 5 0 000-10z M12 11a1 1 0 100 2 1 1 0 000-2z",
-  spark: "M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z",
-};
-
-const Ico = ({ d, c = "#3c3c43", s = 14 }: { d: string; c?: string; s?: number }) => (
-  <svg
-    aria-hidden="true"
-    width={s}
-    height={s}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={c}
-    strokeWidth="2.2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d={d} />
-  </svg>
-);
 
 const Row = ({
   c,
@@ -52,7 +29,7 @@ const Row = ({
   const yes = c.checks?.filter((x) => x.verdict === "yes").length ?? 0;
   const pending = c.approval !== "approved";
   return (
-    <div className="crow native-company-row">
+    <div className="crow native-company-row" data-company-domain={c.domain}>
       <button
         type="button"
         className="btn"
@@ -169,36 +146,29 @@ const Row = ({
         {c.status === "researching" ? (
           <span style={{ color: "var(--accent)" }}>Researching…</span>
         ) : (
-          <>
-            <span style={{ flexShrink: 0, marginTop: 2 }}>
-              <Ico d={I.bolt} c="#d97706" s={13} />
-            </span>
-            <span className="clamp2">{signal ?? "No recent signal found"}</span>
-          </>
+          <span className="clamp2">{signal ?? "No recent signal found"}</span>
         )}
       </button>
-      <div style={{ display: "flex", gap: 6, alignItems: "center", justifyContent: "flex-end" }}>
+      <div className="native-company-actions">
         {pending ? (
           <>
             <button
               type="button"
-              className="btn"
+              className="btn native-row-action"
               aria-label={`Research ${c.name}`}
               title="Start deeper research"
               onClick={() => onAnswer(true)}
-              style={{ padding: "8px 10px", borderRadius: 7, background: "#f3f3f2", fontSize: 13 }}
             >
               Research company
             </button>
             <button
               type="button"
-              className="btn"
+              className="btn native-row-action native-row-action-muted"
               aria-label={`Not a fit: ${c.name}`}
               title="Not a fit"
               onClick={() => onAnswer(false)}
-              style={{ width: 32, height: 32, borderRadius: 9, background: "#f2f2f4" }}
             >
-              <Ico d={I.x} c="#6e6e73" />
+              Not a fit
             </button>
           </>
         ) : c.status === "researching" || c.status === "queued" ? (
@@ -239,14 +209,14 @@ const Row = ({
  * people who can intro you to these companies, and people you know who ARE
  * this ICP and could buy directly. Asked for only once companies are on screen.
  */
-const STEP_ICON: Record<HuntStepKind, string> = {
-  search: "🔎",
-  source: "📰",
-  found: "✨",
-  check: "⏳",
-  pass: "✓",
-  skip: "–",
-  sharpen: "⚡",
+const STEP_ICON: Record<HuntStepKind, React.ReactNode> = {
+  search: <AppIcon name="search" />,
+  source: <AppIcon name="source" />,
+  found: <AppIcon name="check" />,
+  check: <AppIcon name="clock" />,
+  pass: <AppIcon name="check" />,
+  skip: <AppIcon name="minus" />,
+  sharpen: <AppIcon name="refine" />,
 };
 
 const mins = (ms: number) =>
@@ -394,7 +364,9 @@ const WayIn = ({
       </div>
       {hasCos && (
         <div className="wayin-row">
-          <span className="wayin-ico">🤝</span>
+          <span className="wayin-ico">
+            <AppIcon name="people" />
+          </span>
           <span>
             <b>{warmCos}</b> {warmCos === 1 ? "company" : "companies"} here where you know someone
           </span>
@@ -407,7 +379,9 @@ const WayIn = ({
         onClick={() => setOpen(!open)}
         aria-expanded={open}
       >
-        <span className="wayin-ico">🎯</span>
+        <span className="wayin-ico">
+          <AppIcon name="target" />
+        </span>
         <span style={{ flex: 1 }}>
           <b>{checking && !icp.people ? "…" : sure}</b> people you know fit
           {likely > 0 && <span style={{ color: "var(--muted)" }}> · {likely} likely</span>}
@@ -445,7 +419,7 @@ const WayIn = ({
                   <ToolLogo name="linkedin" size={13} radius={3} /> Check sizes on LinkedIn
                 </>
               ) : (
-                "🔎 Search the web"
+                <>Search the web</>
               )}
             </button>
           ))}
@@ -508,6 +482,20 @@ export const IcpView = ({
   onState: (s: State) => void;
 }) => {
   const inspector = useRef<HTMLDialogElement>(null);
+  const page = useRef<HTMLDivElement>(null);
+  const nextFocus = useRef<string | null>(null);
+  const [notice, setNotice] = useState("");
+  useEffect(() => {
+    if (nextFocus.current === null) return;
+    const row = Array.from(
+      page.current?.querySelectorAll<HTMLElement>("[data-company-domain]") ?? []
+    ).find((el) => el.dataset.companyDomain === nextFocus.current);
+    (
+      row?.querySelector<HTMLButtonElement>("button") ??
+      page.current?.querySelector<HTMLButtonElement>("[data-find-companies]")
+    )?.focus();
+    nextFocus.current = null;
+  });
   const icp = ws.icps.find((i) => i.id === icpId);
   if (!icp) return null;
   const bar = scoringOf(ws.scoring).bar;
@@ -531,13 +519,30 @@ export const IcpView = ({
   const crit = icp.criteria;
   const hunt = () => void api().huntIcp(icp.id).then(onState);
   const open = (c: Company) => go({ kind: "company", icpId: icp.id, domain: c.domain });
-  const answer = (c: Company, ok: boolean) =>
-    void api().approveCompany(icp.id, c.domain, ok).then(onState);
+  const answer = (c: Company, ok: boolean) => {
+    const focused =
+      document.activeElement?.closest<HTMLElement>("[data-company-domain]")?.dataset
+        .companyDomain === c.domain;
+    const index = shown.findIndex((item) => item.domain === c.domain);
+    void api()
+      .approveCompany(icp.id, c.domain, ok)
+      .then((state) => {
+        if (!ok) {
+          if (focused)
+            nextFocus.current = shown[index + 1]?.domain ?? shown[index - 1]?.domain ?? "";
+          setNotice(`${c.name} marked as not a fit.`);
+        }
+        onState(state);
+      });
+  };
 
   const presentation = icpPresentation(icp);
   const consumer = icp.profileKind === "consumer";
   return (
-    <div className="native-page native-icp scroll">
+    <div ref={page} className="native-page native-icp scroll">
+      <div className="sr-only" role="status">
+        {notice}
+      </div>
       <div className="native-crumb">
         <button type="button" className="btn" onClick={() => go({ kind: "overview" })}>
           Overview
@@ -564,11 +569,11 @@ export const IcpView = ({
           <h2>Profile details</h2>
           <button
             type="button"
-            className="btn ghost"
+            className="btn native-icon-button"
             aria-label="Close profile details"
             onClick={() => inspector.current?.close()}
           >
-            ✕
+            <AppIcon name="close" />
           </button>
         </div>
         <ProfileEditor key={icp.id} icp={icp} onState={onState} />
@@ -583,7 +588,12 @@ export const IcpView = ({
           <section className="native-companies" aria-label="Companies">
             <div className="native-company-heading">
               <h2>Companies</h2>
-              <button type="button" className="primary btn"  onClick={() => (icp.sourcing ? void api().stopHunt(icp.id).then(onState) : hunt())}>
+              <button
+                type="button"
+                className="primary btn"
+                data-find-companies
+                onClick={() => (icp.sourcing ? void api().stopHunt(icp.id).then(onState) : hunt())}
+              >
                 {icp.sourcing
                   ? "Stop finding companies"
                   : icp.lastHunt?.error
@@ -639,9 +649,6 @@ export const IcpView = ({
                     : "Try adjusting the matching criteria."}
                 </p>
               </div>
-            )}
-            {shown.some((c) => c.approval !== "approved") && (
-              <p className="native-muted">Choose a company to research further.</p>
             )}
           </section>
           <details className="native-disclosure">

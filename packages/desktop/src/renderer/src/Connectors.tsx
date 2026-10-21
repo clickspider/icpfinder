@@ -1,3 +1,4 @@
+import { AppIcon } from "./AppIcon";
 // SPDX-License-Identifier: MIT
 //
 // Connectors: the services IcpFinder plugs into, with their real logos and a
@@ -361,7 +362,7 @@ const SignalSources = ({ state, onState }: { state: State; onState: (s: State) =
       <div style={{ height: 0.5, background: "rgba(0,0,0,0.08)" }} />
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <span style={{ width: 30, textAlign: "center", fontSize: 18 }} aria-hidden="true">
-          🛡️
+          <AppIcon name="shield" />
         </span>
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 600, fontSize: 13.5 }}>Blocked pages</div>
@@ -379,8 +380,8 @@ const SignalSources = ({ state, onState }: { state: State; onState: (s: State) =
         />
       </div>
       <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.5 }}>
-        ⚠ Your own login, read only, one page at a time. Sites can still limit accounts that browse
-        by script, so Reddit, X and LinkedIn are off until you switch them on.
+        Your own login, read only, one page at a time. Sites can still limit accounts that browse by
+        script, so Reddit, X and LinkedIn are off until you switch them on.
       </div>
     </div>
   );

@@ -72,6 +72,10 @@ a {
   transform: none;
 }
 .primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   height: 44px;
   padding: 0 20px;
   border-radius: 11px;
@@ -80,12 +84,20 @@ a {
   font-weight: 600;
 }
 .secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   height: 36px;
   padding: 0 14px;
   border-radius: 10px;
   background: #f2f2f4;
 }
 .ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   height: 44px;
   padding: 0 16px;
   border-radius: 11px;

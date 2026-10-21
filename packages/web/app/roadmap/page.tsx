@@ -69,7 +69,7 @@ export default async function RoadmapPage() {
             >
               Open an issue
             </a>{" "}
-            and react 👍 on the ones you want most — community votes shape priority.
+            and add a thumbs-up reaction to the ones you want most — community votes shape priority.
           </p>
         </header>
 
@@ -121,7 +121,7 @@ export default async function RoadmapPage() {
                             rel="noreferrer"
                             className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--hairline)] bg-[color:var(--bg-card-hi)] px-3 py-1 text-[12px] font-medium text-[color:var(--text)] transition-colors hover:border-[color:var(--mint-deep)] hover:text-[color:var(--mint-deep)]"
                           >
-                            👍 Vote on #{item.voteNumber}
+                            Vote on #{item.voteNumber}
                             <span aria-hidden="true">→</span>
                           </a>
                         ) : null}
@@ -148,8 +148,8 @@ export default async function RoadmapPage() {
             <code className="rounded bg-[color:var(--bg-card-hi)] px-1 py-0.5 text-[12px]">
               roadmap
             </code>
-            . Sign in to GitHub, open an item's issue, react with 👍. Items with the most votes jump
-            priority within their version band. New ideas:{" "}
+            . Sign in to GitHub, open an item's issue, add a thumbs-up reaction. Items with the most
+            votes jump priority within their version band. New ideas:{" "}
             <a
               href="https://github.com/clickspider/icpfinder/issues/new/choose"
               className="text-[color:var(--mint-deep)] hover:underline"

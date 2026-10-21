@@ -1,3 +1,4 @@
+import { AppIcon } from "./AppIcon";
 // SPDX-License-Identifier: MIT
 //
 // Root: the setup wizard blocks until the workspace (product + ICPs) exists.
@@ -81,15 +82,17 @@ export const App = () => {
   }, [toast]);
   const toastEl = toast && (
     <div className="toast glass pop" role="alert">
-      <span style={{ color: "#e0244a", fontWeight: 700 }}>⚠</span>
+      <span style={{ color: "#e0244a", fontWeight: 700 }}>
+        <AppIcon name="warning" />
+      </span>
       <span style={{ flex: 1 }}>{toast}</span>
       <button
         type="button"
-        className="ghost btn"
+        className="btn native-icon-button"
         aria-label="Dismiss"
         onClick={() => setToast(null)}
       >
-        ✕
+        <AppIcon name="close" />
       </button>
     </div>
   );

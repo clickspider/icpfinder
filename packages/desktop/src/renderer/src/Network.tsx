@@ -1,3 +1,4 @@
+import { AppIcon } from "./AppIcon";
 // SPDX-License-Identifier: MIT
 //
 // Your network: who you already know at the companies IcpFinder found.
@@ -302,7 +303,9 @@ const LinkedInPanel = ({
           color: "var(--muted)",
         }}
       >
-        <span style={{ color: "#1f8a43" }}>🔒</span>
+        <span style={{ color: "#1f8a43" }}>
+          <AppIcon name="lock" />
+        </span>
         Your export is read on this Mac. Company names from your connections may be sent to your
         selected provider to assess fit.
         {connected &&
