@@ -3,6 +3,7 @@ import { AppIcon } from "./AppIcon";
 import { companyGroups } from "./dashboard-state";
 import { ProfileEditor } from "./ProfileEditor";
 import { useDialogDismiss } from "./useDialogDismiss";
+import { useDrawer } from "./useDrawer";
 // SPDX-License-Identifier: MIT
 //
 // Main screen in the context of one ICP: who exactly (as short gates), and the
@@ -170,12 +171,12 @@ const Row = ({
           <>
             <button
               type="button"
-              className="btn native-row-action"
+              className="btn native-icon-button native-research-company"
               aria-label={`Research ${c.name}`}
-              title="Start deeper research"
+              title="Research company"
               onClick={() => onAnswer(true)}
             >
-              Research company
+              <AppIcon name="search" size={16} />
             </button>
             <button
               type="button"
@@ -483,8 +484,8 @@ export const IcpView = ({
   go: (v: View) => void;
   onState: (s: State) => void;
 }) => {
-  const inspector = useRef<HTMLDialogElement>(null);
-  const dismissInspector = useDialogDismiss(() => inspector.current?.close());
+  const inspector = useDrawer();
+  const dismissInspector = useDialogDismiss(inspector.close);
   const page = useRef<HTMLDivElement>(null);
   const lowerMatches = useRef<HTMLDetailsElement>(null);
   const nextFocus = useRef<string | null>(null);
@@ -552,14 +553,18 @@ export const IcpView = ({
       <button
         type="button"
         className="btn native-secondary native-details-button"
-        onClick={() => inspector.current?.showModal()}
+        onClick={inspector.open}
       >
         Profile details ↗
       </button>
       <dialog
         {...dismissInspector}
-        ref={inspector}
-        className="native-inspector"
+        ref={inspector.ref}
+        className={`native-inspector${inspector.closing ? " is-closing" : ""}`}
+        onCancel={(event) => {
+          event.preventDefault();
+          inspector.close();
+        }}
         aria-label="Profile details"
       >
         <div className="native-inspector-head">
@@ -568,7 +573,7 @@ export const IcpView = ({
             type="button"
             className="btn native-icon-button"
             aria-label="Close profile details"
-            onClick={() => inspector.current?.close()}
+            onClick={inspector.close}
           >
             <AppIcon name="close" />
           </button>

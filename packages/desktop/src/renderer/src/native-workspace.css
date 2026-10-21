@@ -495,7 +495,7 @@
 }
 
 .native-icp .native-company-row {
-  grid-template-columns: minmax(130px, 1.2fr) minmax(150px, 2fr) 65px 190px;
+  grid-template-columns: minmax(130px, 1.2fr) minmax(150px, 2fr) 65px 88px;
   column-gap: 16px;
 }
 
@@ -898,7 +898,7 @@
 
 .native-company-labels {
   display: grid;
-  grid-template-columns: minmax(130px, 1.2fr) minmax(150px, 2fr) 65px 190px;
+  grid-template-columns: minmax(130px, 1.2fr) minmax(150px, 2fr) 65px 88px;
   gap: 16px;
   padding: 0 16px 10px;
   font-size: 11px;
@@ -990,4 +990,63 @@
 }
 .native-lower-matches > .native-company-row {
   color: var(--muted);
+}
+
+.btn.native-research-company {
+  border: 1px solid #c7c7c3;
+  color: var(--ink);
+}
+
+.native-inspector[open] {
+  animation: drawer-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.native-inspector[open]::backdrop {
+  animation: drawer-backdrop-enter 220ms ease-out both;
+}
+.native-inspector[open].is-closing {
+  animation: drawer-exit 180ms ease-in both;
+  pointer-events: none;
+}
+.native-inspector[open].is-closing::backdrop {
+  animation: drawer-backdrop-exit 180ms ease-in both;
+}
+@keyframes drawer-enter {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes drawer-exit {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes drawer-backdrop-enter {
+  from {
+    background: transparent;
+  }
+  to {
+    background: #00000015;
+  }
+}
+@keyframes drawer-backdrop-exit {
+  from {
+    background: #00000015;
+  }
+  to {
+    background: transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .native-inspector[open],
+  .native-inspector[open]::backdrop,
+  .native-inspector[open].is-closing,
+  .native-inspector[open].is-closing::backdrop {
+    animation: none;
+  }
 }
