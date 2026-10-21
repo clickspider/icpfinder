@@ -2,37 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import type { IcpDraft } from "../../shared/types";
 import { DUO } from "./glass";
 import { Mark } from "./ui";
-import "./icp-reveal-preview.css";
+import "./icp-reveal.css";
 
-const SAMPLES = [
-  {
-    title: "Indie SaaS founders",
-    tag: "Founder-led · 1–5 people",
-    buyer: "The founder who still handles billing",
-    fit: "Keep invoicing from eating into the time founders need to build and sell.",
-    signal: "Launching paid plans or adding their first customers",
-    skip: "Already happy with fully automated billing",
-    icon: "buyer",
-  },
-  {
-    title: "Small SaaS teams",
-    tag: "Growing teams · 6–20 people",
-    buyer: "The founder or first operations hire",
-    fit: "Handle more complex billing without adding more manual work for operations.",
-    signal: "Hiring for operations or selling larger contracts",
-    skip: "Needs a full enterprise finance platform",
-    icon: "company",
-  },
-  {
-    title: "Independent software studios",
-    tag: "Small studios · 2–10 people",
-    buyer: "The owner managing projects and payments",
-    fit: "Spend less time following up on client payments across projects and retainers.",
-    signal: "Taking on more clients or recurring retainers",
-    skip: "Only sells through a marketplace that handles payments",
-    icon: "site",
-  },
-].map((profile, index) => ({ ...profile, id: `sample-${index}` }));
 const PHRASES = [
   "Considering who could benefit most",
   "Exploring what could make them a good fit",
@@ -49,13 +20,8 @@ type LiveReveal = {
   onStart: () => void;
 };
 
-export function IcpRevealPreview({ onExit }: { onExit: () => void }) {
-  return <IcpReveal onExit={onExit} />;
-}
-
-export function IcpReveal({ onExit, live }: { onExit: () => void; live?: LiveReveal }) {
-  const [previewTab, setTab] = useState<"finding" | "portraits">("portraits");
-  const tab = live ? (live.finding ? "finding" : "portraits") : previewTab;
+export function IcpReveal({ onExit, live }: { onExit: () => void; live: LiveReveal }) {
+  const tab = live.finding ? "finding" : "portraits";
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [draft, setDraft] = useState({
@@ -67,10 +33,8 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live?: LiveRev
     skip: "",
   });
   const [phase, setPhase] = useState(0);
-  const [samples, setSamples] = useState(SAMPLES);
-  const profiles = live?.profiles ?? samples;
+  const profiles = live.profiles;
   const [editing, setEditing] = useState(false);
-  const [notice, setNotice] = useState("");
   const editorRef = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (editing) {
@@ -84,57 +48,18 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live?: LiveRev
     return () => clearInterval(timer);
   }, [tab]);
   return (
-    <div className={`ir-preview ${live ? "ir-live" : ""}`}>
-      {!live && (
-        <header className="ir-toolbar drag">
-          <span className="ir-preview-label">Onboarding preview</span>
-          <div className="ir-tabs" role="tablist" aria-label="ICP reveal states">
-            {(
-              [
-                ["finding", "Loader · locked"],
-                ["portraits", "Your ICPs · A"],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                role="tab"
-                id={`ir-${value}-tab`}
-                aria-controls="ir-state"
-                aria-selected={tab === value}
-                onClick={() => {
-                  setTab(value);
-                  setNotice("");
-                  setEditing(false);
-                }}
-              >
-                <span>{label}</span>
-              </button>
-            ))}
-          </div>
-          <button type="button" className="ir-exit" onClick={onExit}>
-            Back to app
-          </button>
-        </header>
-      )}
-      {live && (
-        <header className="ir-live-toolbar drag">
-          <button
-            className="ir-exit nodrag"
-            type="button"
-            disabled={Boolean(live.busy)}
-            onClick={onExit}
-          >
-            ← Back
-          </button>
-        </header>
-      )}
-      <main
-        className={`ir-stage ir-${tab}`}
-        id="ir-state"
-        role={live ? undefined : "tabpanel"}
-        aria-labelledby={live ? undefined : `ir-${tab}-tab`}
-      >
+    <div className="ir-reveal">
+      <header className="ir-toolbar drag">
+        <button
+          className="ir-exit nodrag"
+          type="button"
+          disabled={Boolean(live.busy)}
+          onClick={onExit}
+        >
+          ← Back
+        </button>
+      </header>
+      <main className={`ir-stage ir-${tab}`} id="ir-state">
         {tab === "finding" ? (
           <section className="ir-discovery" aria-label="Finding your ICPs">
             <div className="ir-orbit" aria-hidden="true">
@@ -171,31 +96,31 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live?: LiveRev
               className={`ir-cards ir-cards-${tab}`}
               aria-label="Your ideal customer profiles"
             >
-              {profiles.map((sample) => (
-                <article key={sample.id} className="ir-card">
+              {profiles.map((profile) => (
+                <article key={profile.id} className="ir-card">
                   <div className="ir-card-top">
-                    <span className="ir-profile-icon">{DUO[sample.icon]?.(31)}</span>
+                    <span className="ir-profile-icon">{DUO[profile.icon]?.(31)}</span>
                   </div>
-                  <span className="ir-card-tag">{sample.tag}</span>
-                  <h2>{sample.title}</h2>
-                  <p className="ir-card-fit">{sample.fit}</p>
+                  <span className="ir-card-tag">{profile.tag}</span>
+                  <h2>{profile.title}</h2>
+                  <p className="ir-card-fit">{profile.fit}</p>
                   <div className="ir-card-detail ir-buyer">
                     <span>
                       <i aria-hidden="true">{DUO.buyer?.(16)}</i>WHO TO TALK TO
                     </span>
-                    <p>{sample.buyer}</p>
+                    <p>{profile.buyer}</p>
                   </div>
                   <div className="ir-card-detail ir-signal">
                     <span>
                       <i aria-hidden="true">{DUO.trigger?.(16)}</i>A REASON TO REACH OUT
                     </span>
-                    <p>{sample.signal}</p>
+                    <p>{profile.signal}</p>
                   </div>
                   <div className="ir-card-detail ir-skip">
                     <span>
                       <i aria-hidden="true">{DUO.skip?.(16)}</i>MAY NOT BE A FIT IF
                     </span>
-                    <p>{sample.skip}</p>
+                    <p>{profile.skip}</p>
                   </div>
                 </article>
               ))}
@@ -210,18 +135,9 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live?: LiveRev
                   setSaveError(null);
                   setSaving(true);
                   try {
-                    if (live) await live.onAdd(draft);
-                    else
-                      setSamples((items) => [
-                        ...items,
-                        { ...draft, icon: "buyer", id: crypto.randomUUID() },
-                      ]);
+                    await live.onAdd(draft);
                     setDraft({ title: "", tag: "", buyer: "", fit: "", signal: "", skip: "" });
                     setEditing(false);
-                    if (!live)
-                      setNotice(
-                        "Your profile is added to this preview. You can edit it in the dashboard."
-                      );
                   } catch (error) {
                     setSaveError(error instanceof Error ? error.message : String(error));
                   } finally {
@@ -278,7 +194,7 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live?: LiveRev
                 </div>
               </form>
             )}
-            {live?.error && (
+            {live.error && (
               <p className="error" role="alert">
                 {live.error}
               </p>
@@ -290,7 +206,7 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live?: LiveRev
               <button
                 type="button"
                 className="ir-refine"
-                disabled={Boolean(live?.busy) || saving}
+                disabled={Boolean(live.busy) || saving}
                 onClick={() => setEditing(!editing)}
               >
                 {editing ? "Close form" : "Add a profile"}
@@ -298,27 +214,15 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live?: LiveRev
               <button
                 type="button"
                 className="ir-hunt"
-                disabled={Boolean(live?.busy) || saving || editing || profiles.length === 0}
-                onClick={() =>
-                  live
-                    ? live.onStart()
-                    : setNotice(
-                        `Preview only: all ${samples.length} profiles would be saved to your dashboard. No search starts.`
-                      )
-                }
+                disabled={Boolean(live.busy) || saving || editing || profiles.length === 0}
+                onClick={live.onStart}
               >
-                {live?.busy || "Go to my dashboard"} <span aria-hidden="true">↗</span>
+                {live.busy || "Go to my dashboard"} <span aria-hidden="true">↗</span>
               </button>
             </div>
           </section>
         )}
       </main>
-      {!live && (
-        <footer className="ir-footer">
-          <span>Design preview · sample product and ICPs</span>
-          <span role="status">{notice || "No research or hunts run from this preview"}</span>
-        </footer>
-      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import type { ConnectionFailure, ProviderId } from "../../shared/subscriptions";
 import { ProviderMark } from "./ProviderMark";
 
-/** Shared by the live connection flow and its state preview. */
+/** Provider-aware recovery for connection failures. */
 export function ConnectionErrorCard({
   provider,
   failure = "component",

@@ -1,20 +1,11 @@
-.ir-preview {
+.ir-reveal {
   height: 100vh;
   display: flex;
   flex-direction: column;
   background: #fff;
   color: var(--ink);
 }
-.ir-toolbar {
-  min-height: 68px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 12px 26px 12px 90px;
-  border-bottom: 1px solid #efeff1;
-}
-.ir-preview-label,
+
 .ir-exit {
   font-size: 11px;
   color: var(--faint);
@@ -23,31 +14,6 @@
   border: 0;
   background: transparent;
   cursor: pointer;
-}
-.ir-tabs {
-  display: flex;
-  padding: 4px;
-  gap: 5px;
-  background: #f5f5f6;
-  border-radius: 12px;
-}
-.ir-tabs button {
-  border: 0;
-  background: transparent;
-  color: #88858b;
-  padding: 9px 16px;
-  border-radius: 9px;
-  font-size: 10px;
-  cursor: pointer;
-}
-.ir-tabs :where(button) span {
-  font-size: 12px;
-  margin-left: 7px;
-}
-.ir-tabs button[aria-selected="true"] {
-  background: #fff;
-  color: var(--ink);
-  box-shadow: 0 1px 4px #0000000d;
 }
 .ir-stage {
   flex: 1;
@@ -235,11 +201,6 @@
   display: grid;
   place-items: center;
 }
-.ir-card-index {
-  font-size: 11px;
-  color: #bc9da7;
-  margin-left: auto;
-}
 .ir-card-tag {
   font-size: 10px;
   color: #a48b94;
@@ -312,14 +273,6 @@
   font-size: 11px;
   margin: 15px 0 0;
 }
-.ir-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 15px;
-  padding: 12px 25px;
-  font-size: 10px;
-  color: #a0969b;
-}
 @keyframes ir-spin {
   to {
     transform: rotate(360deg);
@@ -356,9 +309,6 @@
   .ir-card h2 {
     font-size: 19px;
   }
-  .ir-preview-label {
-    display: none;
-  }
   .ir-results h1 {
     font-size: 32px;
   }
@@ -386,15 +336,15 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ir-preview .ir-orbit-sweep,
-  .ir-preview .ir-core,
-  .ir-preview .ir-orbit-node,
-  .ir-preview .ir-working-dot,
-  .ir-preview .ir-phase,
-  .ir-preview .ir-results {
+  .ir-reveal .ir-orbit-sweep,
+  .ir-reveal .ir-core,
+  .ir-reveal .ir-orbit-node,
+  .ir-reveal .ir-working-dot,
+  .ir-reveal .ir-phase,
+  .ir-reveal .ir-results {
     animation: none;
   }
-  .ir-preview .ir-card {
+  .ir-reveal .ir-card {
     transition: none;
   }
 }
@@ -475,16 +425,7 @@
     padding-left: 80px;
     gap: 8px;
   }
-  .ir-tabs button {
-    padding: 9px;
-  }
-  .ir-tabs :where(button) span {
-    font-size: 10px;
-    margin-left: 3px;
-  }
 }
-
-/* Three card explorations. The surrounding reveal and locked loader stay shared. */
 .ir-cards .ir-card {
   display: grid;
   align-content: start;
@@ -530,87 +471,6 @@
 .ir-cards-portraits .ir-card-fit {
   margin-bottom: 6px;
 }
-.ir-cards-rows {
-  grid-template-columns: 1fr;
-  gap: 12px;
-}
-.ir-cards-rows .ir-card {
-  grid-template-areas: "icon tag buyer signal skip" "icon title buyer signal skip" "icon fit buyer signal skip";
-  grid-template-columns: 40px 1.25fr 1fr 1fr 1fr;
-  column-gap: 21px;
-  padding: 23px;
-  border-radius: 16px;
-  background: #ffffffd6;
-  border: 1px solid #ffffff;
-  align-items: start;
-}
-.ir-cards-rows .ir-card-top {
-  margin: 0;
-}
-.ir-cards-rows .ir-profile-icon {
-  width: 39px;
-  height: 39px;
-  border-radius: 12px;
-  background: #f2f5f3;
-}
-.ir-cards-rows .ir-card h2 {
-  font-size: 17px;
-  min-height: 0;
-  margin: 7px 0;
-  letter-spacing: -0.3px;
-}
-.ir-cards-rows .ir-card-tag {
-  font-size: 9px;
-}
-.ir-cards-rows .ir-card-fit {
-  font-size: 11px;
-  min-height: 0;
-  margin: 0;
-  line-height: 1.5;
-}
-.ir-cards-rows .ir-card-detail {
-  margin: 0;
-  padding: 0 0 0 18px;
-  border: 0;
-  border-left: 1px solid #ede5e8;
-  align-self: stretch;
-}
-.ir-cards-rows .ir-card-detail p {
-  font-size: 11px;
-  line-height: 1.6;
-}
-.ir-cards-rows .ir-card-detail > span {
-  font-size: 7px;
-  letter-spacing: 0.6px;
-}
-@media (max-width: 1000px) {
-  .ir-cards-rows .ir-card {
-    column-gap: 12px;
-    padding: 18px;
-    grid-template-columns: 1.2fr 1fr 1fr 1fr;
-    grid-template-areas: "tag buyer signal skip" "title buyer signal skip" "fit buyer signal skip";
-  }
-  .ir-cards-rows .ir-card-top {
-    display: none;
-  }
-  .ir-tabs button {
-    padding-inline: 10px;
-  }
-}
-@media (max-width: 720px) {
-  .ir-cards-rows .ir-card {
-    grid-template-columns: 1fr;
-    grid-template-areas: "tag" "title" "fit" "buyer" "signal" "skip";
-  }
-  .ir-cards-rows .ir-card-detail {
-    padding: 12px 0 0;
-    margin-top: 12px;
-    border-left: 0;
-    border-top: 1px solid #ede5e8;
-  }
-}
-
-/* Readable metadata and restrained detail icons for the two remaining options. */
 .ir-cards .ir-card-tag {
   font-size: 12px;
   line-height: 1.5;
@@ -637,34 +497,6 @@
   font-size: 13px;
   line-height: 1.55;
 }
-.ir-cards-rows .ir-card h2 {
-  font-size: 19px;
-}
-.ir-cards-rows .ir-card {
-  grid-template-columns: 40px 1.25fr 1fr 1fr 1fr;
-  column-gap: 18px;
-}
-.ir-cards-rows .ir-card-detail {
-  padding-left: 14px;
-}
-.ir-cards-rows .ir-card-detail > span {
-  font-size: 8px;
-  letter-spacing: 0.2px;
-  gap: 5px;
-}
-@media (max-width: 1000px) {
-  .ir-cards-rows .ir-card {
-    grid-template-columns: 1.2fr 1fr 1fr 1fr;
-  }
-}
-@media (max-width: 720px) {
-  .ir-cards-rows .ir-card {
-    grid-template-columns: 1fr;
-  }
-  .ir-cards-rows .ir-card-detail {
-    padding-left: 0;
-  }
-}
 
 /* Each card spans the same seven content-sized tracks. A longer field grows
    that row for every card beside it, rather than shifting later sections. */
@@ -682,31 +514,29 @@
 .ir-cards-portraits .ir-card > * {
   grid-area: auto;
 }
-
-/* Space belongs to the content so it survives scrolling in both preview and setup. */
 .ir-results {
   padding-bottom: 40px;
   flex-shrink: 0;
 }
-.ir-live-toolbar {
+.ir-toolbar {
   height: 52px;
   min-height: 52px;
   padding: 17px 30px 0 85px;
 }
-.ir-live {
+.ir-reveal {
   height: 100%;
   width: 100%;
 }
-.ir-live .ir-stage {
+.ir-reveal .ir-stage {
   padding-top: 12px;
   padding-bottom: 24px;
 }
-.ir-preview button:disabled {
+.ir-reveal button:disabled {
   opacity: 0.55;
   cursor: default;
 }
 
-.ir-live-toolbar {
+.ir-toolbar {
   height: 84px;
   min-height: 84px;
   padding: 28px 38px;
@@ -715,7 +545,7 @@
   justify-content: flex-end;
 }
 @media (max-width: 1000px) {
-  .ir-live-toolbar {
+  .ir-toolbar {
     padding-inline: 30px;
   }
 }

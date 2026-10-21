@@ -49,8 +49,8 @@ Tests simulate provider failures, token refresh/cancellation races, and browser 
 
 Subscription authentication design references [OpenBot](https://github.com/CopilotKit/openbot), notably its official CLI sign-in approach and xAI device authorization implementation. The ICP and hunting method borrows ideas, rewritten in our own words, from [gtmskills.com](https://www.gtmskills.com/) (MIT, by Swan and its authors).
 
-## Bundled runtimes and design preview
+## Bundled runtimes and connection recovery
 
 The first `dev` or `build` downloads the pinned official macOS runtime archives, verifies their SHA-512 checksums, and caches them under ignored `resources/runtime/<arch>/`. Later runs use the cache. The packaging hook prepares the target architecture and copies both runtimes outside the app ASAR. A fresh development build needs registry access; end users do not download tools during sign-in. Both Apple Silicon and Intel package checksums are pinned in `scripts/prepare-runtime.mjs`.
 
-The reviewed state gallery remains available by adding `?state-preview=1` to the renderer URL. It is not the startup screen and never runs authentication or AI calls. Connection failures share one screen with recovery actions matched to sign-in, temporary network, session, app component, and status-check failures. Cancellation remains separate. Missing app components offer another provider rather than promising a repair. The full onboarding gallery is available through `?onboarding-review=1`.
+Connection failures share one screen with recovery actions matched to sign-in, temporary network, session, app component, and status-check failures. Cancellation remains separate. Missing app components offer another provider rather than promising a repair.

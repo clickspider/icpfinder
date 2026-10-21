@@ -8,14 +8,11 @@ import type { State } from "../../shared/types";
 import { AgentView } from "./AgentView";
 import { CompanyView } from "./CompanyView";
 import { ConnectorsView } from "./Connectors";
-import { IcpRevealPreview } from "./IcpReveal";
 import { IcpView } from "./IcpView";
 import { MatchingView } from "./Matching";
 import { NetworkView } from "./Network";
-import { OnboardingGallery } from "./OnboardingGallery";
 import { ProductView } from "./ProductView";
 import { Sidebar } from "./Sidebar";
-import { SubscriptionDesignPreview } from "./SubscriptionDesignPreview";
 import { UsageView } from "./Usage";
 import { api, cleanError } from "./ui";
 import { Wizard } from "./Wizard";
@@ -34,15 +31,6 @@ export const App = () => {
   const [state, setState] = useState<State | null>(null);
   const [view, setView] = useState<View | null>(null);
 
-  const [designPreview, setDesignPreview] = useState(() =>
-    new URLSearchParams(window.location.search).has("state-preview")
-  );
-  const [icpPreview, setIcpPreview] = useState(() =>
-    new URLSearchParams(window.location.search).has("icp-preview")
-  );
-  const [onboardingReview, setOnboardingReview] = useState(() =>
-    new URLSearchParams(window.location.search).has("onboarding-review")
-  );
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
@@ -97,9 +85,6 @@ export const App = () => {
   );
 
   if (!state) return null;
-  if (onboardingReview) return <OnboardingGallery onExit={() => setOnboardingReview(false)} />;
-  if (icpPreview) return <IcpRevealPreview onExit={() => setIcpPreview(false)} />;
-  if (designPreview) return <SubscriptionDesignPreview onExit={() => setDesignPreview(false)} />;
   const ws = state.workspaces.find((w) => w.id === state.activeId);
   if (!ws?.setupDone)
     return (

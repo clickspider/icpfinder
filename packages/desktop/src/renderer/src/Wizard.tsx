@@ -21,28 +21,18 @@ const clean = (e: unknown) =>
     ? e.message.replace(/^Error invoking remote method '\w+': (Error: )?/, "")
     : String(e);
 
-export const Wizard = ({
-  state,
-  onState,
-  preview,
-}: {
-  state: State;
-  onState: (s: State) => void;
-  preview?: { step: Step; mode?: "site" | "idea"; busy?: string };
-}) => {
+export const Wizard = ({ state, onState }: { state: State; onState: (s: State) => void }) => {
   const ws = state.workspaces.find((w) => w.id === state.activeId);
   // Someone who already has a product can always leave a new setup.
   const hasProducts = state.workspaces.some((w) => w.setupDone && !w.archived);
-  const [step, setStep] = useState<Step>(
-    preview?.step ?? (ws?.icps.length ? "icp" : ws ? "about" : "welcome")
-  );
-  const [mode, setMode] = useState<"site" | "idea">(preview?.mode ?? "site");
-  const [url, setUrl] = useState(preview?.step === "product" ? "" : (ws?.product.url ?? ""));
+  const [step, setStep] = useState<Step>(ws?.icps.length ? "icp" : ws ? "about" : "welcome");
+  const [mode, setMode] = useState<"site" | "idea">("site");
+  const [url, setUrl] = useState(ws?.product.url ?? "");
   const [description, setDescription] = useState(
     ws?.product.url ? "" : (ws?.product.siteText ?? "")
   );
-  const [busy, setBusy] = useState<string | null>(preview?.busy ?? null);
-  const [briefReady, setBriefReady] = useState(Boolean(ws) && !preview?.busy);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [briefReady, setBriefReady] = useState(Boolean(ws));
   const [error, setError] = useState<string | null>(null);
 
   const [editingOverview, setEditingOverview] = useState(false);
@@ -58,7 +48,6 @@ export const Wizard = ({
 
   const run = (label: string, fn: () => Promise<State>, next?: Step) =>
     withConnection(async () => {
-      if (preview) return;
       if (next === "about") {
         setStep("about");
         setBriefReady(false);
@@ -97,14 +86,7 @@ export const Wizard = ({
     setSavingOverview(true);
     setError(null);
     try {
-      if (preview)
-        onState({
-          ...state,
-          workspaces: state.workspaces.map((w) =>
-            w.id === state.activeId ? { ...w, product: { ...w.product, ...update } } : w
-          ),
-        });
-      else onState(await api().updateProduct(update));
+      onState(await api().updateProduct(update));
     } catch (e) {
       setError(clean(e));
       throw e;
@@ -113,7 +95,6 @@ export const Wizard = ({
     }
   };
   const next = () => {
-    if (preview) return;
     if (step === "welcome") return setStep("product");
     if (step === "product" || (step === "about" && !briefReady)) return void readBrief();
     if (step === "about") return void run("Finding your ICPs…", () => api().findIcps(), "icp");
@@ -177,7 +158,7 @@ export const Wizard = ({
                   : (["buyer", "company", "site"][index % 3] ?? "buyer"),
             })),
             onAdd: async (draft) => {
-              if (!preview) onState(await api().addIcp(draft));
+              onState(await api().addIcp(draft));
             },
             onStart: next,
           }}
@@ -345,7 +326,7 @@ export const Wizard = ({
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              {hasProducts && idx === 0 && !preview && (
+              {hasProducts && idx === 0 && (
                 <button
                   className="ghost btn"
                   type="button"

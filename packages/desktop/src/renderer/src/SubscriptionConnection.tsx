@@ -11,7 +11,7 @@ import { Glass } from "./glass";
 import { AppBrand, OnboardingAside } from "./OnboardingFrame";
 import { ProviderMark } from "./ProviderMark";
 import { api, cleanError } from "./ui";
-import "./subscription-preview.css";
+import "./subscription-connection.css";
 
 const PROVIDERS: Array<{ id: ProviderId; name: string }> = [
   { id: "claude", name: "Claude" },
@@ -25,19 +25,15 @@ export function SubscriptionConnection({
   onState,
   onContinue,
   onBack,
-  previewStatuses,
 }: {
-  previewStatuses?: SubscriptionStatus[];
   state: State;
   product: string;
   onState: (state: State) => void;
   onContinue: () => Promise<void> | void;
   onBack: () => void;
 }) {
-  const [statuses, setStatuses] = useState<SubscriptionStatus[] | null>(previewStatuses ?? null);
-  const [provider, setProvider] = useState<ProviderId | null>(
-    previewStatuses ? suggestedProvider(previewStatuses) : null
-  );
+  const [statuses, setStatuses] = useState<SubscriptionStatus[] | null>(null);
+  const [provider, setProvider] = useState<ProviderId | null>(null);
   const [attempt, setAttempt] = useState<LoginAttempt | null>(null);
   const [busy, setBusy] = useState(false);
   const [expired, setExpired] = useState(false);
@@ -55,19 +51,16 @@ export function SubscriptionConnection({
   const waiting = attempt?.status === "pending";
   const success = attempt?.status === "complete";
 
-  const refresh = useCallback(
-    async (suggest = false) => {
-      const result = previewStatuses ?? (await api().subscriptionStatus());
-      if (!live.current) return;
-      setStatuses(result);
-      if (suggest) {
-        setProvider(
-          suggestedProvider(result, preferred.current.provider, preferred.current.confirmed)
-        );
-      }
-    },
-    [previewStatuses]
-  );
+  const refresh = useCallback(async (suggest = false) => {
+    const result = await api().subscriptionStatus();
+    if (!live.current) return;
+    setStatuses(result);
+    if (suggest) {
+      setProvider(
+        suggestedProvider(result, preferred.current.provider, preferred.current.confirmed)
+      );
+    }
+  }, []);
   useEffect(() => {
     live.current = true;
     void refresh(true).catch((e) => {
@@ -134,10 +127,6 @@ export function SubscriptionConnection({
   };
   const connect = () =>
     act(async () => {
-      if (previewStatuses) {
-        await onContinue();
-        return;
-      }
       if (!provider) return;
       if (connected) {
         // Recheck before allowing any AI request, including after a session expired elsewhere.
@@ -195,7 +184,7 @@ export function SubscriptionConnection({
     </button>
   );
   return (
-    <div className="sp-preview sp-production">
+    <div className="sp-connection">
       <main className={`sp-canvas sp-${connected ? "recommended" : "choice"}`}>
         <section className="sp-sidebar">
           <AppBrand />
