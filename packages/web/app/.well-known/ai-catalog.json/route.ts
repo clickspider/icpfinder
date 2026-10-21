@@ -30,6 +30,12 @@ const catalog = {
       description: "How to find your ICP as a solo founder",
     },
     { type: "app", url: `${SITE_URL}/find`, description: "Run an ICP search in the browser" },
+    {
+      type: "mcp",
+      url: `${SITE_URL}/mcp`,
+      transport: "streamable-http",
+      description: "MCP server with a find_icp tool; no auth for free demo runs",
+    },
     { type: "sdk", url: NPM_URL, description: "@icpfinder/core, the streaming engine" },
     { type: "source", url: REPO_URL, description: "MIT-licensed source code" },
   ],
