@@ -80,23 +80,28 @@ export const detectAi = async (): Promise<AiTool[]> => {
 
 /** Which workspace the current async job belongs to (set with jobs.run). */
 export const jobs = new AsyncLocalStorage<string>();
+/** One hunt or research inside a workspace, so the founder can stop just that one. */
+export const jobKeys = new AsyncLocalStorage<string>();
 const children = new Map<string, Set<ChildProcess>>();
 const paused = new Set<string>();
+const keysNow = (): string[] =>
+  [jobs.getStore(), jobKeys.getStore()].filter((k): k is string => Boolean(k));
 
 export const track = (child: ChildProcess): void => {
-  const ws = jobs.getStore();
-  if (!ws) return;
-  if (paused.has(ws)) {
+  const keys = keysNow();
+  if (keys.some((k) => paused.has(k))) {
     child.kill("SIGTERM");
     return;
   }
-  const set = children.get(ws) ?? new Set();
-  set.add(child);
-  children.set(ws, set);
-  child.on("close", () => set.delete(child));
+  for (const k of keys) {
+    const set = children.get(k) ?? new Set();
+    set.add(child);
+    children.set(k, set);
+    child.on("close", () => set.delete(child));
+  }
 };
 
-/** Stop every Claude run for a workspace, and refuse new ones until resumed. */
+/** Stop every Claude run for a workspace (or one job key), and refuse new ones until resumed. */
 export const pauseWorkspace = (wsId: string): void => {
   paused.add(wsId);
   for (const controller of controllers.get(wsId) ?? []) controller.abort();
@@ -184,24 +189,24 @@ export const createLlm = async (
 
 const llm = async (lightweight = false): Promise<LlmProvider> => {
   const controller = new AbortController();
-  const ws = jobs.getStore();
+  const keys = keysNow();
   const inner = await createLlm(lightweight, controller.signal);
   return {
     name: inner.name,
     stub: false,
     generate: async (input) => {
-      if (ws && paused.has(ws)) throw new Error("AI request stopped.");
-      if (ws) {
-        const set = controllers.get(ws) ?? new Set<AbortController>();
+      if (keys.some((k) => paused.has(k))) throw new Error("AI request stopped.");
+      for (const k of keys) {
+        const set = controllers.get(k) ?? new Set<AbortController>();
         set.add(controller);
-        controllers.set(ws, set);
+        controllers.set(k, set);
       }
       try {
         return await inner.generate(input);
       } finally {
-        if (ws) {
-          controllers.get(ws)?.delete(controller);
-          if (!controllers.get(ws)?.size) controllers.delete(ws);
+        for (const k of keys) {
+          controllers.get(k)?.delete(controller);
+          if (!controllers.get(k)?.size) controllers.delete(k);
         }
       }
     },
@@ -718,7 +723,8 @@ export const sourceCompanies = async (
           onFound(co);
         }
       } catch {
-        // One failed check never stops the hunt.
+        // Stopped: leave quietly. Otherwise one failed check never stops the hunt.
+        if (keysNow().some((k) => paused.has(k))) return;
         step("skip", `${cand.name} · could not check`);
       }
     }

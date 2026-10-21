@@ -41,6 +41,8 @@ const api: IcpApi = {
   updateCriteria: call("updateCriteria") as IcpApi["updateCriteria"],
   approveCompany: call("approveCompany") as IcpApi["approveCompany"],
   researchCompany: call("researchCompany") as IcpApi["researchCompany"],
+  stopHunt: call("stopHunt") as IcpApi["stopHunt"],
+  stopResearch: call("stopResearch") as IcpApi["stopResearch"],
   runAction: call("runAction") as IcpApi["runAction"],
   watchNow: call("watchNow") as IcpApi["watchNow"],
   markSeen: call("markSeen") as IcpApi["markSeen"],

@@ -553,6 +553,13 @@ export const CompanyView = ({
                 <div style={{ color: "var(--muted)" }}>
                   Then the code checks every quote on its page.
                 </div>
+                <button
+                  type="button"
+                  className="btn stop-btn"
+                  onClick={() => void api().stopResearch(icpId, c.domain).then(onState)}
+                >
+                  {c.status === "researching" ? "Stop research" : "Take out of the queue"}
+                </button>
               </>
             ) : (
               <Snap

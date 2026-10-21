@@ -209,6 +209,8 @@ const Row = ({
           <Spinner />
         ) : c.status === "done" ? (
           <span className="pill p-green">✓ {p} proven</span>
+        ) : c.status === "candidate" ? (
+          <span className="pill">Not researched</span>
         ) : (
           <span className="pill p-red">failed</span>
         )}
@@ -569,11 +571,15 @@ export const IcpView = ({
             </div>
           )}
         </div>
-        <button type="button" className="primary btn nodrag" disabled={icp.sourcing} onClick={hunt}>
+        <button
+          type="button"
+          className={`btn nodrag ${icp.sourcing ? "stop-btn" : "primary"}`}
+          onClick={() => (icp.sourcing ? void api().stopHunt(icp.id).then(onState) : hunt())}
+        >
           {icp.sourcing ? (
             <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
               <Spinner />
-              Hunting…
+              Stop hunting
             </span>
           ) : icp.hunted ? (
             "Find more companies"

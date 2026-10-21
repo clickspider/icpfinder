@@ -292,6 +292,8 @@ export interface IcpApi {
   updateCriteria(icpId: string, criteria: IcpCriteria): Promise<State>;
   huntIcp(icpId: string): Promise<State>;
   researchCompany(icpId: string, domain: string): Promise<State>;
+  stopHunt(icpId: string): Promise<State>;
+  stopResearch(icpId: string, domain: string): Promise<State>;
   approveCompany(icpId: string, domain: string, ok: boolean): Promise<State>;
   runAction(icpId: string, domain: string, action: ActionId): Promise<State>;
   watchNow(icpId: string, domain: string): Promise<State>;
