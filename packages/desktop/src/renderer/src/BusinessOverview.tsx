@@ -31,6 +31,7 @@ export function BusinessOverview({
     );
   // Every field in edit mode has the same label and position in view mode.
   const shown = draft ?? product;
+  const showMarketplace = marketplaceOf(product) === true;
   const fields = OVERVIEW_FIELDS.filter(
     ([key]) => key === "name" || key === "sell" || key === "problem" || Boolean(product[key])
   );
@@ -46,13 +47,12 @@ export function BusinessOverview({
     setError("");
     try {
       const patch: Partial<Product> = {
-        marketplace: marketplaceOf(draft),
-        model: undefined,
+        ...(showMarketplace ? { marketplace: marketplaceOf(draft), model: undefined } : {}),
         confirmedFields: [
           ...new Set([
             ...(product.confirmedFields ?? []),
             ...fields.map(([key]) => key),
-            "marketplace",
+            ...(showMarketplace ? ["marketplace"] : []),
           ]),
         ],
       };
@@ -65,12 +65,6 @@ export function BusinessOverview({
       setSaving(false);
     }
   };
-  const structure =
-    marketplaceOf(product) === undefined
-      ? "Not specified"
-      : marketplaceOf(product)
-        ? "Marketplace connecting buyers and sellers"
-        : "Not a marketplace";
   const beginEdit = () => {
     if (!draft) setDraft({ ...product, marketplace: marketplaceOf(product) });
     setEditing(true);
@@ -146,16 +140,18 @@ export function BusinessOverview({
                   <dd>{product[key] || "Not provided"}</dd>
                 </div>
               ))}
-              <div>
-                <dt>
-                  Business structure
-                  {marketplaceOf(product) !== undefined &&
-                    !product.confirmedFields?.includes("marketplace") && (
-                      <span className="ob-suggestion">Suggested</span>
-                    )}
-                </dt>
-                <dd>{structure}</dd>
-              </div>
+              {showMarketplace && (
+                <div>
+                  <dt>
+                    Business structure
+                    {marketplaceOf(product) !== undefined &&
+                      !product.confirmedFields?.includes("marketplace") && (
+                        <span className="ob-suggestion">Suggested</span>
+                      )}
+                  </dt>
+                  <dd>Marketplace connecting buyers and sellers</dd>
+                </div>
+              )}
             </dl>
           </div>
         </section>
@@ -196,33 +192,35 @@ export function BusinessOverview({
                 )}
               </div>
             ))}
-            <div className="ob-form-field">
-              <label htmlFor="overview-marketplace">Business structure</label>
-              <select
-                id="overview-marketplace"
-                disabled={saving}
-                value={
-                  marketplaceOf(shown) === undefined
-                    ? "unknown"
-                    : marketplaceOf(shown)
-                      ? "yes"
-                      : "no"
-                }
-                onChange={(e) =>
-                  draft &&
-                  setDraft({
-                    ...draft,
-                    model: undefined,
-                    marketplace:
-                      e.target.value === "unknown" ? undefined : e.target.value === "yes",
-                  })
-                }
-              >
-                <option value="unknown">Not specified</option>
-                <option value="yes">Marketplace connecting buyers and sellers</option>
-                <option value="no">Not a marketplace</option>
-              </select>
-            </div>
+            {showMarketplace && (
+              <div className="ob-form-field">
+                <label htmlFor="overview-marketplace">Business structure</label>
+                <select
+                  id="overview-marketplace"
+                  disabled={saving}
+                  value={
+                    marketplaceOf(shown) === undefined
+                      ? "unknown"
+                      : marketplaceOf(shown)
+                        ? "yes"
+                        : "no"
+                  }
+                  onChange={(e) =>
+                    draft &&
+                    setDraft({
+                      ...draft,
+                      model: undefined,
+                      marketplace:
+                        e.target.value === "unknown" ? undefined : e.target.value === "yes",
+                    })
+                  }
+                >
+                  <option value="unknown">Not specified</option>
+                  <option value="yes">Marketplace connecting buyers and sellers</option>
+                  <option value="no">Not a marketplace</option>
+                </select>
+              </div>
+            )}
             {error && (
               <p className="error" role="alert">
                 {error}
