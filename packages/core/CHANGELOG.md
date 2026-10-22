@@ -1,5 +1,16 @@
 # @icpfinder/core
 
+## 0.6.0
+
+### Minor Changes
+
+- [#49](https://github.com/clickspider/icpfinder/pull/49) [`9927fe0`](https://github.com/clickspider/icpfinder/commit/9927fe088d806e89be55ebab08b804ac38128bdb) Thanks [@clickspider](https://github.com/clickspider)! - Add `researchAccount()`: SDR account research (why-now, people, public posts, what they sell vs need, tech stack, disqualifiers) where every quote is checked against its page in code and a finding is only "proven" with 2+ independent sources. Add `ClaudeCliLlmProvider` to run on a local Claude Code login.
+
+### Patch Changes
+
+- Updated dependencies [[`0aea9de`](https://github.com/clickspider/icpfinder/commit/0aea9dede50e1d7edb8b876e54617acd064861d7), [`9927fe0`](https://github.com/clickspider/icpfinder/commit/9927fe088d806e89be55ebab08b804ac38128bdb)]:
+  - @icpfinder/providers@0.6.0
+
 ## 0.5.0
 
 ### Minor Changes
