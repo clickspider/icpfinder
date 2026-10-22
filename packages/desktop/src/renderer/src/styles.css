@@ -2065,46 +2065,6 @@ details.fact[open] .fact-chev {
   display: inline-flex;
   align-items: center;
 }
-.pe-line {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  width: 100%;
-  margin-top: 10px;
-  padding: 10px 12px;
-  border: 0;
-  border-radius: 10px;
-  background: #faf7f8;
-  text-align: left;
-  cursor: pointer;
-  font-size: 13px;
-  color: #5f565b;
-}
-.pe-line:hover {
-  background: #f5eff1;
-}
-.pe-line-item {
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.pe-line-item b {
-  color: var(--ink);
-  font-weight: 600;
-  margin-right: 4px;
-}
-.pe-more {
-  flex-shrink: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ink);
-}
-.pe-less {
-  align-self: flex-end;
-  font-size: 12px;
-}
 /* Back link on pages opened from another screen. */
 .page-back {
   display: inline-flex;
@@ -2287,8 +2247,13 @@ details.fact[open] .fact-chev {
 }
 .reach-more > summary {
   cursor: pointer;
-  padding: 4px 2px;
+  padding: 6px 2px;
   list-style: none;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
 }
 .reach-more > summary::-webkit-details-marker {
   display: none;

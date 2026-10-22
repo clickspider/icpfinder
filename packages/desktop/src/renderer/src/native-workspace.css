@@ -223,7 +223,8 @@
 }
 .native-crumb {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
   color: var(--muted);
   margin-bottom: 35px;
@@ -269,9 +270,19 @@
   margin: 0;
   font-size: 19px;
 }
+/* The drawer is the container: no card inside it, one column, full profile. */
+.native-workspace .native-inspector .panel,
 .native-inspector .panel {
   box-shadow: none;
-  padding: 20px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 16px 0 0;
+}
+.native-inspector .pe-view {
+  grid-template-columns: 1fr;
+  gap: 18px;
+  margin-top: 4px;
 }
 .native-inspector .ir-editor-fields {
   grid-template-columns: 1fr;
@@ -495,7 +506,7 @@
 }
 
 .native-icp .native-company-row {
-  grid-template-columns: minmax(130px, 1.2fr) minmax(150px, 2fr) 65px 88px;
+  grid-template-columns: minmax(130px, 1.2fr) minmax(150px, 2fr) 65px 120px;
   column-gap: 16px;
 }
 
@@ -898,7 +909,7 @@
 
 .native-company-labels {
   display: grid;
-  grid-template-columns: minmax(130px, 1.2fr) minmax(150px, 2fr) 65px 88px;
+  grid-template-columns: minmax(130px, 1.2fr) minmax(150px, 2fr) 65px 120px;
   gap: 16px;
   padding: 0 16px 10px;
   font-size: 11px;
@@ -1049,4 +1060,24 @@
   .native-inspector[open].is-closing::backdrop {
     animation: none;
   }
+}
+
+.native-findings {
+  white-space: nowrap;
+}
+
+/* Disclosure rows: one chevron, inside the padding, like "More actions". */
+.native-company details.panel > summary {
+  cursor: pointer;
+  list-style: none;
+}
+.native-company details.panel > summary::-webkit-details-marker {
+  display: none;
+}
+.native-company details.panel > summary::before {
+  content: "› ";
+  color: var(--muted);
+}
+.native-company details.panel[open] > summary::before {
+  content: "⌄ ";
 }

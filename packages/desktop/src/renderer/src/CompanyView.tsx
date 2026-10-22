@@ -845,7 +845,7 @@ export const CompanyView = ({
               <ReachCard icpId={icpId} c={c} person={person?.name} onState={onState} />
 
               <details className="reach-more">
-                <summary className="lbl">More · your AI writes or searches (uses tokens)</summary>
+                <summary className="lbl">More actions · these use AI tokens</summary>
                 <div
                   className="native-action-list"
                   style={{
