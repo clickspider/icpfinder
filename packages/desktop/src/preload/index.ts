@@ -33,7 +33,7 @@ const api: IcpApi = {
   planUsage: call("planUsage") as IcpApi["planUsage"],
   openLogin: call("openLogin") as IcpApi["openLogin"],
   busyWork: call("busyWork") as IcpApi["busyWork"],
-  recalibrate: call("recalibrate") as IcpApi["recalibrate"],
+  previewBusiness: call("previewBusiness") as IcpApi["previewBusiness"],
   archiveWorkspace: call("archiveWorkspace") as IcpApi["archiveWorkspace"],
   saveSettings: call("saveSettings") as IcpApi["saveSettings"],
   finishSetup: call("finishSetup") as IcpApi["finishSetup"],

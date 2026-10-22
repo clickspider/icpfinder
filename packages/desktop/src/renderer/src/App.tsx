@@ -1,3 +1,4 @@
+import { AppIcon } from "./AppIcon";
 // SPDX-License-Identifier: MIT
 //
 // Root: the setup wizard blocks until the workspace (product + ICPs) exists.
@@ -11,13 +12,18 @@ import { ConnectorsView } from "./Connectors";
 import { IcpView } from "./IcpView";
 import { MatchingView } from "./Matching";
 import { NetworkView } from "./Network";
+import { Overview } from "./Overview";
 import { ProductView } from "./ProductView";
+import { SettingsView } from "./SettingsView";
+import "./native-workspace.css";
 import { Sidebar } from "./Sidebar";
 import { UsageView } from "./Usage";
 import { api, cleanError } from "./ui";
 import { Wizard } from "./Wizard";
 
 export type View =
+  | { kind: "overview" }
+  | { kind: "settings"; tab?: "Provider" | "Connected services" | "Usage" }
   | { kind: "icp"; icpId: string }
   | { kind: "company"; icpId: string; domain: string }
   | { kind: "product" }
@@ -76,15 +82,17 @@ export const App = () => {
   }, [toast]);
   const toastEl = toast && (
     <div className="toast glass pop" role="alert">
-      <span style={{ color: "#e0244a", fontWeight: 700 }}>⚠</span>
+      <span style={{ color: "#e0244a", fontWeight: 700 }}>
+        <AppIcon name="warning" />
+      </span>
       <span style={{ flex: 1 }}>{toast}</span>
       <button
         type="button"
-        className="ghost btn"
+        className="btn native-icon-button"
         aria-label="Dismiss"
         onClick={() => setToast(null)}
       >
-        ✕
+        <AppIcon name="close" />
       </button>
     </div>
   );
@@ -99,10 +107,11 @@ export const App = () => {
       </>
     );
 
-  const firstIcp = ws.icps[0];
   const current: View | null =
     view &&
-    (view.kind === "product" ||
+    (view.kind === "overview" ||
+      view.kind === "settings" ||
+      view.kind === "product" ||
       view.kind === "connectors" ||
       view.kind === "network" ||
       view.kind === "matching" ||
@@ -110,14 +119,23 @@ export const App = () => {
       view.kind === "agent" ||
       ws.icps.some((i) => i.id === view.icpId))
       ? view
-      : firstIcp
-        ? { kind: "icp", icpId: firstIcp.id }
-        : { kind: "product" };
+      : { kind: "overview" };
 
   return (
-    <div className="shell">
+    <div className="shell native-workspace">
       <Sidebar state={state} ws={ws} view={current} go={setView} onState={setState} />
       <main className="main">
+        {current?.kind === "overview" && (
+          <Overview key={ws.id} ws={ws} go={setView} onState={setState} />
+        )}
+        {current?.kind === "settings" && (
+          <SettingsView
+            state={state}
+            onState={setState}
+            go={setView}
+            tab={current.tab ?? "Provider"}
+          />
+        )}
         {current?.kind === "icp" && (
           <IcpView
             key={current.icpId}
@@ -140,7 +158,7 @@ export const App = () => {
             onState={setState}
           />
         )}
-        {current?.kind === "product" && <ProductView key="product" ws={ws} onState={setState} />}
+        {current?.kind === "product" && <ProductView key={ws.id} ws={ws} onState={setState} />}
         {current?.kind === "connectors" && (
           <ConnectorsView
             state={state}
@@ -150,14 +168,10 @@ export const App = () => {
         )}
         {current?.kind === "matching" && (
           <MatchingView
+            key={ws.id}
             ws={ws}
             onState={setState}
-            onBack={() =>
-              setView(
-                current.back ??
-                  (firstIcp ? { kind: "icp", icpId: firstIcp.id } : { kind: "product" })
-              )
-            }
+            onBack={() => setView(current.back ?? { kind: "overview" })}
           />
         )}
         {current?.kind === "usage" && <UsageView state={state} />}

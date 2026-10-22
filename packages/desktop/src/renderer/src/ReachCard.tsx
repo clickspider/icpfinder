@@ -21,6 +21,21 @@ const LOGO: Partial<Record<ReachKind, string>> = {
   instagram: "instagram",
 };
 
+/** A post shows the site it is on (Hacker News, X, LinkedIn, Reddit). */
+const logoFor = (l: { kind: ReachKind; url: string }): string =>
+  LOGO[l.kind] ??
+  (l.kind === "post"
+    ? /ycombinator/.test(l.url)
+      ? "hn"
+      : /(x|twitter)\.com/.test(l.url)
+        ? "x"
+        : /linkedin/.test(l.url)
+          ? "linkedin"
+          : /reddit/.test(l.url)
+            ? "reddit"
+            : ""
+    : "");
+
 const short = (url: string) =>
   url
     .replace(/^mailto:/, "")
@@ -84,8 +99,8 @@ export function ReachCard({
       )}
       {links.map((l) => (
         <button key={l.url} type="button" className="btn reach-row" onClick={() => open(l.url)}>
-          {LOGO[l.kind] ? (
-            <ToolLogo name={LOGO[l.kind] ?? ""} size={22} radius={6} />
+          {logoFor(l) ? (
+            <ToolLogo name={logoFor(l)} size={22} radius={6} />
           ) : (
             <span className="reach-dot">{LABEL[l.kind].slice(0, 1)}</span>
           )}

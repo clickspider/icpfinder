@@ -15,7 +15,7 @@ Read the relevant sections before changing or extending IcpFinder. Add future ap
 
 The brand and editorial principles apply to future IcpFinder work. Screen-specific layouts and strings below record the approved onboarding implementation, not blanket approval of unreviewed surfaces. These decisions supersede earlier design experiments and outdated comments describing marble/tie-dye backgrounds.
 
-**Approved implementation baseline (2026-10-21):** Electron/macOS onboarding, subscription connection states, business review, profile discovery, and the handoff to the dashboard. The rest of the desktop app has NOT received the same design pass. Do not describe existing dashboard styling as approved or copy it back into onboarding. The Next.js web app is separate.
+**Approved implementation baseline (2026-10-21):** Electron/macOS onboarding, subscription connection states, business review, profile discovery, and the handoff to the dashboard. The native workspace and shared controls have subsequently received the design pass documented below. Preserve onboarding’s distinct approved layout. The Next.js web app is separate.
 
 **Delivery snapshot (2026-10-21; verify before acting):** `feat/onboarding`, [PR #52](https://github.com/clickspider/icpfinder/pull/52), rebased onto `main` after #49 merged. All provider, UX, and copy work is consolidated on this one branch. Earlier separate subscription/design/copy branch names are retired. The next design effort concerns the rest of the app and belongs in its own PR.
 
@@ -381,10 +381,10 @@ Paths below are relative to the repository root.
 | Flow and page copy | `packages/desktop/src/renderer/src/Wizard.tsx` |
 | Shared brand / right panels | `packages/desktop/src/renderer/src/OnboardingFrame.tsx`, `onboarding-frame.css` |
 | Overview view/edit | `packages/desktop/src/renderer/src/BusinessOverview.tsx` |
-| Provider selection and errors | `SubscriptionConnection.tsx`, `ConnectionErrorCard.tsx`, `subscription-preview.css` in the renderer directory |
-| Loader/results | `IcpReveal.tsx`, `icp-reveal-preview.css` in the renderer directory |
+| Provider selection and errors | `SubscriptionConnection.tsx`, `ConnectionErrorCard.tsx`, `subscription-connection.css` in the renderer directory |
+| Loader/results | `IcpReveal.tsx`, `icp-reveal.css` in the renderer directory |
 | Existing brand/icons | `styles.css`, `ui.tsx`, `glass.tsx` in the renderer directory |
-| Galleries | `OnboardingGallery.tsx`, `SubscriptionDesignPreview.tsx` in the renderer directory |
+| Workspace controls | `controls.css`, `native-workspace.css`, `AppIcon.tsx` in the renderer directory |
 | Saved business / inference contract | `packages/desktop/src/shared/business-overview.ts` |
 | Profile generation and validation | `packages/desktop/src/main/suggested-profiles.ts`, `custom-icp.ts`, `engine.ts` |
 | Dashboard handoff / persistence | `packages/desktop/src/main/index.ts` (`finishSetup`, `addIcp`, `updateProfile`) |
@@ -394,7 +394,7 @@ Paths below are relative to the repository root.
 
 ## Preview and verification
 
-Normal startup must not open a design gallery. Append `?onboarding-review=1` to the renderer URL for the full screen gallery, or `?state-preview=1` for connection states. These use fixtures and do not perform real authentication or AI calls.
+Design galleries and temporary review pages are not shipped. Review concepts outside the source tree, record approved decisions here, then remove the temporary preview. Normal startup opens the real app.
 
 Before PR #52 publication: 295 workspace tests passed (74 desktop, 34 providers, 52 core, 135 web); root typecheck and affected builds passed. An Electron check against the rebased React 19 build verified consumer cards, adding a fourth profile, dashboard persistence/editing across reload, and no automatic hunt/AI usage. Controlled provider tests are not proof of live subscription authentication or real generated-output quality. No new live sign-in/paid-model test was performed in that pass.
 
@@ -402,7 +402,38 @@ For future design changes, verify long content, narrow windows, bottom action sp
 
 ## Extending IcpFinder beyond the approved baseline
 
-Use this language to align the dashboard and other non-onboarding surfaces. Their detailed layouts and copy are not yet approved. Reuse the brand, palette, typography, hierarchy, spacing, restrained icons, and clear action patterns; do not mechanically give every screen the split onboarding layout. Review new states with the user rather than treating old dashboard UI or unused CSS variants as settled design.
+Use this language to align the dashboard and other non-onboarding surfaces. Use the approved workspace decisions below for reviewed surfaces; new layouts and copy still require review. Reuse the brand, palette, typography, hierarchy, spacing, restrained icons, and clear action patterns; do not mechanically give every screen the split onboarding layout. Review new states with the user rather than treating old dashboard UI or unused CSS variants as settled design.
+
+
+## Locked workspace controls and simplification (2026-10-21)
+
+These are user-approved decisions from the temporary controls review, subsequently applied to the Mac app. The review page is disposable; this memory is the durable reference. Never ship review galleries, sample-state pages, or preview scaffolding in the product/PR.
+
+### Shared control language
+
+- Standard workspace actions: 36px height, 6px corner radius, 13px labels, 16px SVG icons, 8px within action groups. Center labels and icons. Icon buttons are 36×36 with zero internal padding. Keep onboarding’s larger controls where its approved layout needs them.
+- Standard buttons use a transparent resting background and a single 1px #c7c7c3 border. Hover background #fafaf9; pressed #f3f3f1. Keep the border light in both states. Darker hover outlines and heavy gray fills were explicitly rejected.
+- Keyboard focus: replace the resting gray border with ONE red accent border (#e0244a). No outer ring, gap, offset, stacked border, or shadow that creates a blurry double edge. Quiet controls reserve a transparent border to avoid layout shift. Filled coral actions still require a discernible focus state. Selection and keyboard focus are separate; retain selected/checked indicators.
+- Primary action: coral fill for a main commitment (Save changes, Connect, Find companies), normally one per action group. Standard outlined actions include Sign in, Change account, Refresh status, Test connection, Edit, Copy, Reset to defaults, and other standalone utilities. Quiet controls are for Cancel/Back within an obvious group, close, and the company dismissal X—not standalone actions users must guess are clickable.
+- Destructive actions: explicit red label with restrained outline; filled red for the final confirmation. Do not present Current provider/Connected as a disabled action: status is text.
+- Match paired inputs/selects to 36px, 6px corners, 13px text, a single border with no legacy inset shadow. Provider Model select must not be taller than its neighboring actions. Give text actual horizontal padding; do not squeeze ChatGPT against a segmented-control edge. Usage segments use 16px left/right padding and natural content width.
+- Disabled actions must not activate or acquire enabled hover treatment. Loading should preserve dimensions and prevent repeat activation. Avoid decorative button scaling, raised slabs, and competing one-off styles.
+- Implementation reference: packages/desktop/src/renderer/src/controls.css centralizes the shared styling; remove competing inline overrides when adding controls. The Next.js app remains a separate implementation; do not claim native changes automatically update it.
+
+### Workspace interaction
+
+- Company list: score before actions, outlined magnifier + quiet X. No repeated decorative lightning icon or redundant instruction to research when an action already expresses it.
+- Lower-match results stay hidden by default. Reveal via a subtle inline “N below the match threshold” inside the Companies list, after qualifying results. No separate peer section, heavy hover box, or quantity-focused presentation.
+- Search criteria and Your way in must visibly disclose their expandable nature with chevrons and Show details / Hide details.
+- Drawers and popovers close on outside click; drawers also close with X/Escape. Preserve unsaved drafts on incidental dismissal where supported. Drawer entry ~220ms and exit ~180ms with reduced-motion support; complete exit before unmounting/closing, restore focus.
+- Sidebar Provider shortcut explicitly opens Settings → Provider, including from another Settings tab. Settings section belongs in navigation state so a shortcut cannot silently leave Usage or Connected services selected.
+
+### Usage: deliberately minimal
+
+- Show only provider, period (Today / 7 days / 30 days), and recorded token total. Provider and period choices update the total and expose selection accessibly.
+- Remove percentage/share bars, cached-token percentages, runs, web-search counts, task/model breakdowns, subscription-limit estimates, and business tiles. The old red bars represented share of recorded tokens, not plan capacity; users found them misleading and unnecessary.
+- Setup activity is not a business and must not appear in a business row. Include setup and archived-business usage in the provider-period aggregate without inventing business entries.
+- State the scope briefly: “Recorded IcpFinder usage only. Your provider may report different totals.” Show a clear empty state when no tokens are recorded.
 
 ## README presentation
 

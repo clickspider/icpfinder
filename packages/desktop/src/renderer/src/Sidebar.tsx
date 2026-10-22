@@ -1,13 +1,9 @@
-// SPDX-License-Identifier: MIT
-//
-// ICP launcher: the product (workspace) on top, ICPs as the main entities below.
-
-import { useState } from "react";
-import { scoringOf } from "../../shared/scoring";
+import { useEffect, useRef, useState } from "react";
+import { icpPresentation } from "../../shared/onboarding";
 import type { State, Workspace } from "../../shared/types";
-import { emptyTotals, fmtTokens, groupBy, tokensOf } from "../../shared/usage";
 import type { View } from "./App";
-import { api, IcpArt, ModelPicker, ProductLogo, proven, Spinner, ToolLogo } from "./ui";
+import { profileStatus } from "./dashboard-state";
+import { api, Mark, ProductLogo, Spinner } from "./ui";
 
 const Icon = ({ d, s }: { d: string; s: number }) => (
   <svg
@@ -17,15 +13,12 @@ const Icon = ({ d, s }: { d: string; s: number }) => (
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="2.2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
+    strokeWidth="1.7"
   >
     <path d={d} />
   </svg>
 );
-
-export const Sidebar = ({
+export function Sidebar({
   state,
   ws,
   view,
@@ -37,55 +30,68 @@ export const Sidebar = ({
   view: View | null;
   go: (v: View) => void;
   onState: (s: State) => void;
-}) => {
+}) {
   const [menu, setMenu] = useState(false);
+  const menuElement = useRef<HTMLDivElement>(null);
+  const menuTrigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!menu) return;
+    const dismiss = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        !menuElement.current?.contains(event.target) &&
+        !menuTrigger.current?.contains(event.target)
+      )
+        setMenu(false);
+    };
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenu(false);
+        menuTrigger.current?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", dismiss, true);
+    document.addEventListener("keydown", onEscape);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss, true);
+      document.removeEventListener("keydown", onEscape);
+    };
+  }, [menu]);
   const [finding, setFinding] = useState(false);
-  const busy = ws.icps.some((i) => i.companies.some((c) => c.status === "researching"));
-
+  const provider = { claude: "Claude", codex: "ChatGPT", xai: "Grok" }[
+    state.settings.provider ?? "claude"
+  ];
   return (
-    <nav className="side drag" aria-label="ICPs" style={{ position: "relative" }}>
-      <button
-        type="button"
-        className={`side-row btn ${view?.kind === "product" ? "on" : ""}`}
-        onClick={() => go({ kind: "product" })}
-      >
-        <ProductLogo product={ws.product} size={36} radius={10} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontWeight: 700,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {ws.product.name}
-          </div>
-          <div style={{ fontSize: 11, color: "var(--faint)" }}>Your product</div>
-        </div>
-      </button>
-      <button
-        type="button"
-        className="btn"
-        aria-label="Switch workspace"
-        aria-expanded={menu}
-        style={{
-          position: "absolute",
-          right: 14,
-          top: 54,
-          width: 28,
-          height: 28,
-          borderRadius: 7,
-          background: "transparent",
-          color: "var(--faint)",
-        }}
-        onClick={() => setMenu(!menu)}
-      >
-        ⌄
-      </button>
-
+    <nav className="side native-sidebar drag" aria-label="Workspace">
+      <div className="native-brand">
+        <Mark size={28} radius={9} />
+        <span>IcpFinder</span>
+      </div>
+      <div className="native-business">
+        <button
+          type="button"
+          className={`side-row btn ${view?.kind === "product" ? "on" : ""}`}
+          onClick={() => go({ kind: "product" })}
+        >
+          <ProductLogo product={ws.product} size={35} radius={10} />
+          <span>
+            <b>{ws.product.name}</b>
+            <small>Your business</small>
+          </span>
+        </button>
+        <button
+          type="button"
+          ref={menuTrigger}
+          className="btn native-switch"
+          aria-label="Switch business"
+          aria-expanded={menu}
+          onClick={() => setMenu(!menu)}
+        >
+          ⌄
+        </button>
+      </div>
       {menu && (
-        <div className="popover pop" role="menu">
+        <div ref={menuElement} className="popover pop" role="menu">
           <div style={{ display: "flex", alignItems: "center", padding: "4px 4px 6px 8px" }}>
             <span style={{ fontSize: 11, color: "var(--faint)" }}>Workspaces</span>
             <button
@@ -125,7 +131,12 @@ export const Sidebar = ({
                   style={{ fontWeight: w.id === ws.id ? 600 : 400 }}
                   onClick={() => {
                     setMenu(false);
-                    void api().switchWorkspace(w.id).then(onState);
+                    void api()
+                      .switchWorkspace(w.id)
+                      .then((next) => {
+                        onState(next);
+                        go({ kind: "overview" });
+                      });
                   }}
                 >
                   <ProductLogo product={w.product} size={18} radius={5} />
@@ -147,69 +158,41 @@ export const Sidebar = ({
         </div>
       )}
 
-      <div style={{ display: "flex", alignItems: "center", padding: "16px 10px 6px" }}>
-        <div className="lbl">Your ICPs</div>
-        <div style={{ marginLeft: "auto", fontSize: 11, color: "var(--faint)" }}>
-          {ws.icps.length}
-        </div>
+      <button
+        type="button"
+        className={`side-row btn native-overview-link ${view?.kind === "overview" ? "on" : ""}`}
+        onClick={() => go({ kind: "overview" })}
+      >
+        <Icon d="M3 11 12 3l9 8M5 10v11h5v-6h4v6h5V10" s={18} />
+        Overview
+      </button>
+      <div className="native-sidebar-label">
+        <span>Customer profiles</span>
+        <span>{ws.icps.length}</span>
       </div>
-
-      <div className="scroll" style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        {ws.icps.map((icp) => {
-          const on =
-            view?.kind === "icp" || view?.kind === "company" ? view.icpId === icp.id : false;
-          const nApproved = icp.companies.filter((c) => c.approval === "approved").length;
-          const _nProven = icp.companies.reduce(
-            (n, c) => n + (proven(c.research).length > 0 ? 1 : 0),
-            0
-          );
-          const researching = icp.companies.some(
-            (c) => c.status === "researching" || c.status === "queued"
-          );
-          const running = Boolean(icp.sourcing) || researching;
-          const matches = icp.companies.filter(
-            (c) => (c.match ?? 0) >= scoringOf(ws.scoring).bar && c.approval !== "rejected"
-          ).length;
+      <div className="scroll native-sidebar-profiles">
+        {ws.icps.map((icp, i) => {
+          const on = (view?.kind === "icp" || view?.kind === "company") && view.icpId === icp.id;
           return (
             <button
               key={icp.id}
               type="button"
-              className={`side-row btn ${on ? "on" : ""}`}
+              className={`side-row btn native-profile-nav ${on ? "on" : ""}`}
               onClick={() => go({ kind: "icp", icpId: icp.id })}
             >
-              <div
-                style={{
-                  borderRadius: 12,
-                  boxShadow: on ? "0 6px 14px rgba(0,0,0,0.18)" : undefined,
-                }}
-              >
-                <IcpArt icp={icp} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600 }}>{icp.name}</div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: !icp.hunted ? "var(--faint)" : running ? "var(--accent)" : "#1f8a43",
-                  }}
-                >
-                  {icp.sourcing
-                    ? matches
-                      ? `Searching… · ${matches} so far`
-                      : "Searching…"
-                    : !icp.hunted
-                      ? "Not hunted yet"
-                      : researching
-                        ? `Researching · ${matches} ${matches === 1 ? "match" : "matches"}`
-                        : `${matches} ${matches === 1 ? "match" : "matches"}${nApproved ? ` · ${nApproved} approved` : ""}`}
-                </div>
-              </div>
+              <span className="native-profile-symbol" aria-hidden="true">
+                {["◉", "◫", "◎"][i % 3]}
+              </span>
+              <span>
+                <b>{icpPresentation(icp).title}</b>
+                <small>{profileStatus(icp, ws)}</small>
+              </span>
             </button>
           );
         })}
         <button
           type="button"
-          className="btn find-more"
+          className="btn native-suggest"
           disabled={finding}
           onClick={() => {
             setFinding(true);
@@ -219,102 +202,32 @@ export const Sidebar = ({
               .finally(() => setFinding(false));
           }}
         >
-          {finding ? <Spinner /> : <Icon d="M12 5v14 M5 12h14" s={14} />}
-          {finding ? "Finding ICPs…" : "Find more ICPs"}
+          {finding ? <Spinner /> : "＋"}{" "}
+          {finding ? "Suggesting profiles…" : "Suggest more profiles"}
         </button>
       </div>
-
-      <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
+      <footer className="native-sidebar-footer">
         <button
           type="button"
-          className={`side-row btn ${view?.kind === "connectors" ? "on" : ""}`}
-          onClick={() => go({ kind: "connectors" })}
+          className={`side-row btn ${view?.kind === "settings" ? "on" : ""}`}
+          onClick={() => go({ kind: "settings" })}
         >
-          <div
-            aria-hidden="true"
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 9,
-              background: "#f2f2f4",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <svg
-              aria-hidden="true"
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#3c3c43"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M9 7V3 M15 7V3 M7 7h10v4a5 5 0 01-10 0z M12 16v5" />
-            </svg>
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 600, fontSize: 13 }}>Connectors</div>
-            <div style={{ fontSize: 11, color: "var(--faint)" }}>
-              <span style={{ display: "inline-flex", gap: 4, marginTop: 3 }}>
-                {["claude", "codex", "hunter", "gmail", "linkedin"].map((n) => (
-                  <ToolLogo key={n} name={n} size={14} radius={4} />
-                ))}
-              </span>
-            </div>
-          </div>
+          <Icon d="M4 6h16M4 12h16M4 18h16M8 3v6m8 0v6m-8 0v6" s={18} />
+          Settings
         </button>
-        <div
-          style={{
-            padding: "4px 10px 2px",
-            fontSize: 12,
-            color: "var(--muted)",
-            display: "flex",
-            gap: 6,
-            alignItems: "center",
-          }}
-        >
-          <div
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: 4,
-              background: busy ? "var(--accent)" : "#34c759",
-            }}
-          />
-          {busy ? (
-            "Researching…"
-          ) : (
-            <ModelPicker
-              provider={state.settings.provider ?? "claude"}
-              value={state.settings.model}
-              onChange={(m) => void api().saveSettings({ model: m }).then(onState)}
-              size={14}
-            />
-          )}
+        <div>
           <button
             type="button"
-            className="ghost btn"
-            style={{ marginLeft: "auto", fontSize: 11.5, padding: "2px 6px" }}
-            title="What IcpFinder used from your plan"
-            onClick={() => go({ kind: "usage" })}
+            className="btn ghost"
+            onClick={() => go({ kind: "settings", tab: "Provider" })}
           >
-            {fmtTokens(
-              tokensOf(
-                groupBy(
-                  (state.usage ?? []).filter((r) => r.provider === "claude"),
-                  1,
-                  () => "t"
-                )[0]?.[1] ?? emptyTotals()
-              )
-            )}{" "}
-            today
+            Provider · {provider}
+          </button>
+          <button type="button" className="btn ghost" onClick={() => go({ kind: "usage" })}>
+            Usage
           </button>
         </div>
-      </div>
+      </footer>
     </nav>
   );
-};
+}

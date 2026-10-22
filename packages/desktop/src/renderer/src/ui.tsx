@@ -5,7 +5,7 @@ import type { ProviderId } from "../../shared/subscriptions";
 // Small shared pieces: the living stage, ICP art, proof helpers.
 
 import type { AccountResearch, Finding, FindingKind } from "@icpfinder/core";
-import { type CSSProperties, type ReactNode, useEffect, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { IcpApi } from "../../shared/types";
 import claudeLogo from "./assets/claude.png";
 import codexLogo from "./assets/codex.png";
@@ -168,9 +168,9 @@ export const best = (r: AccountResearch | undefined, kind: FindingKind): Finding
 
 export const ProofPill = ({ f }: { f?: Finding }) => {
   if (!f) return <span className="pill p-gray">none found</span>;
-  if (f.status === "proven") return <span className="pill p-green">proven</span>;
-  if (f.status === "weak") return <span className="pill p-amber">1 source</span>;
-  return <span className="pill p-red">rejected</span>;
+  if (f.status === "proven") return <span className="pill p-green">Supported</span>;
+  if (f.status === "weak") return <span className="pill p-amber">Needs checking</span>;
+  return <span className="pill p-red">Not supported by this check</span>;
 };
 
 export const host = (url: string) => {
@@ -435,115 +435,40 @@ export const MODELS: Array<{ id: string; name: string; version: string; hint: st
   { id: "claude-haiku-5-5", name: "Haiku", version: "5.5", hint: "Fastest · lightest" },
 ];
 
-/** Provider logo (Grok has none bundled: a small dark tile with its initial). */
-export const ProviderLogo = ({ provider, size }: { provider: ProviderId; size: number }) =>
-  provider === "xai" ? (
-    <span
-      aria-hidden="true"
-      style={{
-        width: size,
-        height: size,
-        borderRadius: Math.round(size / 4),
-        background: "#111114",
-        color: "#fff",
-        display: "inline-grid",
-        placeItems: "center",
-        fontSize: Math.round(size * 0.55),
-        fontWeight: 700,
-        flexShrink: 0,
-      }}
-    >
-      x
-    </span>
-  ) : (
-    <ToolLogo name={provider} size={size} radius={Math.round(size / 4)} />
-  );
-
-/** "Sonnet · balanced" -> ["Sonnet", "balanced"]. */
-const modelParts = (name: string) => {
-  const [main, hint] = name.split(" · ");
-  return [main ?? name, hint ?? ""] as const;
-};
-
-/** The selected provider's logo and model; a glass menu to switch. Codex can use its default. */
+/** The selected provider's model; Codex can choose its subscription default. */
 export const ModelPicker = ({
   value,
   onChange,
   provider = "claude",
-  size = 16,
+  size = 13,
+  label,
 }: {
+  label?: string;
   value: string;
   onChange: (id: string) => void;
   provider?: ProviderId;
   size?: number;
-}) => {
-  const [open, setOpen] = useState(false);
-  const models = PROVIDER_MODELS[provider];
-  const cur = models.find((m) => m.id === value) ?? { id: value, name: value || "Default" };
-  useEffect(() => {
-    if (!open) return;
-    const close = () => setOpen(false);
-    window.addEventListener("click", close);
-    return () => window.removeEventListener("click", close);
-  }, [open]);
-  return (
-    <span className="mp">
-      <button
-        type="button"
-        className="mp-btn"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-label={`AI model: ${PROVIDER_NAMES[provider]} ${cur.name}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen(!open);
-        }}
-      >
-        <ProviderLogo provider={provider} size={size} />
-        {modelParts(cur.name)[0]}
-        <svg
-          width="9"
-          height="9"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinecap="round"
-          aria-hidden="true"
-        >
-          <path d="M6 9l6 6 6-6" />
-        </svg>
-      </button>
-      {open && (
-        <div className="mp-menu glass pop" role="menu">
-          {models.map((m) => {
-            const [main, hint] = modelParts(m.name);
-            return (
-              <button
-                key={m.id || "default"}
-                type="button"
-                role="menuitemradio"
-                aria-checked={m.id === cur.id}
-                className={`mp-item ${m.id === cur.id ? "on" : ""}`}
-                onClick={() => {
-                  onChange(m.id);
-                  setOpen(false);
-                }}
-              >
-                <ProviderLogo provider={provider} size={22} />
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span className="mp-name">{main}</span>
-                  {hint && <span className="mp-hint">{hint}</span>}
-                </span>
-                {m.id === cur.id && <span className="mp-check">✓</span>}
-              </button>
-            );
-          })}
-        </div>
+}) => (
+  <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: size }}>
+    {label ?? PROVIDER_NAMES[provider]}
+    <select
+      aria-label="AI model"
+      className="field model-select"
+      style={{ width: "auto" }}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    >
+      {!PROVIDER_MODELS[provider].some((model) => model.id === value) && (
+        <option value={value}>{value || "Default"}</option>
       )}
-    </span>
-  );
-};
+      {PROVIDER_MODELS[provider].map((model) => (
+        <option key={model.id} value={model.id}>
+          {model.name}
+        </option>
+      ))}
+    </select>
+  </label>
+);
 
 /** "Snap" state: something came back empty or failed. An icon, two short lines, one way out. */
 export const Snap = ({
@@ -625,3 +550,26 @@ export const friendly = (msg: string): string => {
 
 export const cleanError = (e: unknown): string =>
   friendly(e instanceof Error ? e.message : String(e));
+
+export const ProviderLogo = ({ provider, size }: { provider: ProviderId; size: number }) =>
+  provider === "xai" ? (
+    <span
+      aria-hidden="true"
+      style={{
+        width: size,
+        height: size,
+        borderRadius: Math.round(size / 4),
+        background: "#111114",
+        color: "#fff",
+        display: "inline-grid",
+        placeItems: "center",
+        fontSize: Math.round(size * 0.55),
+        fontWeight: 700,
+        flexShrink: 0,
+      }}
+    >
+      x
+    </span>
+  ) : (
+    <ToolLogo name={provider} size={size} radius={Math.round(size / 4)} />
+  );

@@ -72,6 +72,10 @@ a {
   transform: none;
 }
 .primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   height: 44px;
   padding: 0 20px;
   border-radius: 11px;
@@ -80,12 +84,20 @@ a {
   font-weight: 600;
 }
 .secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   height: 36px;
   padding: 0 14px;
   border-radius: 10px;
   background: #f2f2f4;
 }
 .ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   height: 44px;
   padding: 0 16px;
   border-radius: 11px;
@@ -516,9 +528,19 @@ button.crow:hover {
 }
 details > summary {
   cursor: pointer;
+  list-style: disclosure-closed;
+}
+details[open] > summary {
+  list-style: disclosure-open;
+}
+details.fact > summary,
+details.native-disclosure > summary,
+details.native-lower-matches > summary {
   list-style: none;
 }
-details > summary::-webkit-details-marker {
+details.fact > summary::-webkit-details-marker,
+details.native-disclosure > summary::-webkit-details-marker,
+details.native-lower-matches > summary::-webkit-details-marker {
   display: none;
 }
 
@@ -2043,46 +2065,6 @@ details.fact[open] .fact-chev {
   display: inline-flex;
   align-items: center;
 }
-.pe-line {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  width: 100%;
-  margin-top: 10px;
-  padding: 10px 12px;
-  border: 0;
-  border-radius: 10px;
-  background: #faf7f8;
-  text-align: left;
-  cursor: pointer;
-  font-size: 13px;
-  color: #5f565b;
-}
-.pe-line:hover {
-  background: #f5eff1;
-}
-.pe-line-item {
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.pe-line-item b {
-  color: var(--ink);
-  font-weight: 600;
-  margin-right: 4px;
-}
-.pe-more {
-  flex-shrink: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ink);
-}
-.pe-less {
-  align-self: flex-end;
-  font-size: 12px;
-}
 /* Back link on pages opened from another screen. */
 .page-back {
   display: inline-flex;
@@ -2265,8 +2247,13 @@ details.fact[open] .fact-chev {
 }
 .reach-more > summary {
   cursor: pointer;
-  padding: 4px 2px;
+  padding: 6px 2px;
   list-style: none;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
 }
 .reach-more > summary::-webkit-details-marker {
   display: none;
