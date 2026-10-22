@@ -1081,3 +1081,40 @@
 .native-company details.panel[open] > summary::before {
   content: "⌄ ";
 }
+
+/* Action rows: every icon is the same 28px tile, the done/running mark sits at the row end. */
+.native-action-row {
+  position: relative;
+  padding-right: 40px !important;
+}
+.native-action-row > div:first-child {
+  width: 28px !important;
+}
+.native-action-row > div:first-child > div:first-child {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 7px !important;
+  background: #f4f4f2 !important;
+  overflow: hidden;
+}
+.native-action-row > div:first-child > div:first-child img {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 7px !important;
+}
+.native-action-row > div:first-child > div:last-child {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0 !important;
+}
+/* One disclosure arrow only: hide the browser's own marker everywhere we draw ours. */
+.reach-more > summary,
+.native-company details.panel > summary {
+  display: block;
+}
+.reach-more > summary::marker,
+.native-company details.panel > summary::marker {
+  content: "";
+}
