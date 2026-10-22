@@ -193,8 +193,8 @@ const Row = ({
             <Spinner /> {c.status === "queued" ? "Research queued" : "Researching…"}
           </span>
         ) : c.status === "done" ? (
-          <span className="pill p-green">
-            {p} supported {p === 1 ? "finding" : "findings"}
+          <span className="pill p-green native-findings" title="Supported findings from research">
+            {p} {p === 1 ? "finding" : "findings"}
           </span>
         ) : c.status === "candidate" ? (
           <span className="pill">Not researched</span>
@@ -540,7 +540,8 @@ export const IcpView = ({
         <button type="button" className="btn" onClick={() => go({ kind: "overview" })}>
           Overview
         </button>
-        <span>/ Customer profile</span>
+        <span aria-hidden="true">/</span>
+        <span>Customer profile</span>
       </div>
       <header className="native-profile-header">
         <div>
@@ -559,7 +560,7 @@ export const IcpView = ({
         className="btn native-secondary native-details-button"
         onClick={inspector.open}
       >
-        Profile details ↗
+        Profile details
       </button>
       <dialog
         {...dismissInspector}
