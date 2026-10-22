@@ -1,105 +1,51 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/logo-dark.svg">
-    <img alt="icpfinder" src=".github/assets/logo-light.svg" width="140" height="140">
-  </picture>
-</p>
+<img src=".github/assets/logo-light.svg" alt="" width="48" height="48">
 
-<h1 align="center">icpfinder</h1>
+# IcpFinder
 
-<p align="center">
-  <a href="https://icpfinder.dev">Live demo</a> ·
-  <a href="https://www.npmjs.com/package/@icpfinder/core">npm</a> ·
-  <a href="./docs/quickstart.md">Docs</a> ·
-  <a href="https://github.com/clickspider/icpfinder/discussions">Discussions</a> ·
-  <a href="https://github.com/clickspider/icpfinder/issues">Issues</a>
-</p>
+IcpFinder helps you work out who could benefit from what you offer, research companies that could fit, and find ways to reach them.
 
-<p align="center">
-  <strong>Find who'll pay for your idea.</strong> Paste a product description, stream 3 ICP archetypes with verified contact emails in 30 seconds. Free. Open source. MIT.
-</p>
+[Mac releases](https://github.com/clickspider/icpfinder/releases) · [Web app](https://icpfinder.dev) · [Web quickstart](./docs/quickstart.md) · [npm](https://www.npmjs.com/package/@icpfinder/core)
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/banner-dark.svg">
-    <img alt="icpfinder" src=".github/assets/banner-light.svg" width="100%">
-  </picture>
-</p>
+![Company research in IcpFinder: fit criteria, a supporting source, and where to reach the company](.github/assets/company-research.jpg)
 
-<p align="center">
-  <a href="https://github.com/clickspider/icpfinder/actions/workflows/ci.yml"><img src="https://github.com/clickspider/icpfinder/actions/workflows/ci.yml/badge.svg" alt="ci"></a>
-  <a href="https://github.com/clickspider/icpfinder/actions/workflows/release.yml"><img src="https://github.com/clickspider/icpfinder/actions/workflows/release.yml/badge.svg" alt="release"></a>
-  <a href="https://www.npmjs.com/package/@icpfinder/core"><img src="https://img.shields.io/npm/v/@icpfinder/core?label=%40icpfinder%2Fcore&color=14B8A6" alt="npm core"></a>
-  <a href="https://www.npmjs.com/package/@icpfinder/providers"><img src="https://img.shields.io/npm/v/@icpfinder/providers?label=%40icpfinder%2Fproviders&color=14B8A6" alt="npm providers"></a>
-  <a href="https://docs.npmjs.com/generating-provenance-statements"><img src="https://img.shields.io/badge/npm-provenance-7C3AED?logo=npm&logoColor=white" alt="provenance"></a>
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="license"></a>
-  <a href="./CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-F26B3D" alt="PRs welcome"></a>
-</p>
+*IcpFinder for Mac. Example data shown for illustration.*
 
-<p align="center">
-  <a href="https://icpfinder.dev"><img src="https://img.shields.io/badge/▶_Try_the_live_demo-icpfinder.dev-14B8A6?style=for-the-badge&labelColor=15161B" height="36" alt="Try the live demo"></a>
-  <a href="https://github.com/clickspider/icpfinder"><img src="https://img.shields.io/badge/★_Star_on_GitHub-7C3AED?style=for-the-badge&labelColor=15161B" height="36" alt="Star on GitHub"></a>
-  <a href="https://www.npmjs.com/package/@icpfinder/core"><img src="https://img.shields.io/badge/↓_Install_from_npm-F26B3D?style=for-the-badge&labelColor=15161B" height="36" alt="Install from npm"></a>
-</p>
+Free and open source · [MIT license](./LICENSE)
 
-<br/>
+## Explore companies that could fit
 
-<!--
-  Demo video: drag-drop `hero-demo.mp4` into a GitHub PR comment to upload it
-  to user-attachments, then paste the resulting URL on the next line so GitHub
-  renders an inline HTML5 player. Until that's done, the poster JPG below
-  serves as the fallback.
--->
+See why each company could fit, then choose which ones to research further.
 
-<p align="center">
-  <a href="https://icpfinder.dev">
-    <img src=".github/assets/demo-poster.jpg" alt="icpfinder running a streaming ICP discovery in the browser" width="800">
-  </a>
-  <br/>
-  <sub><a href="https://icpfinder.dev">Watch the live demo with audio →</a></sub>
-</p>
+![A customer profile with three example companies, recent signals, and research actions](.github/assets/company-shortlist.jpg)
 
-## What is icpfinder?
+*Illustrative companies and signals, shown before research.*
 
-icpfinder is a free, open-source **ideal customer profile (ICP) finder** for solo founders and indie builders. Use it when you have a product idea and need to know **who will pay for it**, before you spend money on Apollo or Clay.
+## IcpFinder for Mac
 
-- **3 ICP archetypes** per run: buyer role, pain, selling angle, objections and real example companies
-- **Up to 5 verified emails per archetype** (15 per run), found with Hunter
-- **About 30 seconds** from idea to first archetype
-- **Free:** demo runs need no signup; bring your own free Gemini key and Hunter key (25 searches/month) for unlimited runs
-- **MIT licensed:** self-host it, or use [`@icpfinder/core`](https://www.npmjs.com/package/@icpfinder/core) in your own code
+Start with your website or a description of your business. IcpFinder suggests customer profiles you can review and refine. From there, find companies to explore, choose which ones to research, and review the sources and possible ways to reach them.
 
-Guides: [how to find your ICP as a solo founder](https://icpfinder.dev/guides/find-your-icp) · [ICP vs buyer persona](https://icpfinder.dev/guides/icp-vs-buyer-persona) · [icpfinder vs Apollo, Clay and ChatGPT](https://icpfinder.dev/alternatives) · [FAQ](https://icpfinder.dev/faq)
+Connect your Claude, ChatGPT, or eligible Grok account to power IcpFinder. Your provider’s subscription limits apply, and access to models and tools depends on your plan. The software is free; provider subscriptions and optional services have their own requirements.
 
-<br/>
+Your businesses and profiles are saved in a local workspace. Research sends relevant information to your selected provider and any services you enable. Company search is for business customer profiles; consumer profiles do not enable consumer sourcing.
 
-If you prefer the terminal:
+[Mac releases](https://github.com/clickspider/icpfinder/releases) · [Mac setup and provider details](./packages/desktop/README.md)
 
-```
-$ bun run demo
+Run the Mac app from source. See the [Mac setup guide](./packages/desktop/README.md) for requirements and provider setup:
 
-icpfinder demo
-seed: AI invoicing tool for indie SaaS founders ...
-
-# 1. Principal Designer
-   Boutique Brand Identity Studios · 1-5 employees
-   Losing hours weekly on subjective client feedback ...
-   signals: Recent posts on X complaining about revision creep ...
-   → sarah.chen@…
-   → marcus.reed@…
-
-done · 3 archetypes · 9 candidates · 0.00 ¢
+```bash
+git clone https://github.com/clickspider/icpfinder.git
+cd icpfinder
+bun install
+bun run dev:desktop
 ```
 
-## What it does
+## Web app and developer libraries
 
-1. **Archetype detection.** Your product description → 3 ICP archetypes (industry, role, pain, buying signals) via Gemini 2.5 Flash with optional Google grounding.
-2. **Candidate enrichment.** Each archetype → N lookalike companies + verified decision-maker emails via Hunter.io.
-3. **Streaming + cost-capped.** Async-generator API. Every provider call reports cents consumed. Per-run + per-IP caps enforced server-side.
+The [web app](https://icpfinder.dev) offers a separate discovery flow for suggesting customer profiles and finding contact information for candidate companies. It uses providers configured by the host or API keys you supply. See the [web quickstart](./docs/quickstart.md) for setup and requirements.
 
-Everything is swappable. The core engine depends only on `LlmProvider` and `EmailProvider` interfaces — drop in Apollo, Clearbit, OpenAI, Anthropic without touching `packages/core`.
+Use the TypeScript libraries to build discovery into your own application. They provide a streaming pipeline, provider interfaces, and budget controls.
 
-## Install
+## Install the libraries
 
 ```bash
 # core engine + first-party adapters (Gemini + Hunter)
@@ -110,19 +56,17 @@ bun add @icpfinder/core @icpfinder/providers
 pnpm add @icpfinder/core @icpfinder/providers
 ```
 
-Both packages ship as ESM + TypeScript-first, with zero side effects on import and [npm provenance attestations](https://docs.npmjs.com/generating-provenance-statements) (built via OIDC Trusted Publishing on GitHub Actions — every published tarball is cryptographically tied to the commit that produced it).
+Both packages include TypeScript types and use ES modules. Published packages include [npm provenance attestations](https://docs.npmjs.com/generating-provenance-statements).
 
-## Quickstart (clone + run)
+## Run the web app or terminal demo
+
+After cloning the repository and running `bun install`, try the terminal demo:
 
 ```bash
-git clone https://github.com/clickspider/icpfinder.git
-cd icpfinder
-bun install
-bun run demo                       # zero keys, stub providers
-cd packages/web && bun run dev     # full web UI on localhost:3000
+bun run demo
 ```
 
-Full guide: [docs/quickstart.md](./docs/quickstart.md).
+The demo uses sample data and needs no API keys. To run the web app, follow the [web quickstart](./docs/quickstart.md) to configure its environment, database, and providers before starting the development server.
 
 ## Library usage
 
@@ -149,108 +93,76 @@ for await (const event of finder.find({
 }
 ```
 
-## Live demo
+## Use the web discovery tool through MCP
 
-<https://icpfinder.dev> — free, IP-capped, no signup. Bring your own keys to remove caps and see real archetypes (or self-host / fork).
+The web app exposes an MCP server at `https://icpfinder.dev/mcp` (Streamable HTTP, no sign-in). It has one tool, `find_icp`. Give it a product idea or URL, and it returns suggested customer profiles.
 
-## Use it from AI agents (MCP)
-
-icpfinder.dev runs an MCP server at `https://icpfinder.dev/mcp` (Streamable HTTP, no sign-in). It has one tool, `find_icp`. Give it a product idea or URL, and it returns 3 ICP archetypes.
-
-- **Claude (web or desktop):** Settings → Connectors → Add custom connector → `https://icpfinder.dev/mcp`.
+- **MCP clients:** add `https://icpfinder.dev/mcp` as a Streamable HTTP server using your client’s connector setup.
 - **Claude Code:**
 
   ```bash
   claude mcp add --transport http icpfinder https://icpfinder.dev/mcp
-  # unlimited runs on your own Gemini key:
+  # Use your own Gemini key (provider limits and charges still apply):
   claude mcp add --transport http icpfinder https://icpfinder.dev/mcp --header "X-Gemini-Api-Key: $GEMINI_API_KEY"
   ```
 
-Free runs share the website's daily limit. Contact emails stay on [icpfinder.dev/find](https://icpfinder.dev/find), because each Hunter search costs money.
+Shared-key runs use the website’s limits. The MCP tool returns profiles; the [web discovery UI](https://icpfinder.dev/find) handles contact enrichment separately.
 
-## Architecture
+## Repository layout
 
-```
+```text
 packages/
-├── providers/   EmailProvider + LlmProvider interfaces
-│                  → HunterEmailProvider, GeminiLlmProvider, Fake*
-├── core/        IcpFinder orchestrator + safeFetch (SSRF-hardened)
-│                  → async-generator API, cost reporting, budget caps
-└── web/         Next.js 15 app
-                   → POST /api/find (text/event-stream)
-                   → Prisma (Run + Event persistence)
-                   → InMemory or Upstash rate limit (per-IP)
+├── desktop/    Electron Mac app, subscription connections, local workspace
+├── core/       Discovery and research orchestration
+├── providers/  Provider interfaces and adapters
+└── web/        Next.js web app, streaming API, MCP endpoint, persistence
 ```
 
-The dependency graph is strictly acyclic: `web → core → providers`.
+## Usage and costs
 
-## Costs
+The software is MIT licensed. AI subscriptions and external services may have their own charges and limits.
 
-Stub mode: free, no keys. Live mode: ~$1.05 per run (mostly Hunter). Cap with `ICPFINDER_BUDGET_CAP_CENTS` + `ICPFINDER_DAILY_CAP_CENTS`. Full breakdown: [docs/costs.md](./docs/costs.md).
+- **Mac:** research uses your connected provider account. Optional services such as Hunter have separate requirements.
+- **Web and libraries:** live providers may charge for requests. Configured budgets and rate limits apply. See [web/library costs and budget controls](./docs/costs.md).
 
-## Run cache (optional)
+## Self-host the web app
 
-In operator mode, the `/api/find` endpoint can cache complete SSE event streams in Vercel KV (Upstash Redis), keyed by `sha256(seed)` with a 15-minute TTL. Duplicate seeds replay instantly with zero Gemini calls — useful when the shared free-tier key keeps hitting rate limits. To enable, set:
+See the [self-hosting guide](./docs/self-host.md) for web deployment and optional caching.
+
+## Telemetry and data
+
+The hosted website uses Vercel Web Analytics. See the [web telemetry documentation](./docs/telemetry.md) and the [Mac app’s data-storage details](./packages/desktop/README.md#data).
+
+## Contributing
+
+Contributions are welcome. You can report a bug, improve the documentation, or help add a provider.
+
+- Report bugs and suggest features using the [issue templates](./.github/ISSUE_TEMPLATE).
+- Discuss design changes in [GitHub Discussions](https://github.com/clickspider/icpfinder/discussions) before starting an implementation.
+- For provider integrations, see the [interfaces](./packages/providers/src/types.ts) and the existing adapters and tests.
+
+Read [CONTRIBUTING](./CONTRIBUTING.md) for development setup and pull request guidelines. The [Code of Conduct](./CODE_OF_CONDUCT.md) applies to project participation.
+
+## Development checks
 
 ```bash
-KV_REST_API_URL=…
-KV_REST_API_TOKEN=…
-```
-
-Unset → cache is a graceful no-op (every request goes live). BYOK runs always bypass the cache so user data stays user-side.
-
-## Self-host
-
-Vercel + Postgres + Upstash, three steps: [docs/self-host.md](./docs/self-host.md).
-
-## Telemetry
-
-`icpfinder.dev` uses [Vercel Web Analytics](https://vercel.com/docs/analytics/privacy-policy) — no cookies, no PII storage, IP+UA hashed daily server-side. **Self-host gets nothing**: `@vercel/analytics` short-circuits when not deployed on Vercel, so cloning this repo phones nowhere. The npm libs (`@icpfinder/core`, `@icpfinder/providers`) never include tracking — ever. Full details + verification steps: [docs/telemetry.md](./docs/telemetry.md).
-
-## Tests
-
-```bash
-bun run test       # vitest across providers, core, web
+bun run test       # vitest across workspaces
 bun run typecheck  # tsc --noEmit across workspaces
 bun run lint       # biome
 ```
 
-PRs are gated on all three via [`.github/workflows/ci.yml`](./.github/workflows/ci.yml). Publishing to npm is automated via [Changesets](https://github.com/changesets/changesets) + OIDC Trusted Publishing — see [CONTRIBUTING.md](./CONTRIBUTING.md#releasing--versioning).
+The CI workflow runs these checks; lint is currently informational. See the [CI workflow](./.github/workflows/ci.yml) for automated checks and [CONTRIBUTING](./CONTRIBUTING.md#releasing--versioning) for release instructions.
 
 ## Roadmap
 
-- **v0.1** — streaming engine + web UI + library + Hunter/Gemini providers + Upstash rate limit ✅
-- **v0.2** — outreach personalization (per-candidate hook generation), React Flow visualization, CLI binary, Claude Code skill
-- **v0.3** — cold-email diagnostician (paste a failing thread, get rewritten)
-
-## Contributing
-
-PRs, issues, and ideas are all welcome — this project gets better when more eyes find more edges. Whether you're fixing a typo, wiring up a new provider, or asking a question that turns into the next docs page, you belong here.
-
-A few places to start:
-
-- **Good first PR — add a new provider in under 50 lines.** Implement the `LlmProvider` or `EmailProvider` interface in `packages/providers/src/types.ts`, drop tests in `packages/providers/__tests__/`, ship. Apollo, Clearbit, OpenAI, Anthropic, Snov.io — all great candidates.
-- **Open an issue.** Bug, idea, half-formed thought — all fine. See the [issue templates](./.github/ISSUE_TEMPLATE).
-- **Discussions for design questions** — [GitHub Discussions](https://github.com/clickspider/icpfinder/discussions) is the right place for "should we do X?" before you write code.
-
-Full developer setup, PR conventions, and how Changesets / OIDC publishing work: [CONTRIBUTING.md](./CONTRIBUTING.md). By participating you're agreeing to the [Code of Conduct](./CODE_OF_CONDUCT.md).
+See [ROADMAP.md](./ROADMAP.md) for planned work and [GitHub issues](https://github.com/clickspider/icpfinder/issues) for current discussions.
 
 ## Contributors
-
-Built by people who got tired of paying $400/month for sales tools that should be commodity infrastructure.
 
 <a href="https://github.com/clickspider/icpfinder/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=clickspider/icpfinder" alt="icpfinder contributors" />
 </a>
 
-Want your face here? See [Contributing](#contributing) above. ☝️
-
 ## License
 
-MIT. Use it. Fork it. Sell it. Don't sue. — See [LICENSE](./LICENSE).
-
-<br/>
-
-<p align="center">
-  <sub>Made with ( · ) by <a href="https://github.com/clickspider">Daniel Frey (@clickspider)</a> · <a href="https://icpfinder.dev">icpfinder.dev</a></sub>
-</p>
+Licensed under the [MIT License](./LICENSE).

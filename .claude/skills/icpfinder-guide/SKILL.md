@@ -434,3 +434,9 @@ These are user-approved decisions from the temporary controls review, subsequent
 - Remove percentage/share bars, cached-token percentages, runs, web-search counts, task/model breakdowns, subscription-limit estimates, and business tiles. The old red bars represented share of recorded tokens, not plan capacity; users found them misleading and unnecessary.
 - Setup activity is not a business and must not appear in a business row. Include setup and archived-business usage in the provider-period aggregate without inventing business entries.
 - State the scope briefly: “Recorded IcpFinder usage only. Your provider may report different totals.” Show a clear empty state when no tokens are recorded.
+
+## README presentation
+
+Use a compact identity header and direct product screenshots rather than gradient banners, floating-card posters, or oversized badge stacks. Screenshot captions must disclose synthetic example companies, signals, and source material. Do not ship capture fixtures or review-page scaffolding. Clearly separate Mac subscription connections and workspace features from web API-key discovery, MCP, and developer-library examples. Avoid blanket timing, unlimited-usage, verified-contact-count, or fixed-cost promises across these surfaces.
+
+README prose should use the product’s conversational, useful voice throughout, including developer and contribution sections. Keep the Mac workflow prominent, retain useful SDK examples, and move deployment recipes into setup documentation. Avoid rhetorical em dashes, stock community slogans, pricing grievances, and promotional author signatures. Preserve required attribution and license notices. Describe cache bypass accurately: it does not imply device-only processing.
