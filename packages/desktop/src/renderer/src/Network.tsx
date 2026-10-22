@@ -1,3 +1,4 @@
+import { AppIcon } from "./AppIcon";
 // SPDX-License-Identifier: MIT
 //
 // Your network: who you already know at the companies IcpFinder found.
@@ -29,77 +30,97 @@ export const NetworkView = ({
   onState: (s: State) => void;
   go: (v: View) => void;
 }) => {
-  const [open, setOpen] = useState<"linkedin" | "instagram" | null>(
-    state.contacts.length ? null : "linkedin"
-  );
-  const companies = ws.icps
+  const [open, setOpen] = useState<"linkedin" | null>(state.contacts.length ? null : "linkedin");
+  const candidates = ws.icps
     .flatMap((i) => i.companies)
     .filter((c) => (c.match ?? 0) >= scoringOf(ws.scoring).bar && c.approval !== "rejected");
+  const companies = [
+    ...new Map(
+      candidates.map((c) => [
+        c.domain,
+        {
+          ...c,
+          warm: candidates
+            .filter((x) => x.domain === c.domain)
+            .flatMap((x) => x.warm ?? [])
+            .filter(
+              (x, i, a) =>
+                a.findIndex(
+                  (y) => y.name === x.name && y.company === x.company && y.url === x.url
+                ) === i
+            ),
+        },
+      ])
+    ).values(),
+  ];
   const warm = companies.filter((c) => (c.warm?.length ?? 0) > 0);
-  const li = state.network?.linkedin;
   const connected = state.contacts.length > 0;
 
   return (
     <div
-      className="enter scroll"
-      style={{ flex: 1, display: "flex", flexDirection: "column", padding: 16, gap: 16 }}
+      className="enter scroll native-page native-network"
+      style={{ flex: 1, display: "flex", flexDirection: "column", gap: 24 }}
     >
       <header className="drag" style={{ padding: "8px 4px 0" }}>
-        <h1 className="ob-h1">
-          Find your <em>way in</em>
-        </h1>
-        <p className="ob-sub" style={{ marginTop: 4 }}>
-          An intro beats a cold email. Add where your people are.
+        <h1>Find your way in</h1>
+        <p style={{ marginTop: 4 }}>
+          Explore who you already know at companies you’re considering.
         </p>
       </header>
 
-      <section className="panel" style={{ padding: 18 }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-          <span
-            style={{ fontSize: 34, fontWeight: 800, color: "#1f8a43", letterSpacing: "-0.02em" }}
-          >
-            {warm.length}
-          </span>
-          <span style={{ fontSize: 15, color: "var(--muted)" }}>of {companies.length}</span>
-          <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--faint)" }}>
-            grey = nobody you know yet
-          </span>
-        </div>
-        <div style={{ fontWeight: 600, marginTop: 2 }}>companies where you know someone</div>
-        <div className="net-bar">
-          <i
-            style={{ width: `${companies.length ? (warm.length / companies.length) * 100 : 0}%` }}
-          />
-        </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 14 }}>
-          {[...warm, ...companies.filter((c) => !c.warm?.length)].slice(0, 12).map((c) => {
-            const n = c.warm?.length ?? 0;
-            return (
-              <div key={c.domain} className={`net-co ${n ? "" : "cold"}`} title={c.name}>
-                <span className="net-logo">
-                  {c.logo ? <img src={c.logo} alt="" /> : initial(c.name)}
-                  {n > 0 && <b>{n}</b>}
-                </span>
-                <span className="net-name">{c.name}</span>
+      {connected && (
+        <section className="panel" style={{ padding: 18 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            <span
+              style={{ fontSize: 34, fontWeight: 800, color: "#1f8a43", letterSpacing: "-0.02em" }}
+            >
+              {warm.length}
+            </span>
+            <span style={{ fontSize: 15, color: "var(--muted)" }}>of {companies.length}</span>
+            <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--faint)" }}>
+              {warm.length === 0 && companies.length > 0
+                ? "No connection found in this export"
+                : ""}
+            </span>
+          </div>
+          <div style={{ fontWeight: 600, marginTop: 2 }}>
+            companies with a connection in your imported network
+          </div>
+          <div className="net-bar">
+            <i
+              style={{ width: `${companies.length ? (warm.length / companies.length) * 100 : 0}%` }}
+            />
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 14 }}>
+            {[...warm, ...companies.filter((c) => !c.warm?.length)].slice(0, 12).map((c) => {
+              const n = c.warm?.length ?? 0;
+              return (
+                <div key={c.domain} className={`net-co ${n ? "" : "cold"}`} title={c.name}>
+                  <span className="net-logo">
+                    {c.logo ? <img src={c.logo} alt="" /> : initial(c.name)}
+                    {n > 0 && <b>{n}</b>}
+                  </span>
+                  <span className="net-name">{c.name}</span>
+                </div>
+              );
+            })}
+            {companies.length === 0 && (
+              <div style={{ fontSize: 13, color: "var(--muted)" }}>
+                Find companies from a business customer profile to see connections here.
               </div>
-            );
-          })}
-          {companies.length === 0 && (
-            <div style={{ fontSize: 13, color: "var(--muted)" }}>
-              Hunt an ICP first. Then this shows who you know there.
-            </div>
-          )}
-        </div>
-      </section>
+            )}
+          </div>
+        </section>
+      )}
 
       <div style={{ display: "flex", alignItems: "center" }}>
         <div className="lbl">Your sources</div>
         <div style={{ marginLeft: "auto", fontSize: 12, color: "var(--faint)" }}>
-          {connected ? 1 : 0} of 2 connected
+          {connected ? `${state.contacts.length} connections imported` : "No connections imported"}
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
         <button
           type="button"
           className={`btn net-card ${open === "linkedin" ? "on" : ""}`}
@@ -110,46 +131,20 @@ export const NetworkView = ({
             {connected && <span className="net-ok">✓</span>}
           </div>
           <div className="net-title">LinkedIn</div>
-          <div className="net-sub">Your whole network, matched to every company you hunt.</div>
+          <div className="net-sub">
+            Use your exported connections to look for possible introductions.
+          </div>
           <div className="net-state" style={{ color: connected ? "#1f8a43" : "var(--ink-2)" }}>
             {connected
-              ? `${state.contacts.length.toLocaleString()} connections · a way in at ${warm.length}`
-              : li?.requestedAt
-                ? `Requested ${day(li.requestedAt)}. Drop the file when it arrives`
-                : "Not added yet"}
+              ? `${state.contacts.length.toLocaleString()} connections imported`
+              : "Import your connections"}
             <span className="net-chev">{open === "linkedin" ? "⌃" : "⌄"}</span>
-          </div>
-        </button>
-        <button
-          type="button"
-          className={`btn net-card ${open === "instagram" ? "on" : ""}`}
-          onClick={() => setOpen(open === "instagram" ? null : "instagram")}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-            <ToolLogo name="instagram" size={40} radius={10} />
-          </div>
-          <div className="net-title">Instagram</div>
-          <div className="net-sub">
-            Shows who you are really close to, so their intros rank first.
-          </div>
-          <div className="net-state" style={{ color: "var(--faint)" }}>
-            Soon
-            <span className="net-chev">{open === "instagram" ? "⌃" : "⌄"}</span>
           </div>
         </button>
       </div>
 
       {open === "linkedin" && (
         <LinkedInPanel state={state} onState={onState} go={go} connected={connected} />
-      )}
-      {open === "instagram" && (
-        <section
-          className="panel rise"
-          style={{ padding: 16, fontSize: 13, color: "var(--ink-2)" }}
-        >
-          Instagram comes next. It will only rank people you already know higher, and never add
-          anyone.
-        </section>
       )}
     </div>
   );
@@ -195,8 +190,8 @@ const LinkedInPanel = ({
       <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
         <div style={{ flex: 1, fontSize: 13, color: "var(--ink-2)", lineHeight: 1.5 }}>
           {connected
-            ? `Added ${day(li?.importedAt)}. People change jobs, so a fresh export now and then keeps your paths right.`
-            : "We match your connections to every company you hunt. We never message anyone."}
+            ? `Imported ${day(li?.importedAt)}. Import a newer export to update your connections.`
+            : "Importing your connections doesn’t send any messages."}
         </div>
         <div className="ob-seg" style={{ width: 180, flexShrink: 0 }}>
           <button type="button" className={mode === "me" ? "on" : ""} onClick={() => setMode("me")}>
@@ -207,7 +202,7 @@ const LinkedInPanel = ({
             className={mode === "claude" ? "on" : ""}
             onClick={() => setMode("claude")}
           >
-            <ToolLogo name="claude" size={13} radius={3} /> Claude
+            Browser task
           </button>
         </div>
       </div>
@@ -215,16 +210,15 @@ const LinkedInPanel = ({
       {mode === "me" ? (
         <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13 }}>
           <span style={{ flex: 1, color: "var(--ink-2)" }}>
-            On LinkedIn pick <b>Download larger data archive</b>, then <b>Request archive</b>. It
-            comes by email within a day.
+            Request your connections export from LinkedIn. When it’s ready, download it and import
+            it here.
           </span>
           <button
             type="button"
-            className="ob-cta"
+            className="native-secondary"
             style={{ height: 32, fontSize: 12.5, whiteSpace: "nowrap" }}
             onClick={() => {
               void api().openExternal(LI_PAGE);
-              void api().networkRequested().then(onState);
             }}
           >
             Open LinkedIn's page
@@ -233,15 +227,13 @@ const LinkedInPanel = ({
       ) : (
         <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13 }}>
           <span style={{ flex: 1, color: "var(--ink-2)" }}>
-            Claude opens LinkedIn in IcpFinder's browser and requests the export. You watch, and it
-            asks you before it clicks.
+            Start a browser task to help request your export using your selected provider.
           </span>
           <button
             type="button"
-            className="ob-cta"
+            className="native-secondary"
             style={{ height: 32, fontSize: 12.5, whiteSpace: "nowrap" }}
             onClick={() => {
-              void api().networkRequested().then(onState);
               go({
                 kind: "agent",
                 task: LI_TASK,
@@ -251,15 +243,8 @@ const LinkedInPanel = ({
               });
             }}
           >
-            Let Claude do it
+            Start browser task
           </button>
-        </div>
-      )}
-
-      {li?.requestedAt && !connected && (
-        <div style={{ fontSize: 12.5, color: "var(--muted)" }}>
-          <b style={{ color: "var(--ink-2)" }}>Requested {day(li.requestedAt)}.</b> Check your email
-          for LinkedIn's file.
         </div>
       )}
 
@@ -295,7 +280,7 @@ const LinkedInPanel = ({
           "Reading your export…"
         ) : (
           <span>
-            <b>{connected ? "Drop a newer export here" : "Drop the ZIP here when it arrives"}</b> or
+            <b>{connected ? "Drop a newer export here" : "Drop a LinkedIn ZIP or CSV here"}</b> or
             browse
           </span>
         )}
@@ -318,23 +303,40 @@ const LinkedInPanel = ({
           color: "var(--muted)",
         }}
       >
-        <span style={{ color: "#1f8a43" }}>🔒</span>
-        Read on your Mac, never uploaded. Only used for warm paths.
+        <span style={{ color: "#1f8a43" }}>
+          <AppIcon name="lock" />
+        </span>
+        Your export is read on this Mac. Company names from your connections may be sent to your
+        selected provider to assess fit.
         {connected &&
           (sure ? (
-            <button
-              type="button"
-              className="ghost btn"
-              style={{ marginLeft: "auto", color: "var(--red)", fontSize: 12 }}
-              onClick={() => void api().deleteNetwork().then(onState)}
-            >
-              Yes, delete {state.contacts.length.toLocaleString()} contacts
-            </button>
+            <div className="native-delete-confirm">
+              <p>
+                Remove imported connections and network matches from IcpFinder across all
+                businesses?
+              </p>
+              <button type="button" className="secondary btn" onClick={() => setSure(false)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn control-danger confirm"
+                style={{ marginLeft: "auto" }}
+                onClick={() =>
+                  void api()
+                    .deleteNetwork()
+                    .then(onState)
+                    .catch((e) => setErr(cleanError(e)))
+                }
+              >
+                Remove connections
+              </button>
+            </div>
           ) : (
             <button
               type="button"
-              className="ghost btn"
-              style={{ marginLeft: "auto", fontSize: 12 }}
+              className="btn control-danger"
+              style={{ marginLeft: "auto" }}
               onClick={() => setSure(true)}
             >
               Delete my network
@@ -344,8 +346,7 @@ const LinkedInPanel = ({
       <details style={{ fontSize: 12, color: "var(--muted)" }}>
         <summary>Why an export and not one click?</summary>
         <div style={{ marginTop: 4 }}>
-          LinkedIn has no free way for apps to read your connections. Your own export is the
-          official route.
+          Import a downloaded export to choose which connection data you share with IcpFinder.
         </div>
       </details>
     </section>

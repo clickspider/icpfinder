@@ -1,4 +1,9 @@
+import { icpPresentation } from "../../shared/onboarding";
+import { AppIcon } from "./AppIcon";
+import { companyGroups } from "./dashboard-state";
 import { ProfileEditor } from "./ProfileEditor";
+import { useDialogDismiss } from "./useDialogDismiss";
+import { useDrawer } from "./useDrawer";
 // SPDX-License-Identifier: MIT
 //
 // Main screen in the context of one ICP: who exactly (as short gates), and the
@@ -10,33 +15,7 @@ import { scoringOf } from "../../shared/scoring";
 import type { Company, Contact, HuntStepKind, Icp, State, Workspace } from "../../shared/types";
 import type { View } from "./App";
 import { Criteria } from "./Criteria";
-import { DUO } from "./glass";
-import { api, best, friendly, IcpArt, initial, proven, Snap, Spinner, ToolLogo } from "./ui";
-
-const I = {
-  check: "M5 12l5 5 9-10",
-  bolt: "M13 2L4 14h7l-1 8 9-12h-7z",
-  x: "M6 6l12 12 M18 6L6 18",
-  pain: "M12 3a9 9 0 100 18 9 9 0 000-18z M12 7a5 5 0 100 10 5 5 0 000-10z M12 11a1 1 0 100 2 1 1 0 000-2z",
-  spark: "M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z",
-};
-const TINTS = ["#fff1f3", "#f6efff", "#fff4e8", "#eef5ff", "#ecf8f1"];
-
-const Ico = ({ d, c = "#3c3c43", s = 14 }: { d: string; c?: string; s?: number }) => (
-  <svg
-    aria-hidden="true"
-    width={s}
-    height={s}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={c}
-    strokeWidth="2.2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d={d} />
-  </svg>
-);
+import { api, best, friendly, initial, proven, Spinner, ToolLogo } from "./ui";
 
 const Row = ({
   c,
@@ -53,10 +32,7 @@ const Row = ({
   const yes = c.checks?.filter((x) => x.verdict === "yes").length ?? 0;
   const pending = c.approval !== "approved";
   return (
-    <div
-      className="crow"
-      style={{ gridTemplateColumns: "minmax(0,1.2fr) minmax(0,2fr) 80px 40px", columnGap: 16 }}
-    >
+    <div className="crow native-company-row" data-company-domain={c.domain}>
       <button
         type="button"
         className="btn"
@@ -173,48 +149,9 @@ const Row = ({
         {c.status === "researching" ? (
           <span style={{ color: "var(--accent)" }}>Researching…</span>
         ) : (
-          <>
-            <span style={{ flexShrink: 0, marginTop: 2 }}>
-              <Ico d={I.bolt} c="#d97706" s={13} />
-            </span>
-            <span className="clamp2">{signal ?? "No recent signal"}</span>
-          </>
+          <span className="clamp2">{signal ?? "No recent signal found"}</span>
         )}
       </button>
-      <div style={{ display: "flex", gap: 6, alignItems: "center", justifyContent: "flex-end" }}>
-        {pending ? (
-          <>
-            <button
-              type="button"
-              className="btn"
-              aria-label={`Approve ${c.name}`}
-              title="Approve fit"
-              onClick={() => onAnswer(true)}
-              style={{ width: 32, height: 32, borderRadius: 9, background: "#e6f5ea" }}
-            >
-              <Ico d={I.check} c="#1f8a43" />
-            </button>
-            <button
-              type="button"
-              className="btn"
-              aria-label={`Not a fit: ${c.name}`}
-              title="Not a fit"
-              onClick={() => onAnswer(false)}
-              style={{ width: 32, height: 32, borderRadius: 9, background: "#f2f2f4" }}
-            >
-              <Ico d={I.x} c="#6e6e73" />
-            </button>
-          </>
-        ) : c.status === "researching" || c.status === "queued" ? (
-          <Spinner />
-        ) : c.status === "done" ? (
-          <span className="pill p-green">✓ {p} proven</span>
-        ) : c.status === "candidate" ? (
-          <span className="pill">Not researched</span>
-        ) : (
-          <span className="pill p-red">failed</span>
-        )}
-      </div>
       <div
         style={{
           fontWeight: 800,
@@ -224,7 +161,46 @@ const Row = ({
           color: (c.match ?? 0) >= 85 ? "#1f8a43" : "var(--ink)",
         }}
       >
+        <small style={{ display: "block", fontSize: 10, fontWeight: 400, color: "var(--muted)" }}>
+          Match score
+        </small>
         {c.match ?? "–"}
+      </div>
+      <div className="native-company-actions">
+        {pending ? (
+          <>
+            <button
+              type="button"
+              className="btn native-icon-button native-research-company"
+              aria-label={`Research ${c.name}`}
+              title="Research company"
+              onClick={() => onAnswer(true)}
+            >
+              <AppIcon name="search" size={16} />
+            </button>
+            <button
+              type="button"
+              className="btn native-icon-button native-dismiss-company"
+              aria-label={`Not a fit: ${c.name}`}
+              title="Not a fit"
+              onClick={() => onAnswer(false)}
+            >
+              <AppIcon name="close" size={14} />
+            </button>
+          </>
+        ) : c.status === "researching" || c.status === "queued" ? (
+          <span className="native-muted">
+            <Spinner /> {c.status === "queued" ? "Research queued" : "Researching…"}
+          </span>
+        ) : c.status === "done" ? (
+          <span className="pill p-green native-findings" title="Supported findings from research">
+            {p} {p === 1 ? "finding" : "findings"}
+          </span>
+        ) : c.status === "candidate" ? (
+          <span className="pill">Not researched</span>
+        ) : (
+          <span className="pill p-red">Research failed</span>
+        )}
       </div>
     </div>
   );
@@ -236,14 +212,14 @@ const Row = ({
  * people who can intro you to these companies, and people you know who ARE
  * this ICP and could buy directly. Asked for only once companies are on screen.
  */
-const STEP_ICON: Record<HuntStepKind, string> = {
-  search: "🔎",
-  source: "📰",
-  found: "✨",
-  check: "⏳",
-  pass: "✓",
-  skip: "–",
-  sharpen: "⚡",
+const STEP_ICON: Record<HuntStepKind, React.ReactNode> = {
+  search: <AppIcon name="search" />,
+  source: <AppIcon name="source" />,
+  found: <AppIcon name="check" />,
+  check: <AppIcon name="clock" />,
+  pass: <AppIcon name="check" />,
+  skip: <AppIcon name="minus" />,
+  sharpen: <AppIcon name="refine" />,
 };
 
 const mins = (ms: number) =>
@@ -269,7 +245,7 @@ const HuntPanel = ({
     return (
       <div className="hunt">
         <div className="hunt-head">
-          <Spinner /> {icp.sourcingNote ?? "Hunting…"}
+          <Spinner /> {icp.sourcingNote ?? "Stop finding companies"}
         </div>
       </div>
     );
@@ -287,7 +263,7 @@ const HuntPanel = ({
       ? "Searching the web"
       : h.phase === "check"
         ? `Checking companies · ${h.checked} of ${h.total}`
-        : "Sharpening the ICP";
+        : "Adjusting search criteria…";
   const pct = h.phase === "check" && h.total ? (h.checked / h.total) * 100 : 0;
   return (
     <div className="hunt">
@@ -296,7 +272,7 @@ const HuntPanel = ({
         <b>{title}</b>
         {h.round > 1 && <span className="gtag">Round {h.round}</span>}
         <span style={{ marginLeft: "auto", color: "var(--muted)", fontSize: 12 }}>
-          {mins(left)} left
+          Estimated time remaining: {mins(left)}
         </span>
       </div>
       <div className={`hunt-bar ${h.phase !== "check" ? "busy" : ""}`}>
@@ -361,12 +337,10 @@ const WayIn = ({
       <div className="wayin">
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <ToolLogo name="linkedin" size={22} radius={6} />
-          <ToolLogo name="instagram" size={22} radius={6} />
           <b style={{ marginLeft: 2 }}>Your way in</b>
         </div>
         <div className="wayin-text">
-          Add your LinkedIn or Instagram. I find who can intro you to these companies, and people
-          you already know who fit this ICP and could buy from you.
+          Import LinkedIn connections to explore possible introductions.
         </div>
         <button
           type="button"
@@ -393,7 +367,9 @@ const WayIn = ({
       </div>
       {hasCos && (
         <div className="wayin-row">
-          <span className="wayin-ico">🤝</span>
+          <span className="wayin-ico">
+            <AppIcon name="people" />
+          </span>
           <span>
             <b>{warmCos}</b> {warmCos === 1 ? "company" : "companies"} here where you know someone
           </span>
@@ -406,7 +382,9 @@ const WayIn = ({
         onClick={() => setOpen(!open)}
         aria-expanded={open}
       >
-        <span className="wayin-ico">🎯</span>
+        <span className="wayin-ico">
+          <AppIcon name="target" />
+        </span>
         <span style={{ flex: 1 }}>
           <b>{checking && !icp.people ? "…" : sure}</b> people you know fit
           {likely > 0 && <span style={{ color: "var(--muted)" }}> · {likely} likely</span>}
@@ -444,7 +422,7 @@ const WayIn = ({
                   <ToolLogo name="linkedin" size={13} radius={3} /> Check sizes on LinkedIn
                 </>
               ) : (
-                "🔎 Search the web"
+                <>Search the web</>
               )}
             </button>
           ))}
@@ -506,280 +484,235 @@ export const IcpView = ({
   go: (v: View) => void;
   onState: (s: State) => void;
 }) => {
+  const inspector = useDrawer();
+  const dismissInspector = useDialogDismiss(inspector.close);
+  const page = useRef<HTMLDivElement>(null);
+  const lowerMatches = useRef<HTMLDetailsElement>(null);
+  const nextFocus = useRef<string | null>(null);
+  const [notice, setNotice] = useState("");
+  useEffect(() => {
+    if (nextFocus.current === null) return;
+    const row = Array.from(
+      page.current?.querySelectorAll<HTMLElement>("[data-company-domain]") ?? []
+    ).find((el) => el.dataset.companyDomain === nextFocus.current);
+    (
+      (row && !row.closest("details:not([open])")
+        ? row.querySelector<HTMLButtonElement>("button")
+        : null) ??
+      lowerMatches.current?.querySelector<HTMLElement>("summary") ??
+      page.current?.querySelector<HTMLButtonElement>("[data-find-companies]")
+    )?.focus();
+    nextFocus.current = null;
+  });
   const icp = ws.icps.find((i) => i.id === icpId);
   if (!icp) return null;
   const bar = scoringOf(ws.scoring).bar;
-  const reach = (c: Company) =>
-    (c.warm?.length ? 2 : 0) +
-    (c.linkedin ? 1 : 0) +
-    (c.actions?.findEmail?.status === "done" ? 1 : 0);
-  const hidden =
-    icp.companies.filter(
-      (c) => (c.match ?? 0) > 0 && (c.match ?? 0) < bar && c.approval !== "rejected"
-    ).length + (icp.belowBar ?? 0);
-  const shown = icp.companies
-    .filter((c) => (c.match ?? 0) >= bar && c.approval !== "rejected")
-    .sort(
-      (a, b) =>
-        Number(b.approval === "approved") - Number(a.approval === "approved") ||
-        (b.match ?? 0) - (a.match ?? 0) ||
-        // Equal fit: the one you can reach (someone you know, a LinkedIn page, a found email) first.
-        reach(b) - reach(a)
-    );
-  const rejected = icp.companies.filter((c) => c.approval === "rejected").length;
+  const { matching: shown, below } = companyGroups(icp.companies, bar);
   const crit = icp.criteria;
   const hunt = () => void api().huntIcp(icp.id).then(onState);
   const open = (c: Company) => go({ kind: "company", icpId: icp.id, domain: c.domain });
-  const answer = (c: Company, ok: boolean) =>
-    void api().approveCompany(icp.id, c.domain, ok).then(onState);
+  const answer = (c: Company, ok: boolean) => {
+    const focused =
+      document.activeElement?.closest<HTMLElement>("[data-company-domain]")?.dataset
+        .companyDomain === c.domain;
+    const visible = lowerMatches.current?.open ? [...shown, ...below] : shown;
+    const index = visible.findIndex((item) => item.domain === c.domain);
+    void api()
+      .approveCompany(icp.id, c.domain, ok)
+      .then((state) => {
+        if (!ok) {
+          if (focused)
+            nextFocus.current = visible[index + 1]?.domain ?? visible[index - 1]?.domain ?? "";
+          setNotice(`${c.name} marked as not a fit.`);
+        }
+        onState(state);
+      });
+  };
 
+  const presentation = icpPresentation(icp);
+  const consumer = icp.profileKind === "consumer";
   return (
-    <div
-      className="enter scroll"
-      style={{ flex: 1, display: "flex", flexDirection: "column", padding: 16, gap: 16 }}
-    >
-      <header
-        className="drag"
-        style={{
-          borderRadius: 18,
-          background: TINTS[icp.art % TINTS.length],
-          padding: "22px 24px",
-          display: "flex",
-          alignItems: "center",
-          gap: 18,
-          boxShadow: "inset 0 0 0 0.5px rgba(0,0,0,0.06)",
-        }}
-      >
-        <IcpArt icp={icp} size={72} radius={20} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)" }}>
-            ICP · {ws.product.name}
-          </div>
-          <h1
-            style={{
-              margin: "2px 0 0",
-              fontSize: 28,
-              fontWeight: 800,
-              letterSpacing: "-0.025em",
-              lineHeight: 1.1,
-            }}
-          >
-            {icp.name}
-          </h1>
-          <div style={{ fontSize: 13, color: "var(--ink-2)", marginTop: 4 }}>{icp.industry}</div>
+    <div ref={page} className="native-page native-icp scroll">
+      <div className="sr-only" role="status">
+        {notice}
+      </div>
+      <div className="native-crumb">
+        <button type="button" className="btn" onClick={() => go({ kind: "overview" })}>
+          Overview
+        </button>
+        <span aria-hidden="true">/</span>
+        <span>Customer profile</span>
+      </div>
+      <header className="native-profile-header">
+        <div>
+          <small>{presentation.tag}</small>
+          <h1>{presentation.title}</h1>
+          <p>{presentation.fit}</p>
           {icp.reasoning && (
-            <div className="ir-why icp-why">
-              <i aria-hidden="true">{DUO.Idea?.(16)}</i>
-              <p>
-                <b>Why we picked it</b>
-                {icp.reasoning}
-              </p>
-            </div>
+            <p>
+              <strong>Why we picked it</strong> {icp.reasoning}
+            </p>
           )}
         </div>
-        <button
-          type="button"
-          className={`btn nodrag ${icp.sourcing ? "stop-btn" : "primary"}`}
-          onClick={() => (icp.sourcing ? void api().stopHunt(icp.id).then(onState) : hunt())}
-        >
-          {icp.sourcing ? (
-            <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
-              <Spinner />
-              Stop hunting
-            </span>
-          ) : icp.hunted ? (
-            "Find more companies"
-          ) : (
-            "Hunt this ICP"
-          )}
-        </button>
       </header>
-      <ProfileEditor key={icp.id} icp={icp} onState={onState} />
-
-      <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-        <section
-          className="panel"
-          style={{ flex: "1.6 1 0", minWidth: 0, overflow: "hidden" }}
-          aria-label="Companies"
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "14px 16px" }}>
-            <h2 style={{ margin: 0, fontSize: 15 }}>Companies</h2>
-            <div style={{ fontSize: 12, color: "var(--faint)" }}>
-              {hidden > 0 && `${hidden} weaker fits hidden`}
-              {rejected > 0 && `${hidden > 0 ? " · " : ""}${rejected} not a fit`}
+      <button
+        type="button"
+        className="btn native-secondary native-details-button"
+        onClick={inspector.open}
+      >
+        Profile details
+      </button>
+      <dialog
+        {...dismissInspector}
+        ref={inspector.ref}
+        className={`native-inspector${inspector.closing ? " is-closing" : ""}`}
+        onCancel={(event) => {
+          event.preventDefault();
+          inspector.close();
+        }}
+        aria-label="Profile details"
+      >
+        <div className="native-inspector-head">
+          <h2>Profile details</h2>
+          <button
+            type="button"
+            className="btn native-icon-button"
+            aria-label="Close profile details"
+            onClick={inspector.close}
+          >
+            <AppIcon name="close" />
+          </button>
+        </div>
+        <ProfileEditor key={icp.id} icp={icp} onState={onState} />
+      </dialog>
+      {consumer ? (
+        <div className="native-empty">
+          <h2>A profile you can keep refining</h2>
+          <p>Company search is available for business customer profiles.</p>
+        </div>
+      ) : (
+        <>
+          <section className="native-companies" aria-label="Companies">
+            <div className="native-company-heading">
+              <h2>Companies</h2>
+              <button
+                type="button"
+                className="primary btn"
+                data-find-companies
+                onClick={() => (icp.sourcing ? void api().stopHunt(icp.id).then(onState) : hunt())}
+              >
+                {icp.sourcing
+                  ? "Stop finding companies"
+                  : icp.lastHunt?.error
+                    ? "Try again"
+                    : icp.hunted
+                      ? "Find more companies"
+                      : "Find companies"}
+              </button>
             </div>
+            {icp.sourcing && (
+              <HuntPanel icp={icp} timing={timing} candidates={scoringOf(ws.scoring).candidates} />
+            )}
+            {shown.length > 0 && (
+              <div className="native-company-labels" aria-hidden="true">
+                <span>Company</span>
+                <span>Recent signal</span>
+                <span>Score</span>
+                <span>Research</span>
+              </div>
+            )}
+            {shown.map((c) => (
+              <Row key={c.domain} c={c} onOpen={() => open(c)} onAnswer={(ok) => answer(c, ok)} />
+            ))}
+            {!icp.sourcing && !icp.hunted && shown.length === 0 && (
+              <div className="native-empty">
+                <h2>Find companies to explore</h2>
+                <p>
+                  Search for companies that could fit this profile, then decide which ones to
+                  research further.
+                </p>
+              </div>
+            )}
+            {!icp.sourcing && icp.lastHunt?.error && (
+              <div className="native-empty" role="alert">
+                <h2>We couldn’t complete the search.</h2>
+                <p>{friendly(icp.lastHunt.error)}</p>
+                {shown.length > 0 && <p>Available results are still shown above.</p>}
+              </div>
+            )}
+            {!icp.sourcing && icp.hunted && !icp.lastHunt?.error && shown.length === 0 && (
+              <div className="native-empty">
+                <h2>No companies meet your match threshold yet.</h2>
+                <p>
+                  {icp.lastHunt
+                    ? `Checked ${icp.lastHunt.checked} companies in the last search. ${icp.lastHunt.gap ?? ""}`
+                    : "Try adjusting the matching criteria."}
+                </p>
+              </div>
+            )}
+            {below.length > 0 && (
+              <details ref={lowerMatches} key={`below-${icp.id}`} className="native-lower-matches">
+                <summary>{below.length} below the match threshold</summary>
+                {below.map((c) => (
+                  <Row
+                    key={c.domain}
+                    c={c}
+                    onOpen={() => open(c)}
+                    onAnswer={(ok) => answer(c, ok)}
+                  />
+                ))}
+              </details>
+            )}
+          </section>
+          <details key={`criteria-${icp.id}`} className="native-disclosure">
+            <summary>
+              Search criteria{" "}
+              <span className="disclosure-hint">
+                <span className="disclosure-closed">Show details</span>
+                <span className="disclosure-open">Hide details</span>
+              </span>
+            </summary>
             <button
               type="button"
-              className="ghost btn"
-              style={{
-                marginLeft: "auto",
-                fontSize: 12,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 5,
-              }}
+              className="btn secondary"
               onClick={() => go({ kind: "matching", back: { kind: "icp", icpId: icp.id } })}
             >
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                aria-hidden="true"
-              >
-                <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" />
-                <circle cx="16" cy="6" r="2" />
-                <circle cx="10" cy="12" r="2" />
-                <circle cx="18" cy="18" r="2" />
-              </svg>
-              Adjust matching
+              Adjust matching for this business →
             </button>
-          </div>
-          {icp.sourcing && (
-            <HuntPanel icp={icp} timing={timing} candidates={scoringOf(ws.scoring).candidates} />
-          )}
-          {shown.map((c) => (
-            <Row key={c.domain} c={c} onOpen={() => open(c)} onAnswer={(ok) => answer(c, ok)} />
-          ))}
-          {!icp.sourcing && shown.length === 0 && !icp.hunted && (
-            <Snap
-              kind="start"
-              title="Ready to hunt"
-              text="Your AI finds companies that fit."
-              cta="Hunt this ICP"
-              onCta={hunt}
-            />
-          )}
-          {!icp.sourcing && icp.hunted && icp.lastHunt?.error && (
-            <Snap
-              kind="error"
-              title="Snap, the search broke"
-              text={friendly(icp.lastHunt.error)}
-              cta="Try again"
-              onCta={hunt}
-            />
-          )}
-          {!icp.sourcing && icp.hunted && !icp.lastHunt?.error && shown.length === 0 && (
-            <Snap
-              kind="empty"
-              title="Snap! No strong fits yet"
-              text={
-                icp.lastHunt
-                  ? `Checked ${icp.lastHunt.checked} in the last search. ${icp.lastHunt.gap ?? "The ICP got sharper."}`
-                  : "The ICP gets sharper each round."
-              }
-              cta="Search again"
-              onCta={hunt}
-            />
-          )}
-          {shown.some((c) => c.approval !== "approved") && (
-            <div
-              style={{
-                padding: "10px 16px",
-                fontSize: 12,
-                color: "var(--muted)",
-                borderTop: "0.5px solid rgba(0,0,0,0.07)",
-              }}
-            >
-              ✓ Approve a fit to start its research
-            </div>
-          )}
-        </section>
-
-        <aside
-          className="panel"
-          style={{
-            flex: "1 1 0",
-            minWidth: 0,
-            padding: 16,
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
+            {crit ? (
+              <Criteria
+                criteria={crit}
+                onSave={(c) => void api().updateCriteria(icp.id, c).then(onState)}
+              />
+            ) : (
+              <p>Search criteria will be prepared when you start a company search.</p>
+            )}
+            {icp.refinements?.[0] && (
+              <p className="native-muted">Latest refinement: {icp.refinements[0]}</p>
+            )}
+          </details>
           {(shown.length > 0 || contacts.length > 0) && (
-            <WayIn
-              icp={icp}
-              contacts={contacts}
-              facts={facts}
-              onState={onState}
-              warmCos={shown.filter((c) => (c.warm?.length ?? 0) > 0).length}
-              hasCos={shown.length > 0}
-              go={go}
-            />
+            <details key={`network-${icp.id}`} className="native-disclosure">
+              <summary>
+                Your way in{" "}
+                <span className="disclosure-hint">
+                  <span className="disclosure-closed">Show details</span>
+                  <span className="disclosure-open">Hide details</span>
+                </span>
+              </summary>
+              <WayIn
+                icp={icp}
+                contacts={contacts}
+                facts={facts}
+                onState={onState}
+                warmCos={shown.filter((c) => (c.warm?.length ?? 0) > 0).length}
+                hasCos={shown.length > 0}
+                go={go}
+              />
+            </details>
           )}
-          <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-            <div
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: 8,
-                background: "#fff0f3",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              <Ico d={I.pain} c="#e0244a" />
-            </div>
-            <div
-              className="clamp2"
-              title={icp.pain}
-              style={{ fontSize: 13, lineHeight: 1.45, fontWeight: 500 }}
-            >
-              {icp.pain}
-            </div>
-          </div>
-          {crit && (
-            <Criteria
-              criteria={crit}
-              onSave={(c) => void api().updateCriteria(icp.id, c).then(onState)}
-            />
-          )}
-          {icp.refinements?.[0] && (
-            <div
-              style={{
-                display: "flex",
-                gap: 10,
-                alignItems: "flex-start",
-                fontSize: 12,
-                color: "var(--muted)",
-              }}
-            >
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 8,
-                  background: "#f2f2f4",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <Ico d={I.spark} c="#6e6e73" />
-              </div>
-              <div
-                className="clamp2"
-                title={icp.refinements.join("\n")}
-                style={{ lineHeight: 1.45 }}
-              >
-                Sharpened: {icp.refinements[0]}
-              </div>
-            </div>
-          )}
-          {!crit && (
-            <div style={{ fontSize: 13, color: "var(--muted)" }}>
-              Re-check ICPs on the product page.
-            </div>
-          )}
-        </aside>
-      </div>
+        </>
+      )}
     </div>
   );
 };

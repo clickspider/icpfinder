@@ -56,8 +56,17 @@ export function ModeToggle() {
   }, [mode]);
 
   const label =
-    mode === "light" ? "Switch to dark mode" : mode === "dark" ? "Use system mode" : "Switch to light mode";
-  const icon = mode === "light" ? "☀" : mode === "dark" ? "☾" : "◐";
+    mode === "light"
+      ? "Switch to dark mode"
+      : mode === "dark"
+        ? "Use system mode"
+        : "Switch to light mode";
+  const icon =
+    !mounted || mode === "system"
+      ? "M3 3h18v14H3zM8 21h8M12 17v4"
+      : mode === "dark"
+        ? "M20 15A9 9 0 0 1 9 4a9 9 0 1 0 11 11"
+        : "M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1 1M18 18l1 1M5 19l1-1M18 6l1-1M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0";
 
   return (
     <button
@@ -68,9 +77,19 @@ export function ModeToggle() {
       suppressHydrationWarning
       className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--hairline-2)] bg-[color:var(--bg-elev)] text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--text)] hover:bg-[color:var(--bg-card-hi)]"
     >
-      <span aria-hidden="true" style={{ fontSize: "15px", lineHeight: 1 }}>
-        {mounted ? icon : "◐"}
-      </span>
+      <svg
+        aria-hidden="true"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d={icon} />
+      </svg>
     </button>
   );
 }

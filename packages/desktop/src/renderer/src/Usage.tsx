@@ -1,332 +1,79 @@
 // SPDX-License-Identifier: MIT
-//
-// Usage: what IcpFinder itself took from the founder's AI plan, like the
-// project usage view in Claude. Generic per provider (Claude now, Codex later).
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { State } from "../../shared/types";
-import {
-  emptyTotals,
-  fmtTokens,
-  groupBy,
-  type PlanUsage,
-  type Provider,
-  tokensOf,
-  type UsageRow,
-} from "../../shared/usage";
-import { api, Mark, ProductLogo, ProviderLogo } from "./ui";
-
-const fmtPct = (n?: number) =>
-  n === undefined ? "…" : n > 0 && n < 0.1 ? "<0.1%" : `${n < 10 ? n.toFixed(1) : Math.round(n)}%`;
+import { emptyTotals, groupBy, type Provider, tokensOf } from "../../shared/usage";
+import { ProviderLogo } from "./ui";
 
 const PERIODS = [
   { days: 1, label: "Today" },
   { days: 7, label: "7 days" },
   { days: 30, label: "30 days" },
 ];
-
-const MODEL_NAME: Record<string, string> = {
-  "claude-sonnet-5-5": "Sonnet 5.5",
-  "claude-opus-5-5": "Opus 5.5",
-  "claude-haiku-5-5": "Haiku 5.5",
-};
-
-const Table = ({
-  title,
-  rows,
-  total,
-  name,
-  models,
-}: {
-  title: string;
-  rows: Array<[string, ReturnType<typeof emptyTotals>]>;
-  total: number;
-  name: (k: string) => string;
-  /** Per-model split of a row: one model = a tag on the row; more = indented rows under it. */
-  models?: (k: string) => Array<[string, ReturnType<typeof emptyTotals>]>;
-}) => (
-  <section className="panel" style={{ padding: 16 }}>
-    <div className="use-row" style={{ paddingTop: 0 }}>
-      <span className="lbl">{title}</span>
-      <span />
-      <span className="use-dim" style={{ fontSize: 11.5 }}>
-        Tokens
-      </span>
-      <span className="use-dim" style={{ fontSize: 11.5 }}>
-        Cache
-      </span>
-      <span className="use-dim" style={{ fontSize: 11.5 }}>
-        Share
-      </span>
-    </div>
-    {rows.length === 0 && <div style={{ fontSize: 13, color: "var(--muted)" }}>Nothing yet.</div>}
-    {rows.map(([k, t]) => {
-      const n = tokensOf(t);
-      const share = total ? n / total : 0;
-      const hit = n ? t.cacheRead / n : 0;
-      const split = models?.(k) ?? [];
-      return (
-        <div key={k}>
-          <div className="use-row">
-            <span className="use-name">
-              {name(k)}
-              {split.length === 1 && (
-                <span className="model-tag">
-                  {MODEL_NAME[split[0]?.[0] ?? ""] ?? split[0]?.[0]}
-                </span>
-              )}
-            </span>
-            <span className="use-bar">
-              <i style={{ width: `${Math.max(2, share * 100)}%` }} />
-            </span>
-            <span className="use-num">{fmtTokens(n)}</span>
-            <span className="use-dim">{Math.round(hit * 100)}%</span>
-            <span className="use-dim">{Math.round(share * 100)}%</span>
-          </div>
-          {split.length > 1 &&
-            split.map(([m, mt]) => {
-              const mn = tokensOf(mt);
-              return (
-                <div key={m} className="use-row sub">
-                  <span className="use-name">
-                    <span className="model-tag" style={{ marginLeft: 14 }}>
-                      {MODEL_NAME[m] ?? m}
-                    </span>
-                  </span>
-                  <span className="use-bar">
-                    <i
-                      style={{
-                        width: `${Math.max(2, (total ? mn / total : 0) * 100)}%`,
-                        opacity: 0.55,
-                      }}
-                    />
-                  </span>
-                  <span className="use-num" style={{ fontWeight: 500 }}>
-                    {fmtTokens(mn)}
-                  </span>
-                  <span className="use-dim">{mn ? Math.round((mt.cacheRead / mn) * 100) : 0}%</span>
-                  <span className="use-dim">{total ? Math.round((mn / total) * 100) : 0}%</span>
-                </div>
-              );
-            })}
-        </div>
-      );
-    })}
-  </section>
-);
+const PROVIDERS: Array<{ id: Provider; label: string }> = [
+  { id: "claude", label: "Claude" },
+  { id: "codex", label: "ChatGPT" },
+  { id: "xai", label: "Grok" },
+];
 
 export const UsageView = ({ state }: { state: State }) => {
   const [days, setDays] = useState(7);
   const [provider, setProvider] = useState<Provider>(state.settings.provider ?? "claude");
-  // Products to show; empty = all of them.
-  const [picked, setPicked] = useState<string[]>([]);
-  const [plan, setPlan] = useState<PlanUsage | null>(null);
-  useEffect(() => {
-    if (provider !== "claude") {
-      setPlan(null);
-      return;
-    }
-    let live = true;
-    const load = () =>
-      void api()
-        .planUsage()
-        .then((p) => live && setPlan(p));
-    load();
-    const t = setInterval(load, 120_000);
-    return () => {
-      live = false;
-      clearInterval(t);
-    };
-  }, [provider]);
-  const byProvider: UsageRow[] = (state.usage ?? []).filter((r) => r.provider === provider);
-  const products = groupBy(byProvider, days, (r) => r.ws);
-  const allTokens = products.reduce((n, [, t]) => n + tokensOf(t), 0);
-  const rows = picked.length ? byProvider.filter((r) => picked.includes(r.ws)) : byProvider;
-  const all = groupBy(rows, days, () => "all")[0]?.[1] ?? emptyTotals();
-  const total = tokensOf(all);
-  const ws = (id: string) => state.workspaces.find((w) => w.id === id);
-  const name = (id: string) => ws(id)?.product.name ?? "Archived";
-  const toggle = (id: string) =>
-    setPicked(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]);
+  const rows = (state.usage ?? []).filter((row) => row.provider === provider);
+  // Include setup and archived businesses in the total without presenting them as businesses.
+  const total = tokensOf(groupBy(rows, days, () => "all")[0]?.[1] ?? emptyTotals());
+  const providerName = PROVIDERS.find((item) => item.id === provider)?.label;
 
   return (
-    <div
-      className="enter scroll"
-      style={{ flex: 1, padding: 16, display: "flex", flexDirection: "column", gap: 14 }}
-    >
-      <header
-        className="drag"
-        style={{ padding: "8px 4px 0", display: "flex", alignItems: "flex-end", gap: 12 }}
-      >
+    <div className="enter scroll native-page native-usage">
+      <header className="drag">
+        <h1>IcpFinder usage</h1>
+        <p>Tokens recorded in IcpFinder, by provider and period.</p>
+      </header>
+      <div className="nodrag native-usage-filters">
         <div>
-          <h1 className="ob-h1">
-            Your <em>usage</em>
-          </h1>
-          <p className="ob-sub" style={{ marginTop: 4 }}>
-            Only what IcpFinder used from your plan. Your own chats are not counted.
-          </p>
-        </div>
-        <div className="nodrag" style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-          <div className="ob-seg" style={{ width: 250 }}>
-            <button
-              type="button"
-              className={provider === "claude" ? "on" : ""}
-              onClick={() => setProvider("claude")}
-            >
-              <ProviderLogo provider="claude" size={13} /> Claude
-            </button>
-            <button
-              type="button"
-              className={provider === "codex" ? "on" : ""}
-              onClick={() => setProvider("codex")}
-            >
-              <ProviderLogo provider="codex" size={13} /> Codex
-            </button>
-            <button
-              type="button"
-              className={provider === "xai" ? "on" : ""}
-              onClick={() => setProvider("xai")}
-            >
-              <ProviderLogo provider="xai" size={13} /> Grok
-            </button>
-          </div>
-          <div className="ob-seg" style={{ width: 230 }}>
-            {PERIODS.map((p) => (
+          <div className="native-muted">Provider</div>
+          <fieldset className="ob-seg" aria-label="Provider">
+            {PROVIDERS.map((item) => (
               <button
-                key={p.days}
+                key={item.id}
                 type="button"
-                className={days === p.days ? "on" : ""}
-                onClick={() => setDays(p.days)}
+                className={provider === item.id ? "on" : ""}
+                aria-pressed={provider === item.id}
+                onClick={() => setProvider(item.id)}
               >
-                {p.label}
+                <ProviderLogo provider={item.id} size={13} />
+                {item.label}
               </button>
             ))}
-          </div>
+          </fieldset>
         </div>
-      </header>
-
-      <div className="use-products">
-        <button
-          type="button"
-          className={`use-prod ${picked.length === 0 ? "on" : ""}`}
-          onClick={() => setPicked([])}
-        >
-          <span className="use-prod-logo all">All</span>
-          <span>
-            <b>All products</b>
-            <small>{fmtTokens(allTokens)}</small>
-          </span>
-        </button>
-        {/* Setup before a product exists (connection test, reading the site) counts in All only. */}
-        {products
-          .filter(([id]) => id !== "app")
-          .map(([id, t]) => {
-            const w = ws(id);
-            return (
+        <div>
+          <div className="native-muted">Period</div>
+          <fieldset className="ob-seg" aria-label="Period">
+            {PERIODS.map((period) => (
               <button
-                key={id}
+                key={period.days}
                 type="button"
-                className={`use-prod ${picked.includes(id) ? "on" : ""}`}
-                aria-pressed={picked.includes(id)}
-                onClick={() => toggle(id)}
+                className={days === period.days ? "on" : ""}
+                aria-pressed={days === period.days}
+                onClick={() => setDays(period.days)}
               >
-                {w ? (
-                  <ProductLogo product={w.product} size={30} radius={8} />
-                ) : id === "app" ? (
-                  <Mark size={30} radius={8} />
-                ) : (
-                  <span className="use-prod-logo">?</span>
-                )}
-                <span>
-                  <b>{name(id)}</b>
-                  <small>
-                    {fmtTokens(tokensOf(t))} ·{" "}
-                    {allTokens ? Math.round((tokensOf(t) / allTokens) * 100) : 0}%
-                  </small>
-                </span>
+                {period.label}
               </button>
-            );
-          })}
+            ))}
+          </fieldset>
+        </div>
       </div>
-
-      <section
-        className="panel"
-        style={{ padding: 18, display: "flex", flexDirection: "column", gap: 12 }}
-      >
-        <div style={{ display: "flex", alignItems: "baseline" }}>
-          <div className="lbl">
-            Your {provider === "claude" ? "Claude" : provider === "codex" ? "Codex" : "Grok"} plan
-          </div>
-          <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--muted)" }}>
-            {plan ? `${plan.plan} · as Claude Code reports it` : ""}
-          </span>
-        </div>
-        {plan?.windows.map((w) => (
-          <div key={w.label} className="plan-row">
-            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-              <b>{w.label}</b>
-              <span style={{ fontSize: 12, color: "var(--muted)" }}>
-                {w.resets && `resets ${w.resets}`}
-              </span>
-              <span style={{ marginLeft: "auto", fontSize: 12.5 }}>
-                <b style={{ color: "#e0244a" }}>IcpFinder ≈ {fmtPct(w.appPct)}</b>
-                <span style={{ color: "var(--muted)" }}> of {w.pct}% used</span>
-              </span>
-            </div>
-            <div className="plan-bar">
-              <i className="app" style={{ width: `${Math.min(100, w.appPct ?? 0)}%` }} />
-              <i className="rest" style={{ width: `${Math.max(0, w.pct - (w.appPct ?? 0))}%` }} />
-            </div>
-          </div>
-        ))}
-        {!plan?.windows.length && (
-          <div style={{ fontSize: 13, color: "var(--muted)" }}>
-            Plan limits are unavailable here. Recorded IcpFinder usage is shown below.
-          </div>
-        )}
+      <section className="native-token-total" aria-live="polite" aria-atomic="true">
+        <h2>{providerName} tokens</h2>
+        <div className="use-big">{total.toLocaleString()}</div>
+        <p>{days === 1 ? "Today" : `Last ${days} days`}</p>
+        {total === 0 && <p>No tokens recorded for this period.</p>}
       </section>
-
-      <section
-        className="panel"
-        style={{ padding: 18, display: "flex", gap: 28, flexWrap: "wrap" }}
-      >
-        <div>
-          <div className="use-big">{fmtTokens(total)}</div>
-          <div className="use-cap">tokens IcpFinder used</div>
-        </div>
-        <div>
-          <div className="use-big">{all.calls}</div>
-          <div className="use-cap">AI runs</div>
-        </div>
-        <div>
-          <div className="use-big">{total ? Math.round((all.cacheRead / total) * 100) : 0}%</div>
-          <div className="use-cap">cache hit (lighter on your plan)</div>
-        </div>
-        <div>
-          <div className="use-big">{all.webSearches}</div>
-          <div className="use-cap">web searches</div>
-        </div>
-      </section>
-
-      <Table
-        title="By task and model"
-        rows={groupBy(rows, days, (r) => r.task)}
-        total={total}
-        name={(k) => k}
-        models={(k) =>
-          groupBy(
-            rows.filter((r) => r.task === k),
-            days,
-            (r) => r.model
-          )
-        }
-      />
-      <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.5 }}>
-        Red is IcpFinder's part, grey is everything else on your account. IcpFinder's part is an
-        estimate: its own runs are counted exactly and set against Claude Code's other work on this
-        Mac. Use on claude.ai or other devices is not visible here, so the real part is a bit
-        smaller.
-      </div>
+      <p className="native-muted">
+        Recorded IcpFinder usage only. Your provider may report different totals.
+      </p>
     </div>
   );
 };
