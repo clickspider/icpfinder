@@ -440,3 +440,14 @@ These are user-approved decisions from the temporary controls review, subsequent
 Use a compact identity header and direct product screenshots rather than gradient banners, floating-card posters, or oversized badge stacks. Screenshot captions must disclose synthetic example companies, signals, and source material. Do not ship capture fixtures or review-page scaffolding. Clearly separate Mac subscription connections and workspace features from web API-key discovery, MCP, and developer-library examples. Avoid blanket timing, unlimited-usage, verified-contact-count, or fixed-cost promises across these surfaces.
 
 README prose should use the product’s conversational, useful voice throughout, including developer and contribution sections. Keep the Mac workflow prominent, retain useful SDK examples, and move deployment recipes into setup documentation. Avoid rhetorical em dashes, stock community slogans, pricing grievances, and promotional author signatures. Preserve required attribution and license notices. Describe cache bypass accurately: it does not imply device-only processing.
+
+## Company research detail (2026-10-22)
+
+The selected layout is B: three local sections, **Fit / Why now / Background**, with details expanding inline. Preserve the actual workspace sidebar. Use whitespace and a quiet, unboxed reading area; do not return to a long central list or add a scrolling strip of finding categories.
+
+- Fit leads with the existing cited assessment. Keep failed criteria, deal-breakers, and meaningful uncertainties visible without opening the full research. Do not invent a summary or call a model for this presentation.
+- Why now surfaces supported dated findings. Background groups offer, people, public posts, and tools. All seven finding kinds, complete claims, evidence quotes/checks, dates, gaps, criteria, and citations remain available through clear disclosures. Distinguish no records from records without supported highlights.
+- Where to reach them sits alongside the research. A route does not establish a named person's ownership, authorship, or purchasing authority. Keep provenance visible. Missing contacts show a short explanation and one LinkedIn search link; put other searches under Other contact routes. Lookup failures are distinct from empty results and clipboard failures.
+- Monitoring updates remain separate from checked research. Mark them read when opened, not just on entering the company page. Distinguish New updates from previously viewed Updates.
+- More actions holds refresh controls and research/outreach tools. Existing results open without generating again. Button labels describe actual behavior: Open LinkedIn page or Add LinkedIn link for stored-URL controls; Search LinkedIn only for a real search.
+- Keep all real actions, source access, provider restrictions, and recovery states. Full text wraps; action rows accommodate multiple lines. No fixture data, review tabs, or preview entry points ship.

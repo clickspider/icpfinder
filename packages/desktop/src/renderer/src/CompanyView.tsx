@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 //
-// One company in the context of one ICP. Visual first: icons per section,
-// one line per fact with a proof dot, sources on click. On the right: the fit,
-// and next steps that Claude (or Hunter) does for you.
+// Company research organized by fit, timing, and background, with full evidence
+// available inline and contact routes alongside.
 
-import type { Finding, FindingKind } from "@icpfinder/core";
+import type { FindingKind } from "@icpfinder/core";
 import { useEffect, useRef, useState } from "react";
-import { evidenceLabel, findingLabel, findingReason } from "../../shared/evidence-labels";
 import { LINKEDIN, linkedinFor } from "../../shared/people";
 import type { ActionId, State, Workspace } from "../../shared/types";
 import type { View } from "./App";
+import { CitedResearch, CompanyResearch, CompanyUpdates } from "./CompanyResearch";
+import "./company-view.css";
 import { ReachCard } from "./ReachCard";
-import { api, friendly, host, initial, Snap, Spinner, ToolLogo } from "./ui";
+import { api, friendly, initial, Snap, Spinner, ToolLogo } from "./ui";
 
 const KIND: Record<FindingKind, { title: string; path: string }> = {
   why_now: { title: "Recent signals", path: "M13 2L4 14h7l-1 8 9-12h-7z" },
@@ -37,17 +37,6 @@ const KIND: Record<FindingKind, { title: string; path: string }> = {
     path: "M12 3a9 9 0 100 18 9 9 0 000-18z M5.6 5.6l12.8 12.8",
   },
 };
-const ORDER: FindingKind[] = [
-  "why_now",
-  "person",
-  "their_need",
-  "what_they_sell",
-  "linkedin_post",
-  "tech_stack",
-  "disqualifier",
-];
-const PERSON_PATH = KIND.person.path;
-
 const Icon = ({
   path,
   size = 16,
@@ -70,97 +59,6 @@ const Icon = ({
   >
     <path d={path} />
   </svg>
-);
-
-const dot = (f: Finding) =>
-  f.status === "proven" ? "#1f8a43" : f.status === "weak" ? "#d97706" : "#c7c7cc";
-const rank = (f: Finding) => (f.status === "proven" ? 0 : f.status === "weak" ? 1 : 2);
-
-const Fact = ({ f }: { f: Finding }) => (
-  <details className="fact" style={{ borderRadius: 10 }}>
-    <summary
-      style={{
-        display: "flex",
-        gap: 10,
-        alignItems: "flex-start",
-        padding: "6px 8px",
-        borderRadius: 10,
-      }}
-    >
-      <span
-        title={findingLabel(f.status)}
-        style={{
-          width: 8,
-          height: 8,
-          borderRadius: 4,
-          background: dot(f),
-          marginTop: 7,
-          flexShrink: 0,
-        }}
-      />
-      <span
-        className="clamp2"
-        style={{
-          flex: 1,
-          lineHeight: 1.5,
-          color: f.status === "rejected" ? "var(--faint)" : "var(--ink)",
-        }}
-      >
-        {f.claim}
-      </span>
-      <small className="native-evidence-status">{findingLabel(f.status)}</small>
-      {f.date && (
-        <span style={{ fontSize: 12, color: "var(--faint)", whiteSpace: "nowrap" }}>{f.date}</span>
-      )}
-      <span className="fact-chev" aria-hidden="true">
-        ⌄
-      </span>
-    </summary>
-    <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "4px 8px 10px 26px" }}>
-      {f.why && <p className="native-muted">{findingReason(f.why)}</p>}
-      {f.evidence.map((e) => (
-        <div
-          key={`${e.url}|${e.quote}`}
-          style={{ fontSize: 13, padding: "8px 10px", borderRadius: 10, background: "#f7f7f8" }}
-        >
-          <div style={{ display: "flex", gap: 8, fontSize: 12 }}>
-            <a
-              href={e.url}
-              onClick={(ev) => {
-                ev.preventDefault();
-                void api().openExternal(e.url);
-              }}
-            >
-              {host(e.url)}
-            </a>
-            <span
-              style={{
-                marginLeft: "auto",
-                color: e.check === "verified" ? "var(--green)" : "var(--amber)",
-              }}
-            >
-              {evidenceLabel[e.check]}
-            </span>
-          </div>
-          <div
-            style={{ marginTop: 3, lineHeight: 1.45, userSelect: "text", color: "var(--ink-2)" }}
-          >
-            “{e.quote}”
-          </div>
-        </div>
-      ))}
-    </div>
-  </details>
-);
-
-const FitRing = ({ score }: { score: number | null }) => (
-  <div className="native-match-score">
-    <span>Match score</span>
-    <b>
-      {score ?? "–"}
-      <small> / 100</small>
-    </b>
-  </div>
 );
 
 type Action = {
@@ -337,34 +235,37 @@ export const CompanyView = ({
   const [shown, setShown] = useState<ActionId | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [watching, setWatching] = useState(false);
+  const [findingReach, setFindingReach] = useState(false);
+  const [updatesOpen, setUpdatesOpen] = useState(false);
   const [hunterKey, setHunterKey] = useState("");
   const [pasting, setPasting] = useState(false);
   const [liDraft, setLiDraft] = useState("");
   const [error, setError] = useState("");
   useEffect(() => {
-    if (c?.signals?.some((x) => !x.seen)) void api().markSeen(icpId, domain);
-  }, [c?.signals, icpId, domain]);
+    if (updatesOpen && c?.signals?.some((x) => !x.seen))
+      void api()
+        .markSeen(icpId, domain)
+        .then(onState)
+        .catch(() => setError("Couldn’t mark updates as read."));
+  }, [c?.signals, icpId, domain, updatesOpen, onState]);
   useEffect(() => {
     if (shown) resultPanel.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [shown]);
   if (!icp || !c) return null;
   const r = c.research;
-  const nProven = r?.findings.filter((f) => f.status === "proven").length ?? 0;
-  const nWeak = r?.findings.filter((f) => f.status === "weak").length ?? 0;
-  const person = r?.findings.find(
+  const personFinding = r?.findings.find(
     (f) => f.kind === "person" && f.status === "proven" && f.person
-  )?.person;
+  );
+  const person = personFinding?.person;
   const opener = r?.opener.map((l) => l.text).join(" ") ?? "";
   const result = shown ? c.actions?.[shown] : undefined;
-  // A real profile or company page only. Unverified = grayed out, the founder can paste one.
+  // Stored LinkedIn URLs are routes, not proof of ownership or verification.
   const li = linkedinFor(c);
   const liSub = li
-    ? li.who
-      ? `${li.who}'s profile`
-      : li.url.includes("/company/")
-        ? "Company page"
-        : "Your saved profile"
-    : "Not verified · add the link";
+    ? li.url.includes("/company/")
+      ? "Company-page link"
+      : "Profile link"
+    : "No LinkedIn link available";
   const liValid = LINKEDIN.test(liDraft.trim().replace(/^http:\/\//, "https://"));
   const searchLinkedIn = () => {
     const q = encodeURIComponent(`${person?.name ?? ""} ${c.name}`.trim());
@@ -437,7 +338,13 @@ export const CompanyView = ({
 
       <div
         className="scroll"
-        style={{ flex: 1, padding: 18, display: "flex", flexDirection: "column", gap: 16 }}
+        style={{
+          flex: 1,
+          padding: "28px 36px 56px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 24,
+        }}
       >
         <header style={{ display: "flex", alignItems: "center", gap: 16 }}>
           {c.logo ? (
@@ -496,25 +403,16 @@ export const CompanyView = ({
               >
                 {c.domain}
               </a>
+              <span className="company-muted">
+                Match score {c.match ?? r?.fitScore ?? "–"} / 100
+              </span>
               {r && (
-                <span className="pill p-green">
-                  {nProven} supported {nProven === 1 ? "finding" : "findings"}
-                </span>
-              )}
-              {r && nWeak > 0 && (
-                <span className="pill p-amber">
-                  {nWeak} {nWeak === 1 ? "finding needs" : "findings need"} checking
-                </span>
-              )}
-              {person && (
-                <span className="pill p-gray">
-                  <Icon path={PERSON_PATH} size={12} />
-                  {person.name}
+                <span className="company-muted">
+                  Researched {new Date(r.researchedAt).toLocaleDateString()}
                 </span>
               )}
             </div>
           </div>
-          <FitRing score={c.match ?? r?.fitScore ?? null} />
         </header>
 
         {error && (
@@ -596,265 +494,96 @@ export const CompanyView = ({
             )}
           </div>
         ) : (
-          <div
-            className="native-company-columns"
-            style={{ display: "flex", gap: 32, alignItems: "flex-start" }}
-          >
-            <section
-              className="panel"
-              style={{ flex: 1.25, padding: "8px 10px", minWidth: 0 }}
-              aria-label="Research findings"
-            >
-              {c.checks && c.checks.length > 0 && (
-                <div
-                  style={{ padding: "8px 14px 10px", borderBottom: "0.5px solid rgba(0,0,0,0.06)" }}
+          <div className="company-detail-columns">
+            <CompanyResearch
+              key={`${icpId}-${domain}`}
+              company={c}
+              onUpdatesViewed={() => {
+                void api()
+                  .markSeen(icpId, domain)
+                  .then(onState)
+                  .catch(() => setError("Couldn’t mark updates as read."));
+              }}
+            />
+            <aside>
+              <ReachCard
+                key={`${icpId}-${domain}`}
+                icpId={icpId}
+                c={c}
+                person={personFinding}
+                onState={onState}
+              />
+              {(c.signals?.length ?? 0) > 0 && (
+                <details
+                  className="company-disclosure"
+                  open={updatesOpen}
+                  onToggle={(event) => setUpdatesOpen(event.currentTarget.open)}
                 >
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 0 6px" }}
-                  >
-                    <div style={{ fontSize: 13, fontWeight: 700 }}>
-                      How it compares with this profile
-                    </div>
-                    <div style={{ marginLeft: "auto", fontSize: 12, color: "var(--faint)" }}>
-                      {c.checks.filter((x) => x.verdict === "yes").length} of {c.checks.length}{" "}
-                      criteria met
-                    </div>
-                  </div>
-                  <div className="native-checks">
-                    {c.checks.map((k) => (
-                      <span
-                        key={k.criterion}
-                        title={k.evidence}
-                        className={`native-check ${k.verdict === "yes" ? "p-green" : k.verdict === "no" ? "p-red" : "p-gray"}`}
-                        style={{ whiteSpace: "normal", fontWeight: 500 }}
-                      >
-                        {k.verdict === "yes" ? "Met" : k.verdict === "no" ? "Not met" : "Unknown"} ·{" "}
-                        {k.criterion}
-                        <small>{k.evidence}</small>
-                      </span>
-                    ))}
-                  </div>
-                  {c.trigger && (
-                    <div style={{ marginTop: 8, fontSize: 13, color: "var(--ink-2)" }}>
-                      <b style={{ fontWeight: 600 }}>Signal: </b>
-                      {c.trigger.text}
-                      {c.trigger.url && (
-                        <>
-                          {" "}
-                          <a
-                            href={c.trigger.url}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              void api().openExternal(c.trigger?.url ?? "");
-                            }}
-                          >
-                            source
-                          </a>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
+                  <summary>
+                    {c.signals?.some((s) => !s.seen)
+                      ? `New updates (${c.signals.filter((s) => !s.seen).length})`
+                      : `Updates (${c.signals?.length})`}
+                  </summary>
+                  <CompanyUpdates company={c} />
+                </details>
               )}
-              {ORDER.map((kind) => {
-                const fs = r.findings
-                  .filter((f) => f.kind === kind)
-                  .sort((a, b) => rank(a) - rank(b));
-                if (fs.length === 0) return null;
-                const k = KIND[kind];
-                return (
-                  <div
-                    key={kind}
-                    style={{ padding: "8px 6px", borderBottom: "0.5px solid rgba(0,0,0,0.06)" }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        padding: "0 8px 4px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: 7,
-                          background: "#f2f2f4",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Icon path={k.path} size={14} />
-                      </div>
-                      <div style={{ fontSize: 13, fontWeight: 700 }}>{k.title}</div>
-                    </div>
-                    {fs.slice(0, 2).map((f) => (
-                      <Fact key={f.id} f={f} />
-                    ))}
-                    {fs.length > 2 && (
-                      <details>
-                        <summary
-                          style={{
-                            fontSize: 12,
-                            color: "var(--muted)",
-                            padding: "2px 8px 2px 26px",
-                          }}
-                        >
-                          + {fs.length - 2} more
-                        </summary>
-                        {fs.slice(2).map((f) => (
-                          <Fact key={f.id} f={f} />
-                        ))}
-                      </details>
-                    )}
-                  </div>
-                );
-              })}
-              <div
-                style={{
-                  display: "flex",
-                  gap: 14,
-                  padding: "10px 14px 6px",
-                  fontSize: 11,
-                  color: "var(--faint)",
-                }}
-              >
-                <span>
-                  <span style={{ color: "#1f8a43" }}>●</span> Supported
-                </span>
-                <span>
-                  <span style={{ color: "#d97706" }}>●</span> Needs checking
-                </span>
-                <span>
-                  <span style={{ color: "#c7c7cc" }}>●</span> Not supported by this check
-                </span>
-              </div>
-            </section>
-
-            <aside
-              style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12, minWidth: 0 }}
-            >
-              <div className="panel" style={{ padding: 14 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <svg
-                    aria-hidden="true"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#e0244a"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9 M10 21a2 2 0 004 0" />
-                  </svg>
-                  <div className="lbl">Recent signals</div>
+              <details className="company-disclosure company-more-actions">
+                <summary>More actions</summary>
+                <h3>Refresh information</h3>
+                <div className="company-maintenance">
                   <button
                     type="button"
                     className="secondary btn"
-                    style={{ marginLeft: "auto" }}
                     disabled={watching}
                     onClick={() => {
                       setWatching(true);
                       void api()
                         .watchNow(icpId, c.domain)
                         .then(onState)
-                        .catch(() => setError("We couldn’t check for updates. Try again."))
+                        .catch(() => setError("Couldn’t check for updates. Try again."))
                         .finally(() => setWatching(false));
                     }}
                   >
-                    {watching ? "Checking…" : "Check now"}
+                    {watching ? "Checking for updates…" : "Check for updates"}
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary btn"
+                    disabled={findingReach}
+                    onClick={() => {
+                      setFindingReach(true);
+                      void api()
+                        .findReach(icpId, c.domain)
+                        .then(onState)
+                        .catch(() => setError("Couldn’t check contact routes. Try again."))
+                        .finally(() => setFindingReach(false));
+                    }}
+                  >
+                    {findingReach ? "Checking…" : "Look for contact routes again"}
                   </button>
                 </div>
-                {(c.signals ?? []).length === 0 ? (
-                  <div style={{ marginTop: 6, fontSize: 12, color: "var(--muted)" }}>
-                    IcpFinder checks for updates periodically while the app is open.
-                    {c.watchedAt
-                      ? ` Last check: ${new Date(c.watchedAt).toLocaleDateString()}.`
-                      : ""}
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
-                    {(c.signals ?? []).slice(0, 5).map((sig) => (
-                      <div
-                        key={sig.text}
-                        style={{ display: "flex", gap: 8, fontSize: 13, lineHeight: 1.45 }}
-                      >
-                        <span
-                          style={{
-                            width: 7,
-                            height: 7,
-                            borderRadius: 4,
-                            marginTop: 7,
-                            flexShrink: 0,
-                            background: sig.seen ? "#d1d1d6" : "#e0244a",
-                          }}
-                        />
-                        <div style={{ flex: 1 }}>
-                          {sig.text}
-                          <span style={{ color: "var(--faint)" }}>
-                            {sig.date ? ` · ${sig.date}` : ""}
-                          </span>
-                          {sig.url && (
-                            <>
-                              {" "}
-                              <a
-                                href={sig.url}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  void api().openExternal(sig.url ?? "");
-                                }}
-                              >
-                                source
-                              </a>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {opener && (
-                <div
-                  className="panel"
-                  style={{
-                    padding: 14,
-                    background: "#fffafb",
-                    boxShadow: "inset 0 0 0 1px #ffd6df",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center" }}>
-                    <div className="lbl">Suggested opener</div>
+                <p className="company-muted">
+                  Checking for updates uses AI tokens. Contact-route lookup does not.
+                </p>
+                {opener && (
+                  <details className="company-disclosure">
+                    <summary>Saved suggested opener</summary>
+                    <CitedResearch lines={r.opener} findings={r.findings} />
                     <button
                       type="button"
                       className="secondary btn"
-                      style={{ marginLeft: "auto" }}
-                      onClick={() => copy("opener", opener)}
+                      onClick={() => void copy("opener", opener)}
                     >
-                      {copied === "opener" ? "Copied" : "Copy"}
+                      {copied === "opener" ? "Copied" : "Copy opener"}
                     </button>
-                  </div>
-                  <div style={{ marginTop: 6, lineHeight: 1.5, userSelect: "text" }}>{opener}</div>
-                </div>
-              )}
-
-              <ReachCard icpId={icpId} c={c} person={person?.name} onState={onState} />
-
-              <details className="reach-more">
-                <summary className="lbl">More actions · these use AI tokens</summary>
-                <div
-                  className="native-action-list"
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                    gap: 8,
-                    marginTop: 10,
-                  }}
-                >
+                  </details>
+                )}
+                <h3>Research and outreach</h3>
+                <p className="company-muted">
+                  AI actions use tokens from your connected provider. Review any draft before
+                  sending.
+                </p>
+                <div className="company-action-list">
                   {ACTIONS.map((a) => {
                     const st =
                       a.id !== "openLinkedIn" && a.id !== "live" ? c.actions?.[a.id] : undefined;
@@ -863,7 +592,7 @@ export const CompanyView = ({
                       <button
                         key={a.id}
                         type="button"
-                        className={`btn rise native-action-row ${shown === a.id ? "selected" : ""}`}
+                        className={`btn secondary company-action-row ${shown === a.id ? "selected" : ""}`}
                         onClick={() => run(a)}
                         aria-expanded={
                           a.id === "openLinkedIn"
@@ -875,56 +604,25 @@ export const CompanyView = ({
                               : shown === a.id
                         }
                         aria-controls={shown === a.id ? "company-action-result" : undefined}
-                        title={unverified ? "We could not verify a LinkedIn page" : undefined}
-                        style={{
-                          opacity: unverified && !pasting ? 0.55 : 1,
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 8,
-                          padding: 12,
-                          borderRadius: 14,
-                          background: "#fff",
-                          textAlign: "left",
-                          boxShadow:
-                            shown === a.id
-                              ? `inset 0 0 0 2px ${a.ink}`
-                              : "inset 0 0 0 0.5px rgba(0,0,0,0.12)",
-                        }}
+                        title={unverified ? "No LinkedIn link available" : undefined}
                       >
-                        <div
-                          style={{ display: "flex", alignItems: "center", gap: 8, width: "100%" }}
-                        >
-                          <div
-                            style={{
-                              width: 30,
-                              height: 30,
-                              borderRadius: 9,
-                              background: a.tint,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                          >
-                            {a.brand ? (
-                              <ToolLogo name={a.brand} size={30} radius={9} />
-                            ) : (
-                              <Icon path={a.path} size={16} color={a.ink} />
-                            )}
-                          </div>
-                          <div style={{ marginLeft: "auto" }}>
-                            {st?.status === "running" ? (
-                              <Spinner />
-                            ) : st?.status === "done" ? (
-                              <span
-                                style={{ color: "var(--green)", fontSize: 12, fontWeight: 700 }}
-                              >
-                                ✓
-                              </span>
-                            ) : null}
-                          </div>
-                        </div>
                         <div>
-                          <div style={{ fontWeight: 600, fontSize: 13 }}>{a.title}</div>
+                          <div style={{ fontWeight: 600, fontSize: 13 }}>
+                            {a.id === "openLinkedIn"
+                              ? li
+                                ? "Open LinkedIn page"
+                                : "Add LinkedIn link"
+                              : a.title}
+                          </div>
+                          {st && (
+                            <small role={st.status === "running" ? "status" : undefined}>
+                              {st.status === "running"
+                                ? "Working…"
+                                : st.status === "done"
+                                  ? "Saved result"
+                                  : "Failed — try again"}
+                            </small>
+                          )}
                           <div className="ellipsis" style={{ fontSize: 11, color: "var(--muted)" }}>
                             {a.id === "openLinkedIn" ? liSub : a.sub}
                           </div>
@@ -942,11 +640,10 @@ export const CompanyView = ({
                 >
                   <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                     <ToolLogo name="linkedin" size={18} radius={4} />
-                    <b style={{ fontSize: 13 }}>Not verified on LinkedIn</b>
+                    <b style={{ fontSize: 13 }}>No LinkedIn link available</b>
                   </div>
                   <div style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.45 }}>
-                    We could not find {person?.name ?? c.name} on LinkedIn. Found it? Paste the
-                    profile or company link. It stays with this company.
+                    Add a profile or company-page link to save it with this company.
                   </div>
                   <form
                     style={{ display: "flex", gap: 8 }}
@@ -1014,7 +711,11 @@ export const CompanyView = ({
                           .catch(() => setError("Couldn’t start this action."))
                       }
                     >
-                      {shown === "gmailDraft" ? "Create another Gmail draft" : "Generate again"}
+                      {shown === "gmailDraft"
+                        ? "Create another Gmail draft"
+                        : shown === "findEmail"
+                          ? "Search again"
+                          : "Generate again"}
                     </button>
                   )}
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1092,27 +793,6 @@ export const CompanyView = ({
                       </div>
                     )}
                 </div>
-              )}
-
-              {r.gaps.length > 0 && (
-                <details className="panel" style={{ padding: "10px 14px" }}>
-                  <summary style={{ fontSize: 13, fontWeight: 600 }}>
-                    Still to check ({r.gaps.length})
-                  </summary>
-                  <ul
-                    style={{
-                      margin: "8px 0 0",
-                      paddingLeft: 18,
-                      lineHeight: 1.6,
-                      color: "var(--ink-2)",
-                      fontSize: 13,
-                    }}
-                  >
-                    {r.gaps.map((g) => (
-                      <li key={g}>{g}</li>
-                    ))}
-                  </ul>
-                </details>
               )}
             </aside>
           </div>

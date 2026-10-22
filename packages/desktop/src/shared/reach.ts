@@ -125,7 +125,7 @@ export const reachSearches = (
   if (!have.has("post"))
     out.push({
       kind: "post",
-      label: "Search their posts",
+      label: "Search Hacker News",
       url: `https://hn.algolia.com/?q=${encodeURIComponent(name)}`,
     });
   return out;
