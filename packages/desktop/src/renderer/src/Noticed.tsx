@@ -59,7 +59,7 @@ function ListenSetup({
     void api().listenRun().then(onState);
   };
   return (
-    <div className="noticed-setup">
+    <div className="native-page noticed-setup scroll">
       <h1 className="ob-h1">Hear about the right people first</h1>
       <p className="ob-sub">
         We looked at your profiles. Here is what is worth listening for, and where. Change anything,
@@ -347,9 +347,9 @@ export function Noticed({
         <aside className="panel noticed-side">
           <h3>Where we listen</h3>
           <p>
-            Hacker News and Reddit are read through their public pages. X and LinkedIn are read in
-            IcpFinder’s browser, where you signed in. It only reads. It never posts, likes or
-            follows.
+            Hacker News is read through its public page. Reddit, X and LinkedIn are read in your own
+            browser through Claude in Chrome, where you are already signed in. It only reads. It
+            never posts, likes or follows.
           </p>
           {ws.icps
             .filter((i) => i.listen?.on)
@@ -373,25 +373,6 @@ export function Noticed({
               {p}
             </p>
           ))}
-          <div className="noticed-signin">
-            <span>Sign in once, in IcpFinder’s browser:</span>
-            {(
-              [
-                ["Reddit", "https://www.reddit.com/login"],
-                ["X", "https://x.com/login"],
-                ["LinkedIn", "https://www.linkedin.com/login"],
-              ] as const
-            ).map(([name, url]) => (
-              <button
-                key={name}
-                type="button"
-                className="btn ghost"
-                onClick={() => void api().openLogin(url)}
-              >
-                {name}
-              </button>
-            ))}
-          </div>
           <div className="noticed-quiet">
             <b>Model:</b> {state.settings.listen?.model || "the lightest"}
             <br />

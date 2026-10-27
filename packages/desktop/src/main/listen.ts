@@ -16,8 +16,7 @@ import {
   shortlist,
 } from "../shared/listen";
 import type { Icp, Product } from "../shared/types";
-import { browseText, isWall } from "./browse";
-import { createLlm } from "./engine";
+import { createLlm, getProvider, yourBrowserPages } from "./engine";
 
 const json = <T>(text: string): T => {
   const fence = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
@@ -98,59 +97,15 @@ const readHn = async (q: string, days: number): Promise<RawPost[]> => {
   }));
 };
 
-/** Reddit posts from the last days, through the public search JSON. */
-const readReddit = async (q: string, subs: string[], days: number): Promise<RawPost[]> => {
-  const t = days <= 1 ? "day" : days <= 7 ? "week" : "month";
-  const base = subs.length
-    ? `https://www.reddit.com/r/${subs.join("+")}/search.json?restrict_sr=1&`
-    : "https://www.reddit.com/search.json?";
-  const url = `${base}q=${encodeURIComponent(q)}&sort=new&t=${t}&limit=20`;
-  let body = "";
-  const r = await fetch(url, {
-    headers: { "User-Agent": "IcpFinder/1.0 (desktop app; read only)" },
-    signal: AbortSignal.timeout(10_000),
-  }).catch(() => null);
-  if (r?.ok) body = await r.text();
-  // Reddit sometimes blocks plain requests; IcpFinder's own browser can still read the JSON.
-  else body = await browseText(url, 800).catch(() => "");
-  let d: {
-    data?: {
-      children?: Array<{
-        data?: {
-          author?: string;
-          title?: string;
-          selftext?: string;
-          permalink?: string;
-          created_utc?: number;
-          subreddit?: string;
-        };
-      }>;
-    };
-  } = {};
-  try {
-    d = JSON.parse(body);
-  } catch {
-    return [];
-  }
-  return (d.data?.children ?? []).map(({ data: p = {} }) => ({
-    source: "reddit",
-    url: `https://www.reddit.com${p.permalink ?? ""}`,
-    author: p.author ? `u/${p.author}` : "",
-    text: `${p.title ?? ""} ${p.selftext ?? ""}`.trim().slice(0, 1200),
-    postedAt: iso(p.created_utc),
-    where: p.subreddit ? `r/${p.subreddit}` : "Reddit",
-  }));
-};
-
-/** X and LinkedIn search pages, read as text in IcpFinder's browser (where the founder signed in). */
-const readPage = async (source: "x" | "linkedin", q: string): Promise<string> => {
+/** Search pages for Reddit, X and LinkedIn, read in the founder's own browser where they are signed in. */
+const pageUrl = (source: "reddit" | "x" | "linkedin", q: string, subs: string[]): string => {
   const e = encodeURIComponent(q);
-  const url =
-    source === "x"
-      ? `https://x.com/search?q=${e}&f=live`
-      : `https://www.linkedin.com/search/results/content/?keywords=${e}&sortBy=%22date_posted%22`;
-  const text = await browseText(url, 3500).catch(() => "");
-  return isWall(text) ? "" : text.slice(0, 5000);
+  if (source === "reddit")
+    return subs.length
+      ? `https://www.reddit.com/r/${subs.join("+")}/search/?q=${e}&restrict_sr=1&sort=new&t=week`
+      : `https://www.reddit.com/search/?q=${e}&type=posts&sort=new&t=week`;
+  if (source === "x") return `https://x.com/search?q=${e}&f=live`;
+  return `https://www.linkedin.com/search/results/content/?keywords=${e}&sortBy=%22date_posted%22`;
 };
 
 export interface ListenRun {
@@ -173,42 +128,42 @@ export const listenFor = async (
   // Two queries per category at most: the first keywords are the ones people write most.
   const queries = [...new Set(cats.flatMap((c) => c.keywords.slice(0, 2)))].slice(0, 6);
   const posts: RawPost[] = [];
-  const pages: Array<{ source: "x" | "linkedin"; text: string }> = [];
+  const pages: Array<{ source: "reddit" | "x" | "linkedin"; text: string }> = [];
   const problems: string[] = [];
-  let redditRead = 0;
-  for (const q of queries) {
-    if (l.sources.hn) posts.push(...(await readHn(q, days).catch(() => [])));
-    if (l.sources.reddit) {
-      const got = await readReddit(q, l.subreddits, days).catch(() => []);
-      redditRead += got.length;
-      posts.push(...got);
-    }
-  }
-  // Reddit refuses anonymous reads at times; say so instead of looking empty.
-  if (l.sources.reddit && !redditRead)
-    problems.push(
-      "Reddit: we couldn't read it this morning. Sign in to Reddit in IcpFinder's browser."
-    );
-  for (const source of ["x", "linkedin"] as const) {
-    if (!l.sources[source]) continue;
-    let read = 0;
-    for (const q of queries.slice(0, 2)) {
-      const text = await readPage(source, q);
-      if (text) {
-        pages.push({ source, text });
-        read += 1;
-      }
-    }
-    if (!read)
+  for (const q of queries) if (l.sources.hn) posts.push(...(await readHn(q, days).catch(() => [])));
+  // Reddit, X and LinkedIn: read in the founder's own browser (Claude in Chrome), one batch, read only.
+  const social = (["reddit", "x", "linkedin"] as const).filter((s) => l.sources[s]);
+  if (social.length) {
+    if (getProvider() !== "claude")
       problems.push(
-        `${source === "x" ? "X" : "LinkedIn"}: sign in once in IcpFinder's browser so we can read it.`
+        "Reddit, X and LinkedIn are read in your own browser through Claude in Chrome. Choose Claude to use them."
       );
+    else {
+      const wanted = social.flatMap((source) =>
+        queries.slice(0, 2).map((q) => ({ source, url: pageUrl(source, q, l.subreddits) }))
+      );
+      let blocked = "";
+      const got = await yourBrowserPages(wanted.map((w) => w.url)).catch((e: unknown) => {
+        blocked = e instanceof Error ? e.message : "";
+        return [];
+      });
+      if (blocked) problems.push(blocked);
+      for (const g of got) {
+        const source = wanted.find((w) => w.url === g.url)?.source;
+        if (source) pages.push({ source, text: g.text });
+      }
+      for (const source of blocked ? [] : social)
+        if (!pages.some((pg) => pg.source === source))
+          problems.push(
+            `${source === "x" ? "X" : source === "linkedin" ? "LinkedIn" : "Reddit"}: we couldn't read it in your browser. Check that Claude in Chrome is on and that you are signed in.`
+          );
+    }
   }
   const short = shortlist(posts, cats, seenUrls);
   if (!short.length && !pages.length) return { notices: [], problems };
 
   const res = await (await createLlm(true, undefined, model)).generate({
-    system: `You check social posts for ONE customer profile of the SELLER. Keep a post only if its author is clearly this profile's person AND the post shows one of the CATEGORIES right now AND it shows a need the SELLER's offer meets. A post that only asks for general feedback, shares a project, or is about an unrelated problem does not count. Drop anything else: vendors, recruiters, news, competitors of the seller, people selling a similar product, jokes, and posts only loosely related. Use only the text given; never invent a post, a name or a quote. For posts from LIST use their id. For X or LinkedIn PAGES, a post counts only if you copy its author and an exact quote from the page text, and its link if one appears. why = one plain sentence, max 22 words, that says which need they show and how it connects to the seller's offer, in their own context (not a summary of their product). quote = their own words, max 200 characters, copied exactly. Keep at most ${MAX_NOTICES_A_DAY}, best first. Output strict JSON: {"keep":[{"id":"","source":"hn|reddit|x|linkedin","url":"","author":"","company":"","quote":"","category":"","why":""}]}`,
+    system: `You check social posts for ONE customer profile of the SELLER. Keep a post only if its author is clearly this profile's person AND the post shows one of the CATEGORIES right now AND it shows a need the SELLER's offer meets. A post that only asks for general feedback, shares a project, or is about an unrelated problem does not count. Drop anything else: vendors, recruiters, news, competitors of the seller, people selling a similar product, jokes, and posts only loosely related. Use only the text given; never invent a post, a name or a quote. For posts from LIST use their id. For Reddit, X or LinkedIn PAGES, a post counts only if you copy its author and an exact quote from the page text, and its link if one appears. why = one plain sentence, max 22 words, that says which need they show and how it connects to the seller's offer, in their own context (not a summary of their product). quote = their own words, max 200 characters, copied exactly. Keep at most ${MAX_NOTICES_A_DAY}, best first. Output strict JSON: {"keep":[{"id":"","source":"hn|reddit|x|linkedin","url":"","author":"","company":"","quote":"","category":"","why":""}]}`,
     prompt: `SELLER: ${sellerSummary(p)}\n\nPROFILE: ${icp.name}. Who: ${icp.card?.buyer.text ?? ""}. Not a fit if: ${icp.card?.skip.text ?? ""}\nCATEGORIES:\n${cats.map((c) => `- ${c.name}`).join("\n")}${l.rejected?.length ? `\nTHE FOUNDER MARKED THESE NOT RELEVANT (skip posts like them):\n${l.rejected.map((r) => `- ${r}`).join("\n")}` : ""}\n\nLIST:\n${short.map((s, i) => `[${i}] ${s.where ?? s.source} · ${s.author} · ${s.postedAt?.slice(0, 10) ?? "?"}\n${s.text}`).join("\n\n")}${pages.map((pg) => `\n\nPAGE (${pg.source}):\n${pg.text}`).join("")}`,
     format: "json",
     timeoutMs: 180_000,
@@ -249,18 +204,18 @@ export const listenFor = async (
       });
       continue;
     }
-    // From a page: the quote must really be on that page, or it is not shown.
-    const src = k.source === "x" || k.source === "linkedin" ? k.source : undefined;
-    const page = pages.find((pg) => pg.source === src);
-    const norm = (s: string) => s.replace(/\s+/g, " ").toLowerCase();
-    if (!src || !page || !k.author || !norm(page.text).includes(norm(String(k.quote)).slice(0, 60)))
-      continue;
+    const src =
+      k.source === "x" || k.source === "linkedin" || k.source === "reddit" ? k.source : undefined;
+    // The quote must be on one of that source's pages, or it is not shown.
+    const norm = (t: string) => t.replace(/\s+/g, " ").toLowerCase();
+    const page = pages.find(
+      (pg) => pg.source === src && norm(pg.text).includes(norm(String(k.quote ?? "")).slice(0, 60))
+    );
+    if (!src || !page || !k.author) continue;
     const url =
-      k.url && /^https:\/\/(x\.com|twitter\.com|www\.linkedin\.com)\//.test(k.url)
+      k.url && /^https:\/\/(x\.com|twitter\.com|www\.linkedin\.com|www\.reddit\.com)\//.test(k.url)
         ? k.url
-        : src === "x"
-          ? `https://x.com/search?q=${encodeURIComponent(String(k.quote).slice(0, 60))}&f=live`
-          : `https://www.linkedin.com/search/results/content/?keywords=${encodeURIComponent(String(k.quote).slice(0, 60))}`;
+        : pageUrl(src, String(k.quote).slice(0, 60), []);
     if (seenUrls.has(url)) continue;
     notices.push({
       id: randomUUID(),

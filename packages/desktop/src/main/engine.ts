@@ -126,7 +126,7 @@ let sources: Sources = {
   x: false,
   linkedin: false,
   fallback: true,
-  browser: "app",
+  browser: "yours",
 };
 export const setSources = (s: Sources): void => {
   sources = s;
@@ -1070,17 +1070,45 @@ const CHROME_READ = [
   "mcp__claude-in-chrome__tabs_create_mcp",
   "mcp__claude-in-chrome__navigate",
   "mcp__claude-in-chrome__get_page_text",
+  "mcp__claude-in-chrome__javascript_tool",
   "mcp__claude-in-chrome__tabs_close_mcp",
 ];
+
+/** Page text from the founder's own browser (Claude in Chrome), where they are already signed in. Read only. */
+export const yourBrowserPages = async (
+  urls: string[]
+): Promise<Array<{ url: string; text: string }>> => {
+  if (!urls.length) return [];
+  const out = await runClaudeWithTools(
+    `Read these pages in the browser, one at a time, read only. For each URL: open it in a new tab, wait 3 seconds, run this JavaScript with the javascript tool and keep its result: document.body.innerText.slice(0, 6000). Then close the tab. Never use get_page_text (pages are too long). Never click, type, like, follow or post. If a page asks to log in, give "LOGIN" for it. Reply with strict JSON only: {"pages":[{"url":"","text":"the JavaScript result"}]}\n\n${urls.join("\n")}`,
+    CHROME_READ,
+    420_000,
+    // Only the Chrome tools: without these flags Claude loads every MCP server and setting on the
+    // Mac, about 300K tokens a run. With them a run costs a few cents.
+    ["--chrome", "--strict-mcp-config", "--setting-sources", ""],
+    LIGHT_MODEL
+  );
+  const got = json<{ pages?: Array<{ url?: string; text?: string }> }>(out).pages ?? [];
+  // The extension must be allowed on these sites first; say so plainly instead of an empty feed.
+  if (got.some((g) => /requires permission|restricted by policy/i.test(g.text ?? "")))
+    throw new Error(
+      "Claude in Chrome needs your OK for these sites. Open the Claude extension in your browser and allow reddit.com, x.com and linkedin.com."
+    );
+  return got
+    .filter((g) => g.url && g.text && g.text !== "LOGIN" && !isWall(g.text))
+    .map((g) => ({ url: String(g.url), text: String(g.text).slice(0, 5000) }));
+};
 
 /** Read pages in the founder's own browser (Claude in Chrome), where they are already signed in. Read only. */
 const viaYourBrowser = async (pages: Array<{ label: string; url: string }>): Promise<string[]> => {
   if (!pages.length) return [];
   const out = await runClaudeWithTools(
-    `Read these pages in the browser, one at a time, read only: open each URL in a new tab, get the page text, close the tab. Never click, type, like, follow or post. If a page asks to log in, give "LOGIN" for it. Reply with strict JSON only: {"pages":[{"url":"","text":"the first 4000 characters of the page text"}]}\n\n${pages.map((p) => p.url).join("\n")}`,
+    `Read these pages in the browser, one at a time, read only. For each URL: open it in a new tab, wait 3 seconds, run this JavaScript with the javascript tool and keep its result: document.body.innerText.slice(0, 4000). Then close the tab. Never use get_page_text (pages are too long). Never click, type, like, follow or post. If a page asks to log in, give "LOGIN" for it. Reply with strict JSON only: {"pages":[{"url":"","text":"the JavaScript result"}]}\n\n${pages.map((p) => p.url).join("\n")}`,
     CHROME_READ,
     420_000,
-    ["--chrome"],
+    // Only the Chrome tools: without these flags Claude loads every MCP server and setting on the
+    // Mac, about 300K tokens a run. With them a run costs a few cents.
+    ["--chrome", "--strict-mcp-config", "--setting-sources", ""],
     LIGHT_MODEL
   );
   const got = json<{ pages?: Array<{ url?: string; text?: string }> }>(out).pages ?? [];
@@ -1209,7 +1237,9 @@ export const linkedinFacts = async (names: string[]): Promise<Record<string, Com
     `For each company below, use the browser read only: open https://www.linkedin.com/search/results/companies/?keywords=<name>, pick the result that is clearly this company (same name), open its page's "About" tab and read "Company size", "Industry" and the "associated members" count if shown. Never click Follow, Connect, Message or anything that changes something. Close each tab after reading. If LinkedIn asks to log in, stop and return what you have. Industry must be one of: ${INDUSTRIES.join(", ")} (or ""). size = the associated members count if shown, otherwise the LOWER number of the "Company size" range (e.g. "2-10 employees" = 2), 0 if not found. Reply with strict JSON only: {"companies":[{"name":"","industry":"","size":0,"found":true}]}\n\n${names.join("\n")}`,
     CHROME_READ,
     600_000,
-    ["--chrome"],
+    // Only the Chrome tools: without these flags Claude loads every MCP server and setting on the
+    // Mac, about 300K tokens a run. With them a run costs a few cents.
+    ["--chrome", "--strict-mcp-config", "--setting-sources", ""],
     LIGHT_MODEL
   );
   const rows =
