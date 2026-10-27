@@ -154,6 +154,7 @@ export const Wizard = ({ state, onState }: { state: State; onState: (s: State) =
               ...icpPresentation(profile),
               // The AI's pick for this group; the card falls back to words in the name.
               icon: profile.icon ?? "",
+              where: profile.where,
             })),
             onStart: next,
           }}

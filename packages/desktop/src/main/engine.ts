@@ -168,10 +168,11 @@ export const LIGHT_MODEL = "haiku";
 
 export const createLlm = async (
   lightweight = false,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  modelOverride?: string
 ): Promise<LlmProvider> => {
   const provider = selectedProvider;
-  const chosenModel = lightweight && provider === "claude" ? LIGHT_MODEL : model;
+  const chosenModel = modelOverride || (lightweight && provider === "claude" ? LIGHT_MODEL : model);
   const status = (await accounts.status()).find((item) => item.provider === provider);
   if (!status?.connected)
     throw new Error(

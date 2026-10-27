@@ -11,7 +11,7 @@ const PHRASES = [
   "Shaping your suggested customer profiles",
 ];
 
-type Profile = IcpDraft & { icon: string; id: string; why?: string };
+type Profile = IcpDraft & { icon: string; id: string; why?: string; where?: string[] };
 
 /** Ink-only icons, one per kind of group, chosen from the group's own words. */
 const GROUP_ICONS = {
@@ -111,10 +111,10 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live: LiveReve
         ) : (
           <section className="ir-results">
             <h1>
-              Here’s where <em>we’d start.</em>
+              Here’s who <em>we’d talk to first.</em>
             </h1>
             <p className="ir-intro">
-              A few customer groups that could benefit from what you offer.
+              A few kinds of people who could need what you offer, and where you’ll find them.
             </p>
             <section
               className={`ir-cards ir-cards-${tab}`}
@@ -133,7 +133,8 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live: LiveReve
                     </span>
                     <h2>{profile.title}</h2>
                   </header>
-                  {/* One clear text: what gets easier for them, then why we picked them. */}
+                  {/* People first: the person is the headline, the group sits above it. */}
+                  <p className="ir-card-person">{profile.buyer}</p>
                   <div className="ir-summary">
                     <p className="ir-card-fit">{profile.fit}</p>
                     {profile.why && (
@@ -146,13 +147,22 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live: LiveReve
                       </div>
                     )}
                   </div>
-                  <div className="ir-card-detail ir-buyer">
-                    <span>Who to talk to</span>
-                    <p>{profile.buyer}</p>
-                  </div>
                   <div className="ir-card-detail ir-signal">
-                    <span>A reason to reach out</span>
+                    <span>When to reach them</span>
                     <p>{profile.signal}</p>
+                  </div>
+                  {/* Always rendered, so the rows of cards side by side stay aligned. */}
+                  <div className="ir-card-detail ir-where">
+                    {profile.where?.length ? (
+                      <>
+                        <span>Where they talk</span>
+                        <p className="ir-where-chips">
+                          {profile.where.map((w) => (
+                            <span key={w}>{w}</span>
+                          ))}
+                        </p>
+                      </>
+                    ) : null}
                   </div>
                   <div className="ir-card-detail ir-skip">
                     <span>May not be a fit if</span>
@@ -167,8 +177,7 @@ export function IcpReveal({ onExit, live }: { onExit: () => void; live: LiveReve
               </p>
             )}
             <p className="ir-hunt-note">
-              All these profiles will be in your dashboard. You can edit them or add more there
-              anytime.
+              In your dashboard you can listen for these people and edit everything.
             </p>
             <div className="ir-actions">
               <button

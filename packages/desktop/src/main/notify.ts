@@ -9,7 +9,8 @@ import { app, type BrowserWindow, Notification } from "electron";
 export type Target =
   | { kind: "icp"; icpId: string }
   | { kind: "company"; icpId: string; domain: string }
-  | { kind: "agent" };
+  | { kind: "agent" }
+  | { kind: "noticed" };
 
 let win: BrowserWindow | null = null;
 let unseen = 0;
