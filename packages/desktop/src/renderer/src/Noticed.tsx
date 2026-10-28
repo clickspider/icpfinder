@@ -288,6 +288,32 @@ export function Noticed({
             ))}
         </select>
       </div>
+      {(ws.listening || running) && (
+        <div className="panel noticed-live" aria-live="polite">
+          <b>
+            <Spinner /> Checking now
+          </b>
+          <ol>
+            {(ws.listenSteps ?? ["Starting"]).map((x, i) => (
+              <li key={`${i}-${x}`}>{x}</li>
+            ))}
+          </ol>
+          <small>
+            Reddit, X and LinkedIn pages open in small minimized windows in your browser. This takes
+            about a minute.
+          </small>
+        </div>
+      )}
+      {!ws.listening && !running && ws.listenSteps?.length ? (
+        <details className="noticed-last">
+          <summary>What the last check did</summary>
+          <ol>
+            {ws.listenSteps.map((x, i) => (
+              <li key={`${i}-${x}`}>{x}</li>
+            ))}
+          </ol>
+        </details>
+      ) : null}
       <div className="noticed-grid">
         <section aria-label="Posts">
           {!shown.length && (

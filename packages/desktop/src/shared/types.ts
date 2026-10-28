@@ -221,6 +221,10 @@ export interface Workspace {
   listenedAt?: string;
   /** Sources the last run could not read, in plain words. */
   listenProblems?: string[];
+  /** What the current or last listening run did, step by step, for the Noticed page. */
+  listenSteps?: string[];
+  /** True while a listening run is going. */
+  listening?: boolean;
 }
 
 export interface Settings {

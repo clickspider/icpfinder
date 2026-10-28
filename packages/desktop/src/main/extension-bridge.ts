@@ -68,7 +68,8 @@ export const startExtensionBridge = (): void => {
     }
     return send(res, 404, { error: "not found" });
   });
-  server.on("error", () => undefined);
+  // A just-closed IcpFinder can still hold the port for a moment: try again until it is free.
+  server.on("error", () => setTimeout(() => server.listen(BRIDGE_PORT, "127.0.0.1"), 5000));
   server.listen(BRIDGE_PORT, "127.0.0.1");
 };
 

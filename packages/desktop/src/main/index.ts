@@ -386,6 +386,14 @@ const listenNow = async (ws: Workspace): Promise<number> => {
     : 7;
   const found: Notice[] = [];
   const problems: string[] = [];
+  // Live steps for the Noticed page, so a check never looks frozen.
+  ws.listening = true;
+  ws.listenSteps = ["Starting"];
+  commit();
+  const report = (step: string) => {
+    ws.listenSteps = [...(ws.listenSteps ?? []), step].slice(-12);
+    commit();
+  };
   await jobs.run(ws.id, () =>
     withTask("Listening", async () => {
       for (const icp of ws.icps) {
@@ -415,6 +423,12 @@ const listenNow = async (ws: Workspace): Promise<number> => {
   // Keep the feed small: newest first, the last 300 posts.
   ws.notices = [...fresh, ...(ws.notices ?? [])].slice(0, 300);
   ws.listenedAt = new Date().toISOString();
+  ws.listening = false;
+  report(
+    fresh.length
+      ? `Done: ${fresh.length} new ${fresh.length === 1 ? "person" : "people"}`
+      : "Done: nothing new worth answering"
+  );
   ws.listenProblems = [...new Set(problems)].slice(0, 4);
   commit();
   if (fresh.length) {
@@ -1172,6 +1186,7 @@ app.whenReady().then(() => {
     );
   }
   // Resume work that was cut off by a quit.
+  for (const ws of state.workspaces) ws.listening = false;
   for (const ws of state.workspaces)
     for (const icp of ws.icps) {
       if (icp.sourcing) {

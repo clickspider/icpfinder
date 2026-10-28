@@ -1097,7 +1097,8 @@ export const yourBrowserPages = async (
 ): Promise<Array<{ url: string; text: string }>> => {
   if (!urls.length) return [];
   // Right after IcpFinder starts, the extension has not called in yet (it does every 30 seconds).
-  for (let i = 0; i < 9 && !extensionConnected(); i++) await new Promise((r) => setTimeout(r, 5000));
+  for (let i = 0; i < 9 && !extensionConnected(); i++)
+    await new Promise((r) => setTimeout(r, 5000));
   if (!extensionConnected())
     throw new Error(
       "IcpFinder for Chrome is not connected. Install it once from Settings → Browser, and keep your browser open."
@@ -1113,7 +1114,8 @@ export const checkYourBrowser = async (): Promise<{
   sites: Record<Site, SiteStatus>;
 }> => {
   const sites = Object.entries(SITES) as Array<[Site, string]>;
-  for (let i = 0; i < 7 && !extensionConnected(); i++) await new Promise((r) => setTimeout(r, 5000));
+  for (let i = 0; i < 7 && !extensionConnected(); i++)
+    await new Promise((r) => setTimeout(r, 5000));
   if (!extensionConnected())
     return {
       connected: false,

@@ -128,7 +128,8 @@ export const listenFor = async (
   seenUrls: Set<string>,
   days: number,
   model?: string,
-  allowLinkedIn = false
+  allowLinkedIn = false,
+  report: (step: string) => void = () => {}
 ): Promise<ListenRun> => {
   const l = icp.listen;
   if (!l?.on) return { notices: [], problems: [] };
@@ -150,6 +151,7 @@ export const listenFor = async (
         queries.slice(0, 1).map((q) => ({ source, url: pageUrl(source, q, l.subreddits) }))
       );
       let blocked = "";
+      report(`${icp.name}: reading ${wanted.length} pages in your browser (${social.join(", ")})`);
       const got = await yourBrowserPages(wanted.map((w) => w.url)).catch((e: unknown) => {
         blocked = e instanceof Error ? e.message : "";
         return [];
@@ -167,7 +169,11 @@ export const listenFor = async (
     }
   }
   const short = shortlist(posts, cats, seenUrls);
+  report(
+    `${icp.name}: read ${posts.length} Hacker News posts${pages.length ? ` and ${pages.length} pages (${[...new Set(pages.map((p) => p.source))].join(", ")})` : ""}; ${short.length} matched your words`
+  );
   if (!short.length && !pages.length) return { notices: [], problems };
+  report(`${icp.name}: AI checks ${short.length + pages.length} items for real fits`);
 
   const res = await (await createLlm(true, undefined, model)).generate({
     system: `You check social posts for ONE customer profile of the SELLER. Keep a post only if its author is clearly this profile's person AND the post shows one of the CATEGORIES right now AND it shows a need the SELLER's offer meets. A post that only asks for general feedback, shares a project, or is about an unrelated problem does not count. Drop anything else: vendors, recruiters, news, competitors of the seller, people selling a similar product, jokes, and posts only loosely related. Use only the text given; never invent a post, a name or a quote. For posts from LIST use their id. For Reddit, X or LinkedIn PAGES, a post counts only if you copy its author and an exact quote from the page text, and its link if one appears. why = one plain sentence, max 22 words, that says which need they show and how it connects to the seller's offer, in their own context (not a summary of their product). quote = their own words, max 200 characters, copied exactly. Keep at most ${MAX_NOTICES_A_DAY}, best first. Output strict JSON: {"keep":[{"id":"","source":"hn|reddit|x|linkedin","url":"","author":"","company":"","quote":"","category":"","why":""}]}`,
@@ -238,5 +244,6 @@ export const listenFor = async (
       status: "new",
     });
   }
+  report(`${icp.name}: ${notices.length} strong ${notices.length === 1 ? "fit" : "fits"} kept`);
   return { notices, problems };
 };
