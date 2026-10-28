@@ -1080,7 +1080,7 @@ export const yourBrowserPages = async (
 ): Promise<Array<{ url: string; text: string }>> => {
   if (!urls.length) return [];
   const out = await runClaudeWithTools(
-    `Read these pages in the browser, one at a time, read only. For each URL: open it in a new tab, wait 3 seconds, run this JavaScript with the javascript tool and keep its result: document.body.innerText.slice(0, 6000). Then close the tab. Never use get_page_text (pages are too long). Never click, type, like, follow or post. If a page asks to log in, give "LOGIN" for it. Reply with strict JSON only: {"pages":[{"url":"","text":"the JavaScript result"}]}\n\n${urls.join("\n")}`,
+    `Read these pages in the browser, one at a time, read only. For each URL: open it in a new tab, wait 3 seconds, run this JavaScript with the javascript tool and keep its result: document.body.innerText.slice(0, 3000). Then close the tab. Never use get_page_text (pages are too long). Never click, type, like, follow or post. If a page asks to log in, give "LOGIN" for it. Reply with strict JSON only: {"pages":[{"url":"","text":"the JavaScript result"}]}\n\n${urls.join("\n")}`,
     CHROME_READ,
     420_000,
     // Only the Chrome tools: without these flags Claude loads every MCP server and setting on the
@@ -1088,7 +1088,26 @@ export const yourBrowserPages = async (
     ["--chrome", "--strict-mcp-config", "--setting-sources", ""],
     LIGHT_MODEL
   );
-  const got = json<{ pages?: Array<{ url?: string; text?: string }> }>(out).pages ?? [];
+  // A long answer can be cut off; keep every page that came back whole instead of failing.
+  let got: Array<{ url?: string; text?: string }> = [];
+  try {
+    got = json<{ pages?: Array<{ url?: string; text?: string }> }>(out).pages ?? [];
+  } catch {
+    for (const m of out.matchAll(
+      /\{\s*"url"\s*:\s*"([^"]+)"\s*,\s*"text"\s*:\s*"((?:[^"\\]|\\.)*)"\s*\}/g
+    )) {
+      try {
+        got.push({ url: m[1], text: JSON.parse(`"${m[2]}"`) as string });
+      } catch {
+        // A broken page entry is skipped.
+      }
+    }
+    if (!got.length && /requires permission|restricted by policy/i.test(out)) got = [{ text: out }];
+    else if (!got.length)
+      throw new Error(
+        "We couldn't read your browser this time. It runs again tomorrow, or press Check now."
+      );
+  }
   // The extension must be allowed on these sites first; say so plainly instead of an empty feed.
   if (got.some((g) => /requires permission|restricted by policy/i.test(g.text ?? "")))
     throw new Error(

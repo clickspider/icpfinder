@@ -386,7 +386,11 @@ const listenNow = async (ws: Workspace): Promise<number> => {
       }
     })
   );
-  const fresh = found.slice(0, MAX_NOTICES_A_DAY);
+  // One card per post, even if two profiles or two runs found it.
+  const known = new Set((ws.notices ?? []).map((n) => n.url));
+  const fresh = found
+    .filter((n) => !known.has(n.url) && known.add(n.url))
+    .slice(0, MAX_NOTICES_A_DAY);
   // Keep the feed small: newest first, the last 300 posts.
   ws.notices = [...fresh, ...(ws.notices ?? [])].slice(0, 300);
   ws.listenedAt = new Date().toISOString();

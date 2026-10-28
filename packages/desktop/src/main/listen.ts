@@ -20,7 +20,14 @@ import { createLlm, getProvider, yourBrowserPages } from "./engine";
 
 const json = <T>(text: string): T => {
   const fence = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-  return JSON.parse(fence?.[1] ?? text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as T;
+  try {
+    return JSON.parse(fence?.[1] ?? text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as T;
+  } catch {
+    // An empty or cut-off AI answer: plain words for the founder, not a parser message.
+    throw new Error(
+      "The AI answer came back incomplete. It runs again tomorrow, or press Check now."
+    );
+  }
 };
 const strings = (v: unknown, max: number): string[] =>
   Array.isArray(v)
@@ -140,7 +147,7 @@ export const listenFor = async (
       );
     else {
       const wanted = social.flatMap((source) =>
-        queries.slice(0, 2).map((q) => ({ source, url: pageUrl(source, q, l.subreddits) }))
+        queries.slice(0, 1).map((q) => ({ source, url: pageUrl(source, q, l.subreddits) }))
       );
       let blocked = "";
       const got = await yourBrowserPages(wanted.map((w) => w.url)).catch((e: unknown) => {
