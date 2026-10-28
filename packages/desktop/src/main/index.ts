@@ -404,7 +404,8 @@ const listenNow = async (ws: Workspace): Promise<number> => {
           seen,
           days,
           listenModel(),
-          state.settings.sources.linkedin
+          state.settings.sources.linkedin,
+          report
         ).catch((e) => {
           problems.push(e instanceof Error ? e.message : String(e));
           return { notices: [], problems: [] };
