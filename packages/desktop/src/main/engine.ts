@@ -267,14 +267,29 @@ export const readProduct = async (rawUrl: string): Promise<Product> => {
 
 /** Suggest customer groups, without researching companies or contacts. */
 export const findIcps = async (p: Product, feedback?: string): Promise<Icp[]> => {
-  const result = await (await llm()).generate({
-    system: PROFILE_GUIDANCE,
-    prompt: `${sellerSummary(p)}\n\nOriginal source, subordinate to reviewed corrections:\n${p.siteText.slice(0, 3000)}${feedback?.trim() ? `\nUser feedback: ${feedback.trim()}` : ""}`,
-    format: "json",
-    grounding: false,
-    timeoutMs: 240_000,
-  });
-  return parseSuggestedProfiles(json<unknown>(result.text), p);
+  const ask = async (retry: boolean) =>
+    (await llm()).generate({
+      system: PROFILE_GUIDANCE,
+      prompt: `${sellerSummary(p)}\n\nOriginal source, subordinate to reviewed corrections:\n${p.siteText.slice(0, 3000)}${feedback?.trim() ? `\nUser feedback: ${feedback.trim()}` : ""}${retry ? "\n\nYour last answer was not valid JSON. Reply with valid JSON only: escape every quote inside a text value." : ""}`,
+      format: "json",
+      grounding: false,
+      timeoutMs: 240_000,
+    });
+  // The AI sometimes writes broken JSON (an unescaped quote). One more try fixes it almost always.
+  let text = (await ask(false)).text;
+  try {
+    return parseSuggestedProfiles(json<unknown>(text), p);
+  } catch (e) {
+    if (!(e instanceof SyntaxError)) throw e;
+    text = (await ask(true)).text;
+    try {
+      return parseSuggestedProfiles(json<unknown>(text), p);
+    } catch (again) {
+      if (again instanceof SyntaxError)
+        throw new Error("Couldn’t prepare customer profiles this time. Please try again.");
+      throw again;
+    }
+  }
 };
 
 /** Research one company: proof per fact, checked by code on 2 websites. */

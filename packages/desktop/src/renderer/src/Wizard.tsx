@@ -12,14 +12,12 @@ import { DUO } from "./glass";
 import { IcpReveal } from "./IcpReveal";
 import { AppBrand, OnboardingAside } from "./OnboardingFrame";
 import { SubscriptionConnection } from "./SubscriptionConnection";
-import { api, Spinner } from "./ui";
+import { api, cleanError, Spinner } from "./ui";
 
 type Step = "welcome" | "product" | "about" | "icp";
 const ORDER: Step[] = ["welcome", "product", "about", "icp"];
-const clean = (e: unknown) =>
-  e instanceof Error
-    ? e.message.replace(/^Error invoking remote method '\w+': (Error: )?/, "")
-    : String(e);
+// Same plain wording as the dashboard: never a raw parser or stack message.
+const clean = (e: unknown) => cleanError(e);
 
 export const Wizard = ({ state, onState }: { state: State; onState: (s: State) => void }) => {
   const ws = state.workspaces.find((w) => w.id === state.activeId);
