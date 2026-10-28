@@ -1153,8 +1153,7 @@ export const checkYourBrowser = async (): Promise<{
     })
   ) as Record<Site, SiteStatus>;
   // First use: the extension must allow this app's Claude to connect, in the founder's browser.
-  const needsConnect =
-    !connected && /permission|grant|allow|access/i.test(out);
+  const needsConnect = !connected && /permission|grant|allow|access/i.test(out);
   return { connected, needsConnect, sites: status };
 };
 

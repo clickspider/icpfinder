@@ -92,20 +92,21 @@ export function BrowserPanel({
         </div>
       )}
       {mode === "yours" && st && !st.connected && (
-        <div className="browser-connect">
+        <div className="browser-steps">
           <p className="browser-note bad">
             {st.needsConnect
-              ? "Your browser has not allowed IcpFinder yet. Press Connect, then allow it in the Claude extension in your browser."
-              : "Claude in Chrome did not answer. Check that the Claude extension is installed and signed in in your browser."}
+              ? "Claude in Chrome asks for your OK before every new task, and IcpFinder works in the background, so it cannot show you that question. Allow it once in the extension:"
+              : "Claude in Chrome did not answer. Check that the Claude extension is installed and signed in in your browser, then:"}
           </p>
-          <button
-            type="button"
-            className="primary btn"
-            disabled={busy !== null}
-            onClick={() => ask("connect")}
-          >
-            {busy === "connect" ? <Spinner /> : null} Connect
-          </button>
+          <ol>
+            <li>In Comet or Chrome, open the Claude extension’s side panel.</li>
+            <li>Open its menu, then Extension settings.</li>
+            <li>
+              Under permissions, add reddit.com, x.com and linkedin.com to your approved sites, or
+              let it act without asking.
+            </li>
+            <li>Come back here and press Check again.</li>
+          </ol>
         </div>
       )}
       {(Object.keys(SITES) as Site[]).map((site) => {
@@ -131,9 +132,8 @@ export function BrowserPanel({
       })}
       {busy && busy !== "check" && mode === "yours" && (
         <p className="browser-note">
-          {busy === "connect"
-            ? "Look at your browser now: allow IcpFinder in the Claude extension."
-            : `Look at your browser now: the Claude extension asks for permission. Choose “Always allow” for ${NAME[busy as Site]}.`}
+          Look at your browser now: if the Claude extension asks for permission, choose “Always
+          allow” for {NAME[busy as Site]}.
         </p>
       )}
       {st && Object.values(st.sites).includes("unsupported") && (
