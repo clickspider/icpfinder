@@ -64,7 +64,7 @@ export function BrowserPanel({
               : "IcpFinder’s own browser. Sign in to each site once inside it."}
           </p>
         </div>
-        <span className={`browser-state ${ready ? "ok" : st ? "warn" : "quiet"}`}>
+        <span className={`browser-state tone-${ready ? "ok" : st ? "warn" : "quiet"}`}>
           {ready
             ? "All set"
             : !connected && st
@@ -123,7 +123,7 @@ export function BrowserPanel({
             <div key={site} className="browser-site">
               <ToolLogo name={LOGO[site]} size={22} radius={6} />
               <b>{NAME[site]}</b>
-              <span className={`browser-pill ${STATUS[s].tone}`}>{STATUS[s].label}</span>
+              <span className={`browser-pill tone-${STATUS[s].tone}`}>{STATUS[s].label}</span>
               {s === "signed-out" && (
                 <button type="button" className="btn native-secondary" onClick={() => ask(site)}>
                   Sign in
