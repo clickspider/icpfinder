@@ -1480,3 +1480,26 @@
   color: var(--ink-2);
   line-height: 1.6;
 }
+.browser-steps code {
+  font-size: 12px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #f4f4f2;
+}
+.browser-steps li .btn {
+  height: 30px;
+  font-size: 12.5px;
+}
+.browser-li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e6e6e4;
+  font-size: 13px;
+}
+.browser-li small {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+}

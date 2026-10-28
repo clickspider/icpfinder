@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "IcpFinder for Chrome",
+  "version": "0.1.0",
+  "description": "Lets the IcpFinder Mac app read Reddit, X and LinkedIn search pages in your browser, where you are signed in. Read only: it never clicks, types or posts.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuzpEgAKrFSU7Be40C2qsTUE3Q2WlTZkZA+dlh2zIZ3o4BlGnZClApUyT2BfrhuU8R716jAH5aMRwow//Uw7fFLsksePVpz4FJEfaUMvFwuv4lDj7lCb9mmQ7sU1phhc9Ib2OCcCBt6p5Fdp8TajnN9wa0N2XipID+cMmpY5lzUy1rci4Box2YBIjJGIDQUUb68H638V96kAn0kb9953BC/tT7HocN6S1OmEt8wZ6ZNjAy7tQ0S63YzNWtrv7XfqnY5Q2N6xwo7nHBEhcWlnUwOxIbHP5G4KMe7JU4QoDqyKiBrLZFhM0X+jdOEgpqU8gjvwwFXY9JTPRsD9HjWZTJwIDAQAB",
+  "permissions": ["alarms", "tabs", "scripting"],
+  "host_permissions": [
+    "https://www.reddit.com/*",
+    "https://x.com/*",
+    "https://www.linkedin.com/*",
+    "http://127.0.0.1:47321/*"
+  ],
+  "background": { "service_worker": "background.js" }
+}

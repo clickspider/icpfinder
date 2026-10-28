@@ -16,7 +16,7 @@ import {
   shortlist,
 } from "../shared/listen";
 import type { Icp, Product } from "../shared/types";
-import { createLlm, getProvider, yourBrowserPages } from "./engine";
+import { createLlm, yourBrowserPages } from "./engine";
 
 const json = <T>(text: string): T => {
   const fence = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
@@ -127,7 +127,8 @@ export const listenFor = async (
   icp: Icp,
   seenUrls: Set<string>,
   days: number,
-  model?: string
+  model?: string,
+  allowLinkedIn = false
 ): Promise<ListenRun> => {
   const l = icp.listen;
   if (!l?.on) return { notices: [], problems: [] };
@@ -139,13 +140,12 @@ export const listenFor = async (
   const problems: string[] = [];
   for (const q of queries) if (l.sources.hn) posts.push(...(await readHn(q, days).catch(() => [])));
   // Reddit, X and LinkedIn: read in the founder's own browser (Claude in Chrome), one batch, read only.
-  const social = (["reddit", "x", "linkedin"] as const).filter((s) => l.sources[s]);
+  // LinkedIn only when the founder switched it on in Settings → Browser (its terms forbid automated reading).
+  const social = (["reddit", "x", "linkedin"] as const).filter(
+    (s) => l.sources[s] && (s !== "linkedin" || allowLinkedIn)
+  );
   if (social.length) {
-    if (getProvider() !== "claude")
-      problems.push(
-        "Reddit, X and LinkedIn are read in your own browser through Claude in Chrome. Choose Claude to use them."
-      );
-    else {
+    {
       const wanted = social.flatMap((source) =>
         queries.slice(0, 1).map((q) => ({ source, url: pageUrl(source, q, l.subreddits) }))
       );
@@ -162,7 +162,7 @@ export const listenFor = async (
       for (const source of blocked ? [] : social)
         if (!pages.some((pg) => pg.source === source))
           problems.push(
-            `${source === "x" ? "X" : source === "linkedin" ? "LinkedIn" : "Reddit"}: we couldn't read it in your browser. Check that Claude in Chrome is on and that you are signed in.`
+            `${source === "x" ? "X" : source === "linkedin" ? "LinkedIn" : "Reddit"}: we couldn't read it in your browser. Check that you are signed in there.`
           );
     }
   }

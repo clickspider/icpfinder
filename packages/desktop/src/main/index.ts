@@ -48,7 +48,6 @@ import { openLogin } from "./browse";
 import { resolveCli } from "./cli";
 import { customIcp } from "./custom-icp";
 import {
-  askYourBrowser,
   checkAppBrowser,
   checkYourBrowser,
   classifyCompanies,
@@ -82,6 +81,7 @@ import {
   watchCompany,
   which,
 } from "./engine";
+import { startExtensionBridge } from "./extension-bridge";
 import { listenFor, suggestListen } from "./listen";
 import { initLocalUsage, localWeight } from "./localUsage";
 import { dockProgress, initNotify, notify } from "./notify";
@@ -366,6 +366,10 @@ const watchOne = async (ws: Workspace, c: Company): Promise<void> => {
 
 // ponytail: the watcher runs only while the app is open; a launchd job could run it daily when closed.
 const WATCH_EVERY_MS = 24 * 3_600_000;
+/** Where the IcpFinder for Chrome folder is: inside the app when packaged, in the repo when run from source. */
+const extensionDir = (): string =>
+  app.isPackaged ? join(process.resourcesPath, "extension") : join(__dirname, "../../../extension");
+
 /** The listening model, if it belongs to the current provider; otherwise the lightest. */
 const listenModel = (): string | undefined => {
   const m = state.settings.listen?.model;
@@ -386,7 +390,14 @@ const listenNow = async (ws: Workspace): Promise<number> => {
     withTask("Listening", async () => {
       for (const icp of ws.icps) {
         if (!icp.listen?.on) continue;
-        const run = await listenFor(ws.product, icp, seen, days, listenModel()).catch((e) => {
+        const run = await listenFor(
+          ws.product,
+          icp,
+          seen,
+          days,
+          listenModel(),
+          state.settings.sources.linkedin
+        ).catch((e) => {
           problems.push(e instanceof Error ? e.message : String(e));
           return { notices: [], problems: [] };
         });
@@ -970,16 +981,20 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
         sites: await checkAppBrowser(),
       };
     else {
-      const r = await withTask("Browser check", () => checkYourBrowser());
+      const r = await checkYourBrowser();
       state.settings.browserStatus = { mode, checkedAt: now, ...r };
     }
     return commit();
   },
-  /** Bring up the browser's own permission prompt for one site, then check again. */
+  /** Sign in to a site: in your own browser, open its login page; in IcpFinder's browser, its login window. */
   browserAsk: async (site: Site | "connect") => {
-    if (state.settings.sources.browser === "app") {
-      if (site !== "connect") openLogin(`https://${SITES[site]}/login`);
-    } else await withTask("Browser check", () => askYourBrowser(site));
+    if (site === "connect") {
+      // The extension folder, so the founder can pick it in "Load unpacked".
+      shell.showItemInFolder(join(extensionDir(), "manifest.json"));
+      return state;
+    }
+    if (state.settings.sources.browser === "app") openLogin(`https://${SITES[site]}/login`);
+    else void shell.openExternal(`https://${SITES[site]}/login`);
     return state;
   },
   /** Suggest what to listen for, for every profile that has no listening yet (one AI call each). */
@@ -1114,6 +1129,7 @@ const createWindow = (): void => {
 app.setName("IcpFinder");
 // Dock icon while running from source (a packaged build uses its own icon).
 app.whenReady().then(() => {
+  startExtensionBridge();
   if (process.platform === "darwin" && !app.isPackaged)
     app.dock?.setIcon(join(__dirname, "../../resources/icon.png"));
 });

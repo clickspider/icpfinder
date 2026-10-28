@@ -12,7 +12,7 @@ import { promisify } from "node:util";
 import { htmlToText, researchAccount, safeFetch } from "@icpfinder/core";
 import { HunterEmailProvider, type LlmProvider, parseCliResult } from "@icpfinder/providers";
 import { emailsIn, pickEmail } from "../shared/emails";
-import { SITES, type Site, type SiteStatus, siteStatusOf } from "../shared/listen";
+import { SITES, type Site, type SiteStatus } from "../shared/listen";
 import {
   type CompanyFacts,
   INDUSTRIES,
@@ -40,6 +40,7 @@ import type {
 import { type Brand, readBrand } from "./brand";
 import { browseText, isWall } from "./browse";
 import { resolveCli, subscriptionEnv } from "./cli";
+import { extensionConnected, readWithExtension } from "./extension-bridge";
 import { productFromIdea, validateIdeaDescription } from "./idea";
 import type { SubscriptionAuth } from "./subscription-auth";
 import { subscriptionProvider } from "./subscription-provider";
@@ -1090,105 +1091,46 @@ const CHROME_READ = [
   "mcp__claude-in-chrome__tabs_close_mcp",
 ];
 
-/** Page text from the founder's own browser (Claude in Chrome), where they are already signed in. Read only. */
+/** Page text from the founder's own browser, read by the IcpFinder for Chrome extension. Read only. */
 export const yourBrowserPages = async (
   urls: string[]
 ): Promise<Array<{ url: string; text: string }>> => {
   if (!urls.length) return [];
-  const out = await runClaudeWithTools(
-    `Read these pages in the browser, one at a time, read only. For each URL: open it in a new tab, wait 3 seconds, run this JavaScript with the javascript tool and keep its result: document.body.innerText.slice(0, 3000). Then close the tab. Never use get_page_text (pages are too long). Never click, type, like, follow or post. If a page asks to log in, give "LOGIN" for it. Reply with strict JSON only: {"pages":[{"url":"","text":"the JavaScript result"}]}\n\n${urls.join("\n")}`,
-    CHROME_READ,
-    420_000,
-    // Only the Chrome tools: without these flags Claude loads every MCP server and setting on the
-    // Mac, about 300K tokens a run. With them a run costs a few cents.
-    ["--chrome", "--strict-mcp-config", "--setting-sources", ""],
-    LIGHT_MODEL
-  );
-  // A long answer can be cut off; keep every page that came back whole instead of failing.
-  let got: Array<{ url?: string; text?: string }> = [];
-  try {
-    got = json<{ pages?: Array<{ url?: string; text?: string }> }>(out).pages ?? [];
-  } catch {
-    for (const m of out.matchAll(
-      /\{\s*"url"\s*:\s*"([^"]+)"\s*,\s*"text"\s*:\s*"((?:[^"\\]|\\.)*)"\s*\}/g
-    )) {
-      try {
-        got.push({ url: m[1], text: JSON.parse(`"${m[2]}"`) as string });
-      } catch {
-        // A broken page entry is skipped.
-      }
-    }
-    if (!got.length && /requires permission|restricted by policy/i.test(out)) got = [{ text: out }];
-    else if (!got.length)
-      throw new Error(
-        "We couldn't read your browser this time. It runs again tomorrow, or press Check now."
-      );
-  }
-  // The extension must be allowed on these sites first; say so plainly instead of an empty feed.
-  if (got.some((g) => /requires permission|restricted by policy/i.test(g.text ?? "")))
+  if (!extensionConnected())
     throw new Error(
-      "Claude in Chrome needs your OK for these sites. Open the Claude extension in your browser and allow reddit.com, x.com and linkedin.com."
+      "IcpFinder for Chrome is not connected. Install it once from Settings → Browser, and keep your browser open."
     );
-  return got
-    .filter((g) => g.url && g.text && g.text !== "LOGIN" && !isWall(g.text))
-    .map((g) => ({ url: String(g.url), text: String(g.text).slice(0, 5000) }));
+  const got = await readWithExtension(urls);
+  return got.filter((g) => g.text && !g.text.startsWith("ERROR") && !isWall(g.text));
 };
 
-/** Can Claude in Chrome read each site? One short read-only visit per site (a few cents in all). */
+/** Is the extension connected, and is the founder signed in on each site? Reads each home page once. No AI. */
 export const checkYourBrowser = async (): Promise<{
   connected: boolean;
   needsConnect: boolean;
   sites: Record<Site, SiteStatus>;
 }> => {
   const sites = Object.entries(SITES) as Array<[Site, string]>;
-  const out = await runClaudeWithTools(
-    `For each site below: open https://<site>/ in a new tab, then run this JavaScript with the javascript tool: location.host. Then close the tab. Read only: never click, type or post. If a tool fails, keep its exact error text. Reply with strict JSON only: {"sites":[{"site":"","result":"the JavaScript result or the exact error"}]}\n\n${sites.map(([, h]) => h).join("\n")}`,
-    [
-      "mcp__claude-in-chrome__tabs_context_mcp",
-      "mcp__claude-in-chrome__tabs_create_mcp",
-      "mcp__claude-in-chrome__navigate",
-      "mcp__claude-in-chrome__javascript_tool",
-      "mcp__claude-in-chrome__tabs_close_mcp",
-    ],
-    240_000,
-    ["--chrome", "--strict-mcp-config", "--setting-sources", ""],
-    LIGHT_MODEL
-  ).catch((e: unknown) => `ERROR ${e instanceof Error ? e.message : String(e)}`);
-  let rows: Array<{ site?: string; result?: string }> = [];
-  try {
-    rows = json<{ sites?: Array<{ site?: string; result?: string }> }>(out).sites ?? [];
-  } catch {
-    rows = [];
-  }
-  const connected = rows.length > 0 && !/not connected|no browser|extension is not/i.test(out);
+  if (!extensionConnected())
+    return {
+      connected: false,
+      needsConnect: true,
+      sites: Object.fromEntries(sites.map(([k]) => [k, "unknown"])) as Record<Site, SiteStatus>,
+    };
+  const got = await readWithExtension(
+    sites.map(([, h]) => `https://${h}/`),
+    120_000
+  );
   const status = Object.fromEntries(
     sites.map(([key, host]) => {
-      const r = rows.find((x) => String(x.site ?? "").includes(host.replace(/^www\./, "")));
-      return [key, connected && r ? siteStatusOf(String(r.result ?? "")) : "unknown"];
+      const text = got.find((g) => g.url === `https://${host}/`)?.text ?? "";
+      return [
+        key,
+        !text || text.startsWith("ERROR") ? "unknown" : isWall(text) ? "signed-out" : "ok",
+      ];
     })
   ) as Record<Site, SiteStatus>;
-  // First use: the extension must allow this app's Claude to connect, in the founder's browser.
-  const needsConnect = !connected && /permission|grant|allow|access/i.test(out);
-  return { connected, needsConnect, sites: status };
-};
-
-/** Open one site in the founder's browser so Claude in Chrome shows its own permission prompt. */
-export const askYourBrowser = async (site: Site | "connect"): Promise<void> => {
-  await runClaudeWithTools(
-    site === "connect"
-      ? "Run the tabs context tool once. If the browser asks the person to allow this connection, wait for them up to 90 seconds, then run it once more. Reply with the number of tabs or the exact error."
-      : `Open https://${SITES[site]}/ in a new tab and run this JavaScript with the javascript tool: location.host. If the browser asks the person for permission, wait for them up to 90 seconds, then try the JavaScript once more. Then close the tab. Read only: never click, type or post on the page. Reply with the result or the exact error.`,
-    [
-      "mcp__claude-in-chrome__tabs_context_mcp",
-      "mcp__claude-in-chrome__tabs_create_mcp",
-      "mcp__claude-in-chrome__navigate",
-      "mcp__claude-in-chrome__javascript_tool",
-      "mcp__claude-in-chrome__tabs_close_mcp",
-    ],
-    200_000,
-    ["--chrome", "--strict-mcp-config", "--setting-sources", ""],
-    LIGHT_MODEL
-  ).catch(() => "");
+  return { connected: true, needsConnect: false, sites: status };
 };
 
 /** Is IcpFinder's own browser signed in to each site? Reads each home page once, no AI. */

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SITES, type Site, type SiteStatus } from "../../shared/listen";
 import type { State } from "../../shared/types";
 import { api, Spinner, ToolLogo } from "./ui";
@@ -9,7 +9,7 @@ const STATUS: Record<SiteStatus, { label: string; tone: "ok" | "warn" | "bad" | 
   ok: { label: "Ready", tone: "ok" },
   ask: { label: "Needs your OK", tone: "warn" },
   blocked: { label: "Blocked by a browser setting", tone: "bad" },
-  unsupported: { label: "Claude in Chrome does not read this site", tone: "bad" },
+  unsupported: { label: "Cannot be read", tone: "bad" },
   "signed-out": { label: "Not signed in", tone: "warn" },
   unknown: { label: "Not checked", tone: "quiet" },
 };
@@ -26,9 +26,9 @@ export function BrowserPanel({
   compact?: boolean;
 }) {
   const [busy, setBusy] = useState<string | null>(null);
-  const claude = (state.settings.provider ?? "claude") === "claude";
-  const mode = state.settings.sources.browser === "app" || !claude ? "app" : "yours";
+  const mode = state.settings.sources.browser === "app" ? "app" : "yours";
   const st = state.settings.browserStatus?.mode === mode ? state.settings.browserStatus : undefined;
+  const connected = mode === "app" || Boolean(st?.connected);
   const check = () => {
     setBusy("check");
     void api()
@@ -36,19 +36,22 @@ export function BrowserPanel({
       .then(onState)
       .finally(() => setBusy(null));
   };
-  const ask = (site: Site | "connect") => {
-    setBusy(site);
-    void api()
-      .browserAsk(site)
-      .then(() => api().browserCheck())
-      .then(onState)
-      .finally(() => setBusy(null));
-  };
+  // Waiting for the extension: look again every 15 seconds, so the panel turns green by itself.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: poll only while not connected
+  useEffect(() => {
+    if (connected || compact) return;
+    if (!st) check();
+    const t = setInterval(() => void api().browserCheck().then(onState), 15_000);
+    return () => clearInterval(t);
+  }, [connected, mode]);
+  const ask = (site: Site | "connect") => void api().browserAsk(site);
   const pick = (browser: "yours" | "app") =>
     void api()
       .saveSettings({ sources: { ...state.settings.sources, browser } })
       .then(onState);
-  const ready = st && (Object.keys(SITES) as Site[]).every((s) => st.sites[s] === "ok");
+  const linkedinOn = state.settings.sources.linkedin;
+  const shown = (Object.keys(SITES) as Site[]).filter((s) => s !== "linkedin" || linkedinOn);
+  const ready = st && connected && shown.every((s) => st.sites[s] === "ok");
 
   return (
     <section className={`panel browser-panel ${compact ? "compact" : ""}`} aria-label="Browser">
@@ -57,12 +60,18 @@ export function BrowserPanel({
           <h3>Browser</h3>
           <p>
             {mode === "yours"
-              ? "Your own Chrome or Comet, through Claude in Chrome, where you are already signed in. It opens a tab, reads it and closes it. It never posts."
+              ? "Your own Chrome or Comet, where you are already signed in, through the IcpFinder for Chrome extension. Each morning it opens a few search pages in a minimized window, copies the text and closes it. It never clicks or posts."
               : "IcpFinder’s own browser. Sign in to each site once inside it."}
           </p>
         </div>
         <span className={`browser-state ${ready ? "ok" : st ? "warn" : "quiet"}`}>
-          {ready ? "All set" : st ? "Needs attention" : "Not checked"}
+          {ready
+            ? "All set"
+            : !connected && st
+              ? "Not connected"
+              : st
+                ? "Needs attention"
+                : "Not checked"}
         </span>
       </div>
       {!compact && (
@@ -72,13 +81,9 @@ export function BrowserPanel({
             role="radio"
             aria-checked={mode === "yours"}
             className={mode === "yours" ? "on" : ""}
-            disabled={!claude}
-            title={
-              !claude ? "Choose Claude in AI subscriptions to use your own browser" : undefined
-            }
             onClick={() => pick("yours")}
           >
-            <ToolLogo name="claude" size={13} radius={3} /> Your browser
+            Your browser
           </button>
           <button
             type="button"
@@ -91,62 +96,61 @@ export function BrowserPanel({
           </button>
         </div>
       )}
-      {mode === "yours" && st && !st.connected && (
+      {mode === "yours" && !connected && (
         <div className="browser-steps">
-          <p className="browser-note bad">
-            {st.needsConnect
-              ? "Claude in Chrome asks for your OK before every new task, and IcpFinder works in the background, so it cannot show you that question. Allow it once in the extension:"
-              : "Claude in Chrome did not answer. Check that the Claude extension is installed and signed in in your browser, then:"}
+          <p className="browser-note">
+            Install IcpFinder for Chrome once. After that it runs by itself.
           </p>
           <ol>
-            <li>In Comet or Chrome, open the Claude extension’s side panel.</li>
-            <li>Open its menu, then Extension settings.</li>
             <li>
-              Under permissions, add reddit.com, x.com and linkedin.com to your approved sites, or
-              let it act without asking.
+              <button type="button" className="btn native-secondary" onClick={() => ask("connect")}>
+                Show the extension folder
+              </button>
             </li>
-            <li>Come back here and press Check again.</li>
+            <li>
+              In Chrome go to <code>chrome://extensions</code>, in Comet to{" "}
+              <code>comet://extensions</code>. Turn on Developer mode.
+            </li>
+            <li>Choose “Load unpacked” and pick the folder from step 1.</li>
+            <li>Keep your browser open. This panel turns green by itself.</li>
           </ol>
         </div>
       )}
-      {(Object.keys(SITES) as Site[]).map((site) => {
-        const s = st?.sites[site] ?? "unknown";
-        return (
-          <div key={site} className="browser-site">
-            <ToolLogo name={LOGO[site]} size={22} radius={6} />
-            <b>{NAME[site]}</b>
-            <span className={`browser-pill ${STATUS[s].tone}`}>{STATUS[s].label}</span>
-            {(s === "ask" || s === "signed-out") && (
-              <button
-                type="button"
-                className="btn native-secondary"
-                disabled={busy !== null}
-                onClick={() => ask(site)}
-              >
-                {busy === site ? <Spinner /> : null}
-                {mode === "yours" ? "Ask for access" : "Sign in"}
-              </button>
-            )}
-          </div>
-        );
-      })}
-      {busy && busy !== "check" && mode === "yours" && (
-        <p className="browser-note">
-          Look at your browser now: if the Claude extension asks for permission, choose “Always
-          allow” for {NAME[busy as Site]}.
-        </p>
-      )}
-      {st && Object.values(st.sites).includes("unsupported") && (
-        <p className="browser-note">
-          Anthropic does not let Claude in Chrome read some sites, Reddit among them. IcpFinder
-          still listens on the other sites you picked.
-        </p>
-      )}
-      {st && Object.values(st.sites).includes("blocked") && (
-        <p className="browser-note bad">
-          A browser setting blocks the extension on this site. In Comet or Chrome, open the Claude
-          extension’s site access and allow it, or ask your admin if a work policy blocks it.
-        </p>
+      {connected &&
+        shown.map((site) => {
+          const s = st?.sites[site] ?? "unknown";
+          return (
+            <div key={site} className="browser-site">
+              <ToolLogo name={LOGO[site]} size={22} radius={6} />
+              <b>{NAME[site]}</b>
+              <span className={`browser-pill ${STATUS[s].tone}`}>{STATUS[s].label}</span>
+              {s === "signed-out" && (
+                <button type="button" className="btn native-secondary" onClick={() => ask(site)}>
+                  Sign in
+                </button>
+              )}
+            </div>
+          );
+        })}
+      {!compact && (
+        <label className="browser-li">
+          <input
+            type="checkbox"
+            checked={linkedinOn}
+            onChange={() =>
+              void api()
+                .saveSettings({ sources: { ...state.settings.sources, linkedin: !linkedinOn } })
+                .then(onState)
+            }
+          />
+          <span>
+            Also read LinkedIn
+            <small>
+              LinkedIn’s terms forbid automated reading, and it can limit accounts that do it. Off
+              unless you choose it.
+            </small>
+          </span>
+        </label>
       )}
       <div className="browser-foot">
         <button
@@ -157,12 +161,7 @@ export function BrowserPanel({
         >
           {busy === "check" ? <Spinner /> : null} {st ? "Check again" : "Check connection"}
         </button>
-        {st && (
-          <small>
-            Checked {new Date(st.checkedAt).toLocaleString()}
-            {mode === "yours" ? " · a check costs a few cents of AI" : ""}
-          </small>
-        )}
+        {st && <small>Checked {new Date(st.checkedAt).toLocaleString()} · no AI used</small>}
       </div>
     </section>
   );
