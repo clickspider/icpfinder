@@ -53,6 +53,8 @@ const api: IcpApi = {
   listenSave: call("listenSave") as IcpApi["listenSave"],
   listenRun: call("listenRun") as IcpApi["listenRun"],
   noticeSet: call("noticeSet") as IcpApi["noticeSet"],
+  browserCheck: call("browserCheck") as IcpApi["browserCheck"],
+  browserAsk: call("browserAsk") as IcpApi["browserAsk"],
   openExternal: call("openExternal") as IcpApi["openExternal"],
   newWorkspace: call("newWorkspace") as IcpApi["newWorkspace"],
   switchWorkspace: call("switchWorkspace") as IcpApi["switchWorkspace"],

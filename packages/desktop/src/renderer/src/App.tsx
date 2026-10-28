@@ -25,7 +25,7 @@ import { Wizard } from "./Wizard";
 
 export type View =
   | { kind: "overview" }
-  | { kind: "settings"; tab?: "Provider" | "Connected services" | "Usage" }
+  | { kind: "settings"; tab?: "Provider" | "Browser" | "Connected services" | "Usage" }
   | { kind: "icp"; icpId: string }
   | { kind: "company"; icpId: string; domain: string }
   | { kind: "product" }

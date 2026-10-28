@@ -296,35 +296,9 @@ const SignalSources = ({ state, onState }: { state: State; onState: (s: State) =
           plus your AI provider’s web search
         </span>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span style={{ fontSize: 12.5, color: "var(--ink-2)", flex: 1 }}>
-          Read social sites with
-        </span>
-        <div className="ob-seg" style={{ width: 300 }}>
-          <button
-            type="button"
-            className={!ownBrowser ? "on" : ""}
-            onClick={() => save({ browser: "app" })}
-          >
-            IcpFinder's browser
-          </button>
-          <button
-            type="button"
-            className={ownBrowser ? "on" : ""}
-            disabled={!canUseChrome}
-            title={!canUseChrome ? "Select Claude to use its Chrome integration" : undefined}
-            onClick={() => save({ browser: "yours" })}
-          >
-            <ToolLogo name="claude" size={13} radius={3} /> Your Chrome · requires Claude
-          </button>
-        </div>
+      <div style={{ fontSize: 12, color: "var(--muted)" }}>
+        Reddit, X and LinkedIn are read with the browser you pick in Settings → Browser.
       </div>
-      {ownBrowser && (
-        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: -4 }}>
-          Your own browser through Claude in Chrome, where you are already signed in. Claude opens a
-          tab, reads it and closes it.
-        </div>
-      )}
       {SOURCES.map((s) => (
         <div key={s.key} style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <ToolLogo name={s.key} size={30} radius={8} />

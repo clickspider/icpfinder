@@ -3,6 +3,7 @@ import type { Listen, ListenSource, Notice } from "../../shared/listen";
 import { icpPresentation } from "../../shared/onboarding";
 import type { State, Workspace } from "../../shared/types";
 import { fmtTokens, groupBy, tokensOf } from "../../shared/usage";
+import { BrowserPanel } from "./BrowserPanel";
 import { api, ModelPicker, Spinner, ToolLogo } from "./ui";
 
 const SOURCE: Record<ListenSource, { name: string; logo: string; verb: string }> = {
@@ -373,6 +374,7 @@ export function Noticed({
               {p}
             </p>
           ))}
+          <BrowserPanel state={state} onState={onState} compact />
           <div className="noticed-quiet">
             <b>Model:</b> {state.settings.listen?.model || "the lightest"}
             <br />

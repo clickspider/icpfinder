@@ -98,3 +98,37 @@ export const listenDue = (time: string, lastRun: string | undefined, now = new D
   if (now < at) return false;
   return !lastRun || new Date(lastRun) < at;
 };
+
+/** The social sites IcpFinder reads, and their home pages. */
+export const SITES = {
+  reddit: "www.reddit.com",
+  x: "x.com",
+  linkedin: "www.linkedin.com",
+} as const;
+export type Site = keyof typeof SITES;
+
+/** ok = can read; ask = the browser extension needs the founder's OK; blocked = a browser policy
+ *  forbids it; signed-out = IcpFinder's browser is not signed in; unknown = not checked yet. */
+export type SiteStatus = "ok" | "ask" | "blocked" | "unsupported" | "signed-out" | "unknown";
+
+export interface BrowserStatus {
+  mode: "yours" | "app";
+  checkedAt: string;
+  /** Your browser only: Claude in Chrome answered. */
+  connected: boolean;
+  /** Your browser only: the extension asks the founder to allow IcpFinder's connection first. */
+  needsConnect?: boolean;
+  sites: Record<Site, SiteStatus>;
+}
+
+/** What a browser tool error means for one site. */
+export const siteStatusOf = (text: string): SiteStatus =>
+  /not allowed due to safety/i.test(text)
+    ? "unsupported"
+    : /restricted by policy/i.test(text)
+      ? "blocked"
+      : /requires permission|permission required|not allowed/i.test(text)
+        ? "ask"
+        : /\b(log ?in|sign ?in)\b/i.test(text) && text.length < 200
+          ? "signed-out"
+          : "ok";

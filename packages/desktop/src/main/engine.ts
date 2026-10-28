@@ -12,6 +12,7 @@ import { promisify } from "node:util";
 import { htmlToText, researchAccount, safeFetch } from "@icpfinder/core";
 import { HunterEmailProvider, type LlmProvider, parseCliResult } from "@icpfinder/providers";
 import { emailsIn, pickEmail } from "../shared/emails";
+import { SITES, type Site, type SiteStatus, siteStatusOf } from "../shared/listen";
 import {
   type CompanyFacts,
   INDUSTRIES,
@@ -1116,6 +1117,74 @@ export const yourBrowserPages = async (
   return got
     .filter((g) => g.url && g.text && g.text !== "LOGIN" && !isWall(g.text))
     .map((g) => ({ url: String(g.url), text: String(g.text).slice(0, 5000) }));
+};
+
+/** Can Claude in Chrome read each site? One short read-only visit per site (a few cents in all). */
+export const checkYourBrowser = async (): Promise<{
+  connected: boolean;
+  needsConnect: boolean;
+  sites: Record<Site, SiteStatus>;
+}> => {
+  const sites = Object.entries(SITES) as Array<[Site, string]>;
+  const out = await runClaudeWithTools(
+    `For each site below: open https://<site>/ in a new tab, then run this JavaScript with the javascript tool: location.host. Then close the tab. Read only: never click, type or post. If a tool fails, keep its exact error text. Reply with strict JSON only: {"sites":[{"site":"","result":"the JavaScript result or the exact error"}]}\n\n${sites.map(([, h]) => h).join("\n")}`,
+    [
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "mcp__claude-in-chrome__tabs_create_mcp",
+      "mcp__claude-in-chrome__navigate",
+      "mcp__claude-in-chrome__javascript_tool",
+      "mcp__claude-in-chrome__tabs_close_mcp",
+    ],
+    240_000,
+    ["--chrome", "--strict-mcp-config", "--setting-sources", ""],
+    LIGHT_MODEL
+  ).catch((e: unknown) => `ERROR ${e instanceof Error ? e.message : String(e)}`);
+  let rows: Array<{ site?: string; result?: string }> = [];
+  try {
+    rows = json<{ sites?: Array<{ site?: string; result?: string }> }>(out).sites ?? [];
+  } catch {
+    rows = [];
+  }
+  const connected = rows.length > 0 && !/not connected|no browser|extension is not/i.test(out);
+  const status = Object.fromEntries(
+    sites.map(([key, host]) => {
+      const r = rows.find((x) => String(x.site ?? "").includes(host.replace(/^www\./, "")));
+      return [key, connected && r ? siteStatusOf(String(r.result ?? "")) : "unknown"];
+    })
+  ) as Record<Site, SiteStatus>;
+  // First use: the extension must allow this app's Claude to connect, in the founder's browser.
+  const needsConnect =
+    !connected && /permission|grant|allow|access/i.test(out);
+  return { connected, needsConnect, sites: status };
+};
+
+/** Open one site in the founder's browser so Claude in Chrome shows its own permission prompt. */
+export const askYourBrowser = async (site: Site | "connect"): Promise<void> => {
+  await runClaudeWithTools(
+    site === "connect"
+      ? "Run the tabs context tool once. If the browser asks the person to allow this connection, wait for them up to 90 seconds, then run it once more. Reply with the number of tabs or the exact error."
+      : `Open https://${SITES[site]}/ in a new tab and run this JavaScript with the javascript tool: location.host. If the browser asks the person for permission, wait for them up to 90 seconds, then try the JavaScript once more. Then close the tab. Read only: never click, type or post on the page. Reply with the result or the exact error.`,
+    [
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "mcp__claude-in-chrome__tabs_create_mcp",
+      "mcp__claude-in-chrome__navigate",
+      "mcp__claude-in-chrome__javascript_tool",
+      "mcp__claude-in-chrome__tabs_close_mcp",
+    ],
+    200_000,
+    ["--chrome", "--strict-mcp-config", "--setting-sources", ""],
+    LIGHT_MODEL
+  ).catch(() => "");
+};
+
+/** Is IcpFinder's own browser signed in to each site? Reads each home page once, no AI. */
+export const checkAppBrowser = async (): Promise<Record<Site, SiteStatus>> => {
+  const out = {} as Record<Site, SiteStatus>;
+  for (const [key, host] of Object.entries(SITES) as Array<[Site, string]>) {
+    const text = await browseText(`https://${host}/`, 2500).catch(() => "");
+    out[key] = !text ? "unknown" : isWall(text) ? "signed-out" : "ok";
+  }
+  return out;
 };
 
 /** Read pages in the founder's own browser (Claude in Chrome), where they are already signed in. Read only. */

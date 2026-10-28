@@ -239,6 +239,8 @@ export interface Settings {
   sources: Sources;
   /** Morning listening: the time it runs and the model it uses (empty = the lightest). */
   listen?: { time: string; model?: string };
+  /** Last browser check: which browser, and whether each social site can be read. */
+  browserStatus?: import("./listen").BrowserStatus;
 }
 
 export interface Sources {
@@ -328,6 +330,8 @@ export interface IcpApi {
   listenSave(icpId: string, listen: import("./listen").Listen): Promise<State>;
   listenRun(): Promise<State>;
   noticeSet(id: string, status: import("./listen").Notice["status"]): Promise<State>;
+  browserCheck(): Promise<State>;
+  browserAsk(site: import("./listen").Site | "connect"): Promise<State>;
   openExternal(url: string): Promise<void>;
   newWorkspace(): Promise<State>;
   switchWorkspace(id: string): Promise<State>;

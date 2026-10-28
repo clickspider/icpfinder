@@ -14,7 +14,14 @@ import {
   session,
   shell,
 } from "electron";
-import { type Listen, listenDue, MAX_NOTICES_A_DAY, type Notice } from "../shared/listen";
+import {
+  type Listen,
+  listenDue,
+  MAX_NOTICES_A_DAY,
+  type Notice,
+  SITES,
+  type Site,
+} from "../shared/listen";
 import {
   type CompanyFacts,
   companiesForLinkedIn,
@@ -41,6 +48,9 @@ import { openLogin } from "./browse";
 import { resolveCli } from "./cli";
 import { customIcp } from "./custom-icp";
 import {
+  askYourBrowser,
+  checkAppBrowser,
+  checkYourBrowser,
   classifyCompanies,
   companyLogo,
   configureSubscriptions,
@@ -947,6 +957,30 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
   },
   copyText: (text: string) => {
     if (typeof text === "string") clipboard.writeText(text);
+  },
+  /** Check the chosen browser: connected, and can each social site be read. A few cents at most. */
+  browserCheck: async () => {
+    const mode = state.settings.sources.browser === "app" ? "app" : "yours";
+    const now = new Date().toISOString();
+    if (mode === "app")
+      state.settings.browserStatus = {
+        mode,
+        checkedAt: now,
+        connected: true,
+        sites: await checkAppBrowser(),
+      };
+    else {
+      const r = await withTask("Browser check", () => checkYourBrowser());
+      state.settings.browserStatus = { mode, checkedAt: now, ...r };
+    }
+    return commit();
+  },
+  /** Bring up the browser's own permission prompt for one site, then check again. */
+  browserAsk: async (site: Site | "connect") => {
+    if (state.settings.sources.browser === "app") {
+      if (site !== "connect") openLogin(`https://${SITES[site]}/login`);
+    } else await withTask("Browser check", () => askYourBrowser(site));
+    return state;
   },
   /** Suggest what to listen for, for every profile that has no listening yet (one AI call each). */
   listenSuggest: async () => {

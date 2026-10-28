@@ -1370,3 +1370,106 @@
   font-size: 12.5px;
   color: var(--ink);
 }
+
+/* Browser: one place to pick the browser, see each site's access and fix it in the app. */
+.panel.browser-panel {
+  max-width: 720px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.panel.browser-panel.compact {
+  max-width: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.browser-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.browser-head h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.browser-head p {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.browser-state {
+  margin-left: auto;
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.browser-state.ok,
+.browser-pill.ok {
+  background: #e6f5ea;
+  color: #1b6b30;
+}
+.browser-state.warn,
+.browser-pill.warn {
+  background: #fff1e3;
+  color: #8a3f00;
+}
+.browser-pill.bad {
+  background: #fff0f3;
+  color: #b01a39;
+}
+.browser-state.quiet,
+.browser-pill.quiet {
+  background: #f4f4f2;
+  color: var(--muted);
+}
+.browser-pick {
+  width: 320px;
+}
+.browser-site {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #e6e6e4;
+  font-size: 13px;
+}
+.browser-pill {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.browser-site .btn {
+  margin-left: auto;
+  height: 30px;
+  font-size: 12.5px;
+}
+.browser-note {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+.browser-note.bad {
+  color: #b01a39;
+}
+.browser-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.browser-foot small {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.browser-connect {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.browser-connect .btn {
+  flex-shrink: 0;
+}

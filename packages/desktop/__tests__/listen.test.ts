@@ -42,3 +42,14 @@ describe("listening", () => {
     expect(listenDue("10:00", undefined, now)).toBe(false);
   });
 });
+
+describe("browser site status", () => {
+  it("reads the extension's errors", async () => {
+    const { siteStatusOf } = await import("../src/shared/listen");
+    expect(siteStatusOf("Failed to execute JavaScript: Host access is restricted by policy.")).toBe(
+      "blocked"
+    );
+    expect(siteStatusOf("Claude in Chrome requires permission.")).toBe("ask");
+    expect(siteStatusOf("www.reddit.com")).toBe("ok");
+  });
+});
