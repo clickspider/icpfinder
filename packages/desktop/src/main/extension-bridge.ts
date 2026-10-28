@@ -13,6 +13,8 @@ export const BRIDGE_PORT = 47321;
 /** Fixed by the "key" in packages/extension/manifest.json, so the ID is the same on every Mac. */
 export const EXTENSION_ID = "oengddmgnimipjnfdblmkppmihnlaojp";
 const ORIGIN = `chrome-extension://${EXTENSION_ID}`;
+/** Same as packages/extension/manifest.json. When they differ, the extension reloads itself. */
+export const EXTENSION_VERSION = "0.2.0";
 
 type Job = { id: string; url: string; resolve: (text: string) => void };
 const queue: Job[] = [];
@@ -51,7 +53,10 @@ export const startExtensionBridge = (): void => {
     if (req.method === "GET" && req.url === "/jobs") {
       const jobs = queue.splice(0, 6);
       for (const j of jobs) waiting.set(j.id, j);
-      return send(res, 200, { jobs: jobs.map(({ id, url }) => ({ id, url })) });
+      return send(res, 200, {
+        jobs: jobs.map(({ id, url }) => ({ id, url })),
+        version: EXTENSION_VERSION,
+      });
     }
     if (req.method === "POST" && req.url === "/results") {
       try {

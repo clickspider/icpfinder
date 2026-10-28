@@ -22,7 +22,12 @@ async function poll() {
   try {
     const r = await fetch(`${APP}/jobs`, { headers: HEADERS }).catch(() => null);
     if (!r?.ok) return;
-    const { jobs = [] } = await r.json();
+    const { jobs = [], version } = await r.json();
+    // IcpFinder updated the extension files: reload so the new version runs, no clicks needed.
+    if (version && version !== chrome.runtime.getManifest().version) {
+      chrome.runtime.reload();
+      return;
+    }
     for (const job of jobs) {
       const text = SITES.test(job.url) ? await read(job.url) : "ERROR not an allowed site";
       await fetch(`${APP}/results`, {
@@ -45,9 +50,28 @@ async function read(url) {
     await sleep(3500);
     const [res] = await chrome.scripting.executeScript({
       target: { tabId },
-      func: () => {
-        window.scrollTo(0, document.body.scrollHeight / 2);
-        return document.body ? document.body.innerText.slice(0, 6000) : "";
+      // Only the posts, not the menus: scroll a little so more load, then copy each post's text
+      // and its own link. Falls back to the page text when a site changes its layout.
+      func: async () => {
+        for (let i = 0; i < 3; i++) {
+          window.scrollBy(0, window.innerHeight * 2);
+          await new Promise((r) => setTimeout(r, 1200));
+        }
+        const nodes = document.querySelectorAll(
+          'article, shreddit-post, [data-testid="post-container"], .feed-shared-update-v2, div[data-urn*="activity"]'
+        );
+        const posts = [];
+        for (const n of nodes) {
+          const text = (n.innerText || "").replace(/\n{2,}/g, "\n").trim();
+          if (text.length < 40) continue;
+          const a = n.querySelector('a[href*="/status/"], a[href*="/comments/"], a[href*="/feed/update/"], a[href*="/posts/"]');
+          const urn = n.getAttribute("data-urn") || n.closest("[data-urn]")?.getAttribute("data-urn");
+          const link = a?.href || (urn ? `https://www.linkedin.com/feed/update/${urn}/` : "");
+          posts.push(`POST${link ? ` ${link}` : ""}\n${text.slice(0, 900)}`);
+        }
+        const unique = [...new Set(posts)];
+        const text = unique.length ? unique.join("\n\n") : document.body ? document.body.innerText : "";
+        return text.slice(0, 9000);
       },
     });
     return res?.result || "";
