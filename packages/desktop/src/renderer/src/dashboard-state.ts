@@ -1,4 +1,5 @@
 import { scoringOf } from "../../shared/scoring";
+import { timingOf } from "../../shared/timing";
 import type { Company, Icp, Workspace } from "../../shared/types";
 
 export function profileStatus(icp: Icp, ws: Pick<Workspace, "scoring">): string {
@@ -25,6 +26,9 @@ export function companyGroups(companies: Company[], threshold: number) {
     .sort(
       (a, b) =>
         Number(b.approval === "approved") - Number(a.approval === "approved") ||
+        // The new way: the freshest moment first, then someone you can reach, then fit.
+        timingOf(a).rank - timingOf(b).rank ||
+        Number(reach(b) >= 2) - Number(reach(a) >= 2) ||
         (b.match ?? 0) - (a.match ?? 0) ||
         reach(b) - reach(a)
     );

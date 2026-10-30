@@ -3,6 +3,7 @@
 // IcpFinder main process: window, IPC, and a one-at-a-time research queue.
 
 import { mkdirSync } from "node:fs";
+import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   app,
@@ -15,6 +16,14 @@ import {
   shell,
 } from "electron";
 import {
+  type Listen,
+  listenDue,
+  MAX_NOTICES_A_DAY,
+  type Notice,
+  SITES,
+  type Site,
+} from "../shared/listen";
+import {
   type CompanyFacts,
   companiesForLinkedIn,
   companiesToCheck,
@@ -22,7 +31,7 @@ import {
   LINKEDIN,
   normCompany,
 } from "../shared/people";
-import { defaultModel, isProvider } from "../shared/provider-models";
+import { defaultModel, isProvider, PROVIDER_MODELS } from "../shared/provider-models";
 import { type Scoring, score, scoringOf } from "../shared/scoring";
 import type {
   ActionId,
@@ -40,6 +49,8 @@ import { openLogin } from "./browse";
 import { resolveCli } from "./cli";
 import { customIcp } from "./custom-icp";
 import {
+  checkAppBrowser,
+  checkYourBrowser,
   classifyCompanies,
   companyLogo,
   configureSubscriptions,
@@ -71,6 +82,7 @@ import {
   watchCompany,
   which,
 } from "./engine";
+import { lastRunDebug, listenFor, suggestListen } from "./listen";
 import { initLocalUsage, localWeight } from "./localUsage";
 import { dockProgress, initNotify, notify } from "./notify";
 import { readClaudePlan, windowStart } from "./plan";
@@ -354,6 +366,102 @@ const watchOne = async (ws: Workspace, c: Company): Promise<void> => {
 
 // ponytail: the watcher runs only while the app is open; a launchd job could run it daily when closed.
 const WATCH_EVERY_MS = 24 * 3_600_000;
+
+/** The listening model, if it belongs to the current provider; otherwise the lightest. */
+const listenModel = (): string | undefined => {
+  const m = state.settings.listen?.model;
+  const provider = state.settings.provider ?? "claude";
+  return m && PROVIDER_MODELS[provider].some((x) => x.id === m) ? m : undefined;
+};
+
+/** One morning run for a product: every listening profile, at most 10 new posts in total. */
+const listenNow = async (ws: Workspace): Promise<number> => {
+  if (ws.listening) return 0; // The daily round and Check now must not read at the same time.
+  const seen = new Set((ws.notices ?? []).map((n) => n.url));
+  // First run looks back a week; after that, only since the last run (plus a day of overlap).
+  const days = ws.listenedAt
+    ? Math.min(7, Math.ceil((Date.now() - Date.parse(ws.listenedAt)) / 86_400_000) + 1)
+    : 7;
+  const found: Notice[] = [];
+  const problems: string[] = [];
+  // Live steps for the Noticed page, so a check never looks frozen.
+  ws.listening = true;
+  ws.listenSteps = ["Starting"];
+  lastRunDebug.length = 0;
+  commit();
+  const report = (step: string) => {
+    ws.listenSteps = [...(ws.listenSteps ?? []), step].slice(-12);
+    commit();
+  };
+  await jobs.run(ws.id, () =>
+    withTask("Listening", async () => {
+      for (const icp of ws.icps) {
+        if (!icp.listen?.on) continue;
+        const run = await listenFor(
+          ws.product,
+          icp,
+          seen,
+          days,
+          listenModel(),
+          state.settings.sources.linkedin,
+          report
+        ).catch((e) => {
+          problems.push(e instanceof Error ? e.message : String(e));
+          return { notices: [], problems: [] };
+        });
+        for (const n of run.notices) seen.add(n.url);
+        found.push(...run.notices);
+        problems.push(...run.problems);
+      }
+    })
+  );
+  // One card per post, even if two profiles or two runs found it.
+  const known = new Set((ws.notices ?? []).map((n) => n.url));
+  const fresh = found
+    .filter((n) => !known.has(n.url) && known.add(n.url))
+    .slice(0, MAX_NOTICES_A_DAY);
+  // Keep the feed small: newest first, the last 300 posts.
+  ws.notices = [...fresh, ...(ws.notices ?? [])].slice(0, 300);
+  ws.listenedAt = new Date().toISOString();
+  ws.listening = false;
+  // A local file next to the app data, never sent anywhere: what was read and what the AI said.
+  writeFile(
+    join(app.getPath("userData"), "listen-last-run.json"),
+    JSON.stringify(lastRunDebug, null, 1)
+  ).catch(() => undefined);
+  report(
+    fresh.length
+      ? `Done: ${fresh.length} new ${fresh.length === 1 ? "person" : "people"}`
+      : "Done: nothing new worth answering"
+  );
+  ws.listenProblems = [...new Set(problems)].slice(0, 4);
+  commit();
+  if (fresh.length) {
+    const names = new Map<string, number>();
+    for (const n of fresh) {
+      const c = ws.icps
+        .find((i) => i.id === n.icpId)
+        ?.listen?.categories.find((x) => x.id === n.categoryId)?.name;
+      if (c) names.set(c, (names.get(c) ?? 0) + 1);
+    }
+    notify(
+      `${fresh.length} ${fresh.length === 1 ? "person" : "people"} noticed`,
+      [...names].map(([name, n]) => `${n} ${name.toLowerCase()}`).join(", "),
+      { kind: "noticed" }
+    );
+  }
+  return fresh.length;
+};
+
+/** Run the morning listening when it is due (checked every 10 minutes while the app is open). */
+const listenRound = async (): Promise<void> => {
+  const time = state.settings.listen?.time ?? "08:30";
+  for (const ws of state.workspaces) {
+    if (ws.archived || !ws.icps.some((i) => i.listen?.on)) continue;
+    if (listenDue(time, ws.listenedAt)) await listenNow(ws).catch(() => undefined);
+  }
+};
+
 const watchRound = async (): Promise<void> => {
   for (const ws of state.workspaces)
     for (const icp of ws.icps)
@@ -880,6 +988,72 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
   copyText: (text: string) => {
     if (typeof text === "string") clipboard.writeText(text);
   },
+  /** Check the chosen browser: connected, and can each social site be read. A few cents at most. */
+  browserCheck: async () => {
+    const mode = state.settings.sources.browser === "app" ? "app" : "yours";
+    const now = new Date().toISOString();
+    if (mode === "app")
+      state.settings.browserStatus = {
+        mode,
+        checkedAt: now,
+        connected: true,
+        sites: await checkAppBrowser(),
+      };
+    else {
+      const r = await checkYourBrowser();
+      state.settings.browserStatus = { mode, checkedAt: now, ...r };
+    }
+    return commit();
+  },
+  /** Sign in to a site: in your own browser, open its login page; in IcpFinder's browser, its login window. */
+  browserAsk: async (site: Site | "connect") => {
+    if (site === "connect") {
+      // Claude in Chrome, the extension that reads pages in the founder's own browser.
+      void shell.openExternal(
+        "https://chromewebstore.google.com/detail/claude/fcoeoabgfenejglbffodgkkbkcdhcgfn"
+      );
+      return state;
+    }
+    if (state.settings.sources.browser === "app") openLogin(`https://${SITES[site]}/login`);
+    else void shell.openExternal(`https://${SITES[site]}/login`);
+    return state;
+  },
+  /** Suggest what to listen for, for every profile that has no listening yet (one AI call each). */
+  listenSuggest: async () => {
+    const ws = activeWorkspace(state);
+    if (!ws) return state;
+    await jobs.run(ws.id, () =>
+      withTask("Listening", async () => {
+        for (const icp of ws.icps) {
+          if (icp.listen || icp.profileKind === "consumer") continue;
+          icp.listen = await suggestListen(ws.product, icp, listenModel());
+          commit();
+        }
+      })
+    );
+    return commit();
+  },
+  listenSave: (icpId: string, listen: Listen) => {
+    const icp = activeWorkspace(state)?.icps.find((i) => i.id === icpId);
+    if (icp) icp.listen = listen;
+    return commit();
+  },
+  listenRun: async () => {
+    const ws = activeWorkspace(state);
+    if (ws) await listenNow(ws);
+    return state;
+  },
+  /** Saved, seen or not relevant. Not relevant teaches the check what to skip next time. */
+  noticeSet: (id: string, status: Notice["status"]) => {
+    const ws = activeWorkspace(state);
+    const n = ws?.notices?.find((x) => x.id === id);
+    if (!ws || !n) return state;
+    n.status = status;
+    const l = ws.icps.find((i) => i.id === n.icpId)?.listen;
+    if (status === "dismissed" && l)
+      l.rejected = [n.quote.slice(0, 140), ...(l.rejected ?? [])].slice(0, 15);
+    return commit();
+  },
   openExternal: (url: string) => {
     if (/^https:\/\//.test(url)) void shell.openExternal(url);
   },
@@ -1018,6 +1192,7 @@ app.whenReady().then(() => {
     );
   }
   // Resume work that was cut off by a quit.
+  for (const ws of state.workspaces) ws.listening = false;
   for (const ws of state.workspaces)
     for (const icp of ws.icps) {
       if (icp.sourcing) {
@@ -1090,6 +1265,8 @@ app.whenReady().then(() => {
   })();
   setTimeout(() => void watchRound(), 60_000);
   setInterval(() => void watchRound(), 3_600_000);
+  setTimeout(() => void listenRound(), 90_000);
+  setInterval(() => void listenRound(), 600_000);
 });
 
 app.on("window-all-closed", () => app.quit());

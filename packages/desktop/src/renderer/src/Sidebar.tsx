@@ -166,6 +166,19 @@ export function Sidebar({
         <Icon d="M3 11 12 3l9 8M5 10v11h5v-6h4v6h5V10" s={18} />
         Overview
       </button>
+      <button
+        type="button"
+        className={`side-row btn native-overview-link ${view?.kind === "noticed" ? "on" : ""}`}
+        onClick={() => go({ kind: "noticed" })}
+      >
+        <Icon d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4" s={18} />
+        Noticed
+        {(ws.notices ?? []).some((n) => n.status === "new") && (
+          <span className="noticed-badge">
+            {(ws.notices ?? []).filter((n) => n.status === "new").length}
+          </span>
+        )}
+      </button>
       <div className="native-sidebar-label">
         <span>Customer profiles</span>
         <span>{ws.icps.length}</span>

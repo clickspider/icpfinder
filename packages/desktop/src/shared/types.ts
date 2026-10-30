@@ -124,6 +124,10 @@ export interface IcpDraft {
 }
 
 export interface Icp {
+  /** Where this profile's people talk (e.g. "r/SaaS", "Show HN", "LinkedIn"), from onboarding. */
+  where?: string[];
+  /** What to listen for and where, for the Noticed feed. Suggested once, edited by the founder. */
+  listen?: import("./listen").Listen;
   profileKind?: "business" | "consumer";
   characteristics?: string;
   id: string;
@@ -211,6 +215,16 @@ export interface Workspace {
   scoring?: Partial<import("./scoring").Scoring>;
   /** True while re-calibrate runs; other Claude work for this product is stopped. */
   recalibrating?: boolean;
+  /** Listening: people who fit a profile and just posted something worth answering. */
+  notices?: import("./listen").Notice[];
+  /** Last morning listening run (ISO). */
+  listenedAt?: string;
+  /** Sources the last run could not read, in plain words. */
+  listenProblems?: string[];
+  /** What the current or last listening run did, step by step, for the Noticed page. */
+  listenSteps?: string[];
+  /** True while a listening run is going. */
+  listening?: boolean;
 }
 
 export interface Settings {
@@ -227,6 +241,10 @@ export interface Settings {
   timing?: { searchMs: number; checkMs: number };
   /** Where hunts look for buying signals, and whether blocked pages use the app's browser. */
   sources: Sources;
+  /** Morning listening: the time it runs and the model it uses (empty = the lightest). */
+  listen?: { time: string; model?: string };
+  /** Last browser check: which browser, and whether each social site can be read. */
+  browserStatus?: import("./listen").BrowserStatus;
 }
 
 export interface Sources {
@@ -312,6 +330,12 @@ export interface IcpApi {
   findReach(icpId: string, domain: string): Promise<State>;
   /** Copy through the main process: the web clipboard API is denied when the window is not focused. */
   copyText(text: string): Promise<void>;
+  listenSuggest(): Promise<State>;
+  listenSave(icpId: string, listen: import("./listen").Listen): Promise<State>;
+  listenRun(): Promise<State>;
+  noticeSet(id: string, status: import("./listen").Notice["status"]): Promise<State>;
+  browserCheck(): Promise<State>;
+  browserAsk(site: import("./listen").Site | "connect"): Promise<State>;
   openExternal(url: string): Promise<void>;
   newWorkspace(): Promise<State>;
   switchWorkspace(id: string): Promise<State>;

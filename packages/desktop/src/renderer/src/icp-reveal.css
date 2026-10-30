@@ -553,7 +553,7 @@
   row-gap: 0;
 }
 .ir-cards-portraits .ir-card {
-  grid-row: span 5;
+  grid-row: span 6;
   grid-template-rows: subgrid;
   grid-template-areas: none;
   row-gap: 0;
@@ -709,4 +709,32 @@
       opacity: 0;
     }
   }
+}
+
+/* People first: the person is the card's headline. */
+.ir-card-person {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.2px;
+  line-height: 1.32;
+  color: var(--ink);
+}
+.ir-cards-portraits .ir-card-head h2 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #5f565b;
+}
+.ir-where-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 0;
+}
+.ir-where-chips span {
+  padding: 2px 9px;
+  border: 1px solid #e6e1e3;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--ink);
 }

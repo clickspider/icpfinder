@@ -19,7 +19,14 @@ export const emptyState = (): State => ({
     dropTime: "06:00",
     askBeforeEmail: true,
     model: "sonnet",
-    sources: { hn: true, reddit: false, x: false, linkedin: false, fallback: true },
+    sources: {
+      hn: true,
+      reddit: false,
+      x: false,
+      linkedin: false,
+      fallback: true,
+      browser: "yours",
+    },
   },
   contacts: [],
 });
