@@ -71,7 +71,7 @@ try {
     if (!result.people.length) console.log("No matches (no credits used).");
     console.log(
       `\n${result.cost.units} credits used, ${result.creditsRemaining ?? "?"} left.` +
-        (result.nextCursor ? `\nMore: --cursor ${result.nextCursor}` : "")
+        (result.nextCursor ? "\nMore results exist: rerun with --json to get next_cursor." : "")
     );
   }
 } catch (err) {
