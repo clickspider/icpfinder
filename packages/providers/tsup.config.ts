@@ -7,6 +7,7 @@ export default defineConfig({
     "src/gemini.ts",
     "src/fake.ts",
     "src/claude-cli.ts",
+    "src/context-dev.ts",
   ],
   format: ["esm"],
   dts: true,

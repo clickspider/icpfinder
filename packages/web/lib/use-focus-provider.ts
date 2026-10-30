@@ -15,7 +15,12 @@ export function useFocusProvider(errors: RunError[]): "gemini" | "hunter" | null
     for (let i = errors.length - 1; i >= 0; i -= 1) {
       const err = errors[i];
       if (!err) continue;
-      if (err.provider && err.code && err.code !== "unknown" && err.code !== "network") {
+      if (
+        (err.provider === "gemini" || err.provider === "hunter") &&
+        err.code &&
+        err.code !== "unknown" &&
+        err.code !== "network"
+      ) {
         return err.provider;
       }
     }
