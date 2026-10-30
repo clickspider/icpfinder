@@ -23,7 +23,7 @@ export interface CostUnit {
 }
 
 export type ProviderErrorCode = "auth" | "rate_limit" | "quota" | "network";
-export type ProviderName = "gemini" | "hunter";
+export type ProviderName = "context-dev" | "gemini" | "hunter";
 
 /** Lifecycle errors all providers may throw. */
 export class ProviderAuthError extends Error {
