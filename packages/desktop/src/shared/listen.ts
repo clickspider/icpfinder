@@ -132,3 +132,113 @@ export const siteStatusOf = (text: string): SiteStatus =>
         : /\b(log ?in|sign ?in)\b/i.test(text) && text.length < 200
           ? "signed-out"
           : "ok";
+
+const POST_LINK =
+  /href="([^"]*?(?:\/status\/\d+|\/comments\/[^"/]+|\/feed\/update\/[^"]+|\/posts\/[^"]+))"/;
+// ponytail: LinkedIn search shows no post links, so a post links to its author. A second post by
+// the same person counts as seen until LinkedIn exposes post links.
+const AUTHOR_LINK = /href="([^"]*\/in\/[^"]+)"/;
+
+const indentOf = (l: string) => l.length - l.trimStart().length;
+
+/** The visible words of tree lines: labels only, nothing inside a button, no images or counters. */
+const wordsOf = (lines: string[]): string[] => {
+  const out: string[] = [];
+  let skipDeeperThan = -1;
+  for (const l of lines) {
+    const indent = indentOf(l);
+    if (skipDeeperThan >= 0 && indent > skipDeeperThan) continue;
+    skipDeeperThan = -1;
+    if (/^\s*(button|img|image|group|progressbar|heading)\b/.test(l) || /\/analytics"/.test(l)) {
+      skipDeeperThan = indent;
+      continue;
+    }
+    const word = /^\s*[\w-]+ "([^"]+)" \[ref_/.exec(l)?.[1];
+    if (word) out.push(word);
+  }
+  return out;
+};
+
+/** Posts from a Claude in Chrome read_page tree: each post's link and its visible words. A post is
+ *  an article (X, Reddit) or a list item that opens with "Feed post" (LinkedIn). Falls back to
+ *  every visible word on the page when it has no posts. */
+export const postsFromTree = (tree: string, host: string): string => {
+  const lines = tree.split("\n");
+  const posts: string[] = [];
+  let cur: string[] | null = null;
+  let depth = -1;
+  const flush = () => {
+    if (!cur) return;
+    const href =
+      cur.map((l) => POST_LINK.exec(l)?.[1]).find(Boolean) ??
+      cur.map((l) => AUTHOR_LINK.exec(l)?.[1]).find(Boolean);
+    const text = [...new Set(wordsOf(cur))].join("\n");
+    if (text.length >= 40)
+      posts.push(
+        `POST${href ? ` ${href.startsWith("http") ? href : `https://${host}${href}`}` : ""}\n${text.slice(0, 900)}`
+      );
+    cur = null;
+  };
+  lines.forEach((l, i) => {
+    const indent = indentOf(l);
+    if (cur && indent <= depth) flush();
+    if (
+      !cur &&
+      (/^\s*article\b/.test(l) ||
+        (/^\s*listitem\b/.test(l) && /heading "Feed post"/.test(lines[i + 1] ?? "")))
+    ) {
+      cur = [];
+      depth = indent;
+    } else cur?.push(l);
+  });
+  flush();
+  return (posts.length ? [...new Set(posts)].join("\n\n") : wordsOf(lines).join("\n")).slice(
+    0,
+    9000
+  );
+};
+
+/** One browser run's tool results, back to pages: each read_page tree belongs to the page the tab
+ *  last went to. A page Claude refused to open keeps its error text. */
+export const pagesFromTools = (
+  results: string[],
+  urls: string[]
+): Array<{ url: string; text: string; error?: string }> => {
+  const out = new Map<string, { url: string; text: string; error?: string }>();
+  let url = "";
+  let n = 0;
+  for (const r of results)
+    for (const chunk of r.split(/\n(?=\[\w[\w:]*\] )/)) {
+      const to = /Navigated to (\S+)/.exec(chunk)?.[1];
+      if (to) {
+        url = urls.includes(to) ? to : (urls[n] ?? to);
+        n++;
+        continue;
+      }
+      if (!url) continue;
+      if (/not allowed due to safety|restricted by policy|requires permission/i.test(chunk))
+        out.set(url, { url, text: "", error: chunk.slice(0, 200) });
+      else if (/ \[ref_\d+\]/.test(chunk)) {
+        const host = new URL(url).host;
+        out.set(url, { url, text: postsFromTree(chunk.replace(/^\[\w+\] /, ""), host) });
+      }
+    }
+  return [...out.values()];
+};
+
+/** What IcpFinder lets Claude do in the founder's browser: open the listed sites and read them. */
+export const isBrowserReadStep = (tool: string, input: Record<string, unknown>): boolean => {
+  const name = tool.replace(/^mcp__claude-in-chrome__/, "");
+  if (["tabs_context_mcp", "read_page", "get_page_text", "tabs_close_mcp"].includes(name))
+    return true;
+  if (name === "computer") return input.action === "wait";
+  if (name === "navigate") {
+    try {
+      const u = new URL(String(input.url));
+      return u.protocol === "https:" && (Object.values(SITES) as string[]).includes(u.hostname);
+    } catch {
+      return false;
+    }
+  }
+  return false;
+};

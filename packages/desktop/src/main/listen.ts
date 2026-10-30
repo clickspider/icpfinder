@@ -106,7 +106,8 @@ const readHn = async (q: string, days: number): Promise<RawPost[]> => {
 
 /** Search pages for Reddit, X and LinkedIn, read in the founder's own browser where they are signed in. */
 const pageUrl = (source: "reddit" | "x" | "linkedin", q: string, subs: string[]): string => {
-  const e = encodeURIComponent(q);
+  // X and LinkedIn: the exact phrase. Without quotes X finds every post with both words.
+  const e = encodeURIComponent(source === "reddit" ? q : `"${q}"`);
   if (source === "reddit")
     return subs.length
       ? `https://www.reddit.com/r/${subs.join("+")}/search/?q=${e}&restrict_sr=1&sort=new&t=week`
@@ -114,6 +115,14 @@ const pageUrl = (source: "reddit" | "x" | "linkedin", q: string, subs: string[])
   if (source === "x") return `https://x.com/search?q=${e}&f=live`;
   return `https://www.linkedin.com/search/results/content/?keywords=${e}&sortBy=%22date_posted%22`;
 };
+
+/** The last run's inputs and AI answer, per profile, for "What the last check did" and debugging. */
+export const lastRunDebug: Array<{
+  profile: string;
+  hn: string[];
+  pages: Array<{ source: string; text: string }>;
+  answer: string;
+}> = [];
 
 export interface ListenRun {
   notices: Notice[];
@@ -142,9 +151,12 @@ export const listenFor = async (
   for (const q of queries) if (l.sources.hn) posts.push(...(await readHn(q, days).catch(() => [])));
   // Reddit, X and LinkedIn: read in the founder's own browser (Claude in Chrome), one batch, read only.
   // LinkedIn only when the founder switched it on in Settings → Browser (its terms forbid automated reading).
-  const social = (["reddit", "x", "linkedin"] as const).filter(
+  // Claude in Chrome does not open Reddit, so Reddit is not read in the founder's browser.
+  const social = (["x", "linkedin"] as const).filter(
     (s) => l.sources[s] && (s !== "linkedin" || allowLinkedIn)
   );
+  if (l.sources.reddit)
+    problems.push("Reddit: Claude in Chrome does not open Reddit, so IcpFinder skips it.");
   if (social.length) {
     {
       const wanted = social.flatMap((source) =>
@@ -164,7 +176,7 @@ export const listenFor = async (
       for (const source of blocked ? [] : social)
         if (!pages.some((pg) => pg.source === source))
           problems.push(
-            `${source === "x" ? "X" : source === "linkedin" ? "LinkedIn" : "Reddit"}: we couldn't read it in your browser. Check that you are signed in there.`
+            `${source === "x" ? "X" : "LinkedIn"}: we couldn't read it in your browser. Check that you are signed in there.`
           );
     }
   }
@@ -180,6 +192,13 @@ export const listenFor = async (
     prompt: `SELLER: ${sellerSummary(p)}\n\nPROFILE: ${icp.name}. Who: ${icp.card?.buyer.text ?? ""}. Not a fit if: ${icp.card?.skip.text ?? ""}\nCATEGORIES:\n${cats.map((c) => `- ${c.name}`).join("\n")}${l.rejected?.length ? `\nTHE FOUNDER MARKED THESE NOT RELEVANT (skip posts like them):\n${l.rejected.map((r) => `- ${r}`).join("\n")}` : ""}\n\nLIST:\n${short.map((s, i) => `[${i}] ${s.where ?? s.source} · ${s.author} · ${s.postedAt?.slice(0, 10) ?? "?"}\n${s.text}`).join("\n\n")}${pages.map((pg) => `\n\nPAGE (${pg.source}):\n${pg.text}`).join("")}`,
     format: "json",
     timeoutMs: 180_000,
+  });
+  // Keep the last run's inputs and answer next to the app data, so a weak run can be explained.
+  lastRunDebug.push({
+    profile: icp.name,
+    hn: short.map((x) => `${x.author}: ${x.text.slice(0, 200)}`),
+    pages: pages.map((pg) => ({ source: pg.source, text: pg.text.slice(0, 2500) })),
+    answer: res.text.slice(0, 4000),
   });
   const keep =
     json<{

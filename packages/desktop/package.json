@@ -59,11 +59,6 @@
     "beforePack": "scripts/before-pack.cjs",
     "extraResources": [
       {
-        "from": "../extension",
-        "to": "extension",
-        "filter": ["manifest.json", "background.js", "README.md"]
-      },
-      {
         "from": "resources/runtime/${arch}",
         "to": "runtime",
         "filter": [

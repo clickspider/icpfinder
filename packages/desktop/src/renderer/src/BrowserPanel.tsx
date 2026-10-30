@@ -9,7 +9,7 @@ const STATUS: Record<SiteStatus, { label: string; tone: "ok" | "warn" | "bad" | 
   ok: { label: "Ready", tone: "ok" },
   ask: { label: "Needs your OK", tone: "warn" },
   blocked: { label: "Blocked by a browser setting", tone: "bad" },
-  unsupported: { label: "Cannot be read", tone: "bad" },
+  unsupported: { label: "Claude does not open it", tone: "quiet" },
   "signed-out": { label: "Not signed in", tone: "warn" },
   unknown: { label: "Not checked", tone: "quiet" },
 };
@@ -36,14 +36,11 @@ export function BrowserPanel({
       .then(onState)
       .finally(() => setBusy(null));
   };
-  // Waiting for the extension: look again every 15 seconds, so the panel turns green by itself.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: poll only while not connected
+  // Check once when the panel opens and nothing was checked yet. A check uses a little AI, so no polling.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once per browser choice
   useEffect(() => {
-    if (connected || compact) return;
-    if (!st) check();
-    const t = setInterval(() => void api().browserCheck().then(onState), 15_000);
-    return () => clearInterval(t);
-  }, [connected, mode]);
+    if (!st && !compact) check();
+  }, [mode]);
   const ask = (site: Site | "connect") => void api().browserAsk(site);
   const pick = (browser: "yours" | "app") =>
     void api()
@@ -60,7 +57,7 @@ export function BrowserPanel({
           <h3>Browser</h3>
           <p>
             {mode === "yours"
-              ? "Your own Chrome or Comet, where you are already signed in, through the IcpFinder for Chrome extension. Each morning it opens a few search pages in a minimized window, copies the text and closes it. It never clicks or posts."
+              ? "Your own Chrome or Comet, where you are already signed in, through Claude in Chrome, the extension from Anthropic. Each morning Claude opens a few search pages in a tab, reads the posts and closes the tab. It never clicks or posts."
               : "IcpFinder’s own browser. Sign in to each site once inside it."}
           </p>
         </div>
@@ -99,20 +96,16 @@ export function BrowserPanel({
       {mode === "yours" && !connected && (
         <div className="browser-steps">
           <p className="browser-note">
-            Install IcpFinder for Chrome once. After that it runs by itself.
+            Set up Claude in Chrome once. After that it runs by itself.
           </p>
           <ol>
             <li>
               <button type="button" className="btn native-secondary" onClick={() => ask("connect")}>
-                Show the extension folder
+                Get Claude in Chrome
               </button>
             </li>
-            <li>
-              In Chrome go to <code>chrome://extensions</code>, in Comet to{" "}
-              <code>comet://extensions</code>. Turn on Developer mode.
-            </li>
-            <li>Choose “Load unpacked” and pick the folder from step 1.</li>
-            <li>Keep your browser open. This panel turns green by itself.</li>
+            <li>Sign in to it with the same Claude account as IcpFinder.</li>
+            <li>Keep your browser open, then choose Check again.</li>
           </ol>
         </div>
       )}
@@ -161,7 +154,9 @@ export function BrowserPanel({
         >
           {busy === "check" ? <Spinner /> : null} {st ? "Check again" : "Check connection"}
         </button>
-        {st && <small>Checked {new Date(st.checkedAt).toLocaleString()} · no AI used</small>}
+        {st && (
+          <small>Checked {new Date(st.checkedAt).toLocaleString()} · uses about a cent of AI</small>
+        )}
       </div>
     </section>
   );

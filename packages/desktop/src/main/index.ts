@@ -3,6 +3,7 @@
 // IcpFinder main process: window, IPC, and a one-at-a-time research queue.
 
 import { mkdirSync } from "node:fs";
+import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   app,
@@ -81,8 +82,7 @@ import {
   watchCompany,
   which,
 } from "./engine";
-import { startExtensionBridge } from "./extension-bridge";
-import { listenFor, suggestListen } from "./listen";
+import { lastRunDebug, listenFor, suggestListen } from "./listen";
 import { initLocalUsage, localWeight } from "./localUsage";
 import { dockProgress, initNotify, notify } from "./notify";
 import { readClaudePlan, windowStart } from "./plan";
@@ -366,9 +366,6 @@ const watchOne = async (ws: Workspace, c: Company): Promise<void> => {
 
 // ponytail: the watcher runs only while the app is open; a launchd job could run it daily when closed.
 const WATCH_EVERY_MS = 24 * 3_600_000;
-/** Where the IcpFinder for Chrome folder is: inside the app when packaged, in the repo when run from source. */
-const extensionDir = (): string =>
-  app.isPackaged ? join(process.resourcesPath, "extension") : join(__dirname, "../../../extension");
 
 /** The listening model, if it belongs to the current provider; otherwise the lightest. */
 const listenModel = (): string | undefined => {
@@ -379,6 +376,7 @@ const listenModel = (): string | undefined => {
 
 /** One morning run for a product: every listening profile, at most 10 new posts in total. */
 const listenNow = async (ws: Workspace): Promise<number> => {
+  if (ws.listening) return 0; // The daily round and Check now must not read at the same time.
   const seen = new Set((ws.notices ?? []).map((n) => n.url));
   // First run looks back a week; after that, only since the last run (plus a day of overlap).
   const days = ws.listenedAt
@@ -389,6 +387,7 @@ const listenNow = async (ws: Workspace): Promise<number> => {
   // Live steps for the Noticed page, so a check never looks frozen.
   ws.listening = true;
   ws.listenSteps = ["Starting"];
+  lastRunDebug.length = 0;
   commit();
   const report = (step: string) => {
     ws.listenSteps = [...(ws.listenSteps ?? []), step].slice(-12);
@@ -425,6 +424,11 @@ const listenNow = async (ws: Workspace): Promise<number> => {
   ws.notices = [...fresh, ...(ws.notices ?? [])].slice(0, 300);
   ws.listenedAt = new Date().toISOString();
   ws.listening = false;
+  // A local file next to the app data, never sent anywhere: what was read and what the AI said.
+  writeFile(
+    join(app.getPath("userData"), "listen-last-run.json"),
+    JSON.stringify(lastRunDebug, null, 1)
+  ).catch(() => undefined);
   report(
     fresh.length
       ? `Done: ${fresh.length} new ${fresh.length === 1 ? "person" : "people"}`
@@ -1004,8 +1008,10 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
   /** Sign in to a site: in your own browser, open its login page; in IcpFinder's browser, its login window. */
   browserAsk: async (site: Site | "connect") => {
     if (site === "connect") {
-      // The extension folder, so the founder can pick it in "Load unpacked".
-      shell.showItemInFolder(join(extensionDir(), "manifest.json"));
+      // Claude in Chrome, the extension that reads pages in the founder's own browser.
+      void shell.openExternal(
+        "https://chromewebstore.google.com/detail/claude/fcoeoabgfenejglbffodgkkbkcdhcgfn"
+      );
       return state;
     }
     if (state.settings.sources.browser === "app") openLogin(`https://${SITES[site]}/login`);
@@ -1144,7 +1150,6 @@ const createWindow = (): void => {
 app.setName("IcpFinder");
 // Dock icon while running from source (a packaged build uses its own icon).
 app.whenReady().then(() => {
-  startExtensionBridge();
   if (process.platform === "darwin" && !app.isPackaged)
     app.dock?.setIcon(join(__dirname, "../../resources/icon.png"));
 });
