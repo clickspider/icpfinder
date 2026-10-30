@@ -77,7 +77,7 @@ export interface DeepenResult {
  * `candidate` referencing that archetype.
  */
 export type FindErrorCode = "auth" | "rate_limit" | "quota" | "network" | "unknown";
-export type FindErrorProvider = "gemini" | "hunter";
+export type FindErrorProvider = "context-dev" | "gemini" | "hunter";
 
 export type FindEvent =
   | { type: "archetype"; archetype: Archetype }
