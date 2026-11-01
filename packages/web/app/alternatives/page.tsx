@@ -74,8 +74,9 @@ export default function AlternativesPage() {
         </li>
       </ul>
       <p>
-        They work well together. Use icpfinder to find your ICP, then take it into Apollo or Clay
-        once you need volume.
+        IcpFinder brings the first steps into one app: finding who to sell to, researching companies
+        and finding how to reach them. Apollo and Clay go further when you need a large contact
+        database, sequences or many data sources.
       </p>
       <p>
         New to ICPs? Start with{" "}
