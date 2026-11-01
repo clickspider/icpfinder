@@ -49,7 +49,7 @@ export const FAQS: Faq[] = [
   },
   {
     q: "Is icpfinder an Apollo or Clay alternative?",
-    a: "For the first step, yes. Apollo and Clay are built for sales teams with a defined ICP and a budget. icpfinder is for the step before that: a solo founder who does not know yet who will pay. See the comparison on the alternatives page.",
+    a: "For the first steps, yes. IcpFinder brings together finding who to sell to, researching companies and finding how to reach them. Apollo and Clay go further if you need a large contact database, sequences or many data sources.",
   },
   {
     q: "Where do my API keys go?",
