@@ -136,6 +136,10 @@ This is a writing contract for generated content, not a set of static sample sen
 - Lean by default, for $20 Claude or Codex plans: 10 candidates per round, at most 6 web searches in the search step (no site visits there), at most 4 searches or page opens per company check, and a round stops checking once 5 strong fits are in. A timed-out AI call is never retried.
 - Copy buttons (2026-10-21): never call `navigator.clipboard` in the desktop renderer; it is denied when the window is not focused. Use `api().copyText(text)`, which copies through Electron's clipboard in the main process.
 - Company page (decided 2026-10-21): IcpFinder finds WHERE to reach someone; the user writes and sends the outreach. "Where to reach them" comes first: their own post (answer where they already post), then X, LinkedIn, email, GitHub and other public profiles, each with its source. It is found by code from their site, their research, and public Hacker News and GitHub profiles, with no AI. Missing places get a search button that opens the user's browser. AI actions (write the email, warm intros, call brief, live LinkedIn) sit under a closed "More".
+- **The new way (decided 2026-10-27):** signals over lists, people over companies, timing over volume, listening over scraping, noticing over chasing.
+  - Onboarding cards lead with ONE concrete person in a moment (“A founder who just shipped alone and has zero paying customers”), the group name small above it, then the benefit, “Why we picked it”, “When to reach them”, “Where they talk” (2-4 real places, from the AI, optional) and “May not be a fit if”. Onboarding still searches nothing and claims no real person was found.
+  - Company lists show the person (research contact, else their public handle) with the company under it, and a timing tag from the signal's event date: “Act today” (≤2 days), “This week”, “This month”, “N weeks ago”, “No date”. Order: approved, freshest moment, someone you can reach, then fit.
+  - **Noticed** (listening): set up after onboarding, never in it. One light AI call per profile suggests 2-4 categories (from that profile's own reasons to reach out, so every customer gets different ones), keywords people really write, subreddits and sources; the user edits them, picks the time and the listening model, then starts. Each morning: Hacker News and Reddit through their public JSON, X and LinkedIn as read-only pages in IcpFinder's browser; keywords sort first (no AI); one light AI call per profile keeps at most 10 real fits a day, each with the person, their exact words and “why it matched”. A quote from a page must appear on that page or it is dropped. “Not relevant” teaches the check. One notification per morning. Listening tokens show as the “Listening” task and in Noticed (last 7 days).
 - Equal scores: the company the user can reach (someone they know, a LinkedIn page, a found email) ranks first.
 
 Each profile needs:
@@ -333,9 +337,9 @@ Rotate these lines without implying measured progress:
 
 ### Your ICPs
 
-Heading: “Here’s where we’d start.” Subtitle: “A few customer groups that could benefit from what you offer.”
+Heading (changed 2026-10-27, people first): “Here’s who we’d talk to first.” Subtitle: “A few kinds of people who could need what you offer, and where you’ll find them.” (Before: “Here’s where we’d start.”)
 
-Near actions: “All these profiles will be in your dashboard. You can edit them or add more there anytime.” One action: Go to my dashboard. Back remains available. No profile selection is required. **No “Add a profile” in onboarding** (decided 2026-10-21): onboarding exists to get people to the dashboard as fast as possible; adding and editing profiles happens in the dashboard. Do not restore “Next: we’ll find real companies and check why they fit.”
+Near actions: “In your dashboard you can listen for these people and edit everything.” One action: Go to my dashboard. Back remains available. No profile selection is required. **No “Add a profile” in onboarding** (decided 2026-10-21): onboarding exists to get people to the dashboard as fast as possible; adding and editing profiles happens in the dashboard. Do not restore “Next: we’ll find real companies and check why they fit.”
 
 **Cards use approved option A**, not the dropped B or alternate row design. Each contains characteristics, recognizable group name, differentiated benefit, “Who to talk to”, “A reason to reach out”, and “May not be a fit if”. The fit concern stays inside the card. Do not number the cards.
 

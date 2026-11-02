@@ -544,7 +544,8 @@ export const friendly = (msg: string): string => {
   if (/claude -p exited|claude CLI/i.test(m)) return "Claude did not answer. Try again.";
   if (/fetch failed|ENOTFOUND|ECONNRESET|network/i.test(m))
     return "No connection to the web. Check your internet.";
-  if (/JSON|Unexpected token/i.test(m)) return "The AI answer came back broken. Try again.";
+  if (/JSON|Unexpected token|SyntaxError/i.test(m))
+    return "The AI answer came back broken. Try again.";
   return m.slice(0, 140);
 };
 

@@ -1,4 +1,5 @@
 import { AppIcon } from "./AppIcon";
+
 // SPDX-License-Identifier: MIT
 //
 // Root: the setup wizard blocks until the workspace (product + ICPs) exists.
@@ -12,6 +13,7 @@ import { ConnectorsView } from "./Connectors";
 import { IcpView } from "./IcpView";
 import { MatchingView } from "./Matching";
 import { NetworkView } from "./Network";
+import { Noticed } from "./Noticed";
 import { Overview } from "./Overview";
 import { ProductView } from "./ProductView";
 import { SettingsView } from "./SettingsView";
@@ -23,7 +25,7 @@ import { Wizard } from "./Wizard";
 
 export type View =
   | { kind: "overview" }
-  | { kind: "settings"; tab?: "Provider" | "Connected services" | "Usage" }
+  | { kind: "settings"; tab?: "Provider" | "Browser" | "Connected services" | "Usage" }
   | { kind: "icp"; icpId: string }
   | { kind: "company"; icpId: string; domain: string }
   | { kind: "product" }
@@ -31,6 +33,7 @@ export type View =
   | { kind: "network" }
   | { kind: "matching"; back?: View }
   | { kind: "usage" }
+  | { kind: "noticed" }
   | { kind: "agent"; task?: string; url?: string; title: string; back: View };
 
 export const App = () => {
@@ -56,6 +59,7 @@ export const App = () => {
         if (t.kind === "company" && t.icpId && t.domain)
           setView({ kind: "company", icpId: t.icpId, domain: t.domain });
         else if (t.kind === "icp" && t.icpId) setView({ kind: "icp", icpId: t.icpId });
+        else if (t.kind === "noticed") setView({ kind: "noticed" });
         else if (t.kind === "agent")
           setView((v) => ({
             kind: "agent",
@@ -116,6 +120,7 @@ export const App = () => {
       view.kind === "network" ||
       view.kind === "matching" ||
       view.kind === "usage" ||
+      view.kind === "noticed" ||
       view.kind === "agent" ||
       ws.icps.some((i) => i.id === view.icpId))
       ? view
@@ -175,6 +180,9 @@ export const App = () => {
           />
         )}
         {current?.kind === "usage" && <UsageView state={state} />}
+        {current?.kind === "noticed" && (
+          <Noticed key={ws.id} ws={ws} state={state} onState={setState} />
+        )}
         {current?.kind === "network" && (
           <NetworkView state={state} ws={ws} onState={setState} go={setView} />
         )}

@@ -13,6 +13,14 @@ import { htmlToText, researchAccount, safeFetch } from "@icpfinder/core";
 import { HunterEmailProvider, type LlmProvider, parseCliResult } from "@icpfinder/providers";
 import { emailsIn, pickEmail } from "../shared/emails";
 import {
+  isBrowserReadStep,
+  pagesFromTools,
+  SITES,
+  type Site,
+  type SiteStatus,
+  siteStatusOf,
+} from "../shared/listen";
+import {
   type CompanyFacts,
   INDUSTRIES,
   normCompany,
@@ -126,7 +134,7 @@ let sources: Sources = {
   x: false,
   linkedin: false,
   fallback: true,
-  browser: "app",
+  browser: "yours",
 };
 export const setSources = (s: Sources): void => {
   sources = s;
@@ -168,10 +176,11 @@ export const LIGHT_MODEL = "haiku";
 
 export const createLlm = async (
   lightweight = false,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  modelOverride?: string
 ): Promise<LlmProvider> => {
   const provider = selectedProvider;
-  const chosenModel = lightweight && provider === "claude" ? LIGHT_MODEL : model;
+  const chosenModel = modelOverride || (lightweight && provider === "claude" ? LIGHT_MODEL : model);
   const status = (await accounts.status()).find((item) => item.provider === provider);
   if (!status?.connected)
     throw new Error(
@@ -265,14 +274,29 @@ export const readProduct = async (rawUrl: string): Promise<Product> => {
 
 /** Suggest customer groups, without researching companies or contacts. */
 export const findIcps = async (p: Product, feedback?: string): Promise<Icp[]> => {
-  const result = await (await llm()).generate({
-    system: PROFILE_GUIDANCE,
-    prompt: `${sellerSummary(p)}\n\nOriginal source, subordinate to reviewed corrections:\n${p.siteText.slice(0, 3000)}${feedback?.trim() ? `\nUser feedback: ${feedback.trim()}` : ""}`,
-    format: "json",
-    grounding: false,
-    timeoutMs: 240_000,
-  });
-  return parseSuggestedProfiles(json<unknown>(result.text), p);
+  const ask = async (retry: boolean) =>
+    (await llm()).generate({
+      system: PROFILE_GUIDANCE,
+      prompt: `${sellerSummary(p)}\n\nOriginal source, subordinate to reviewed corrections:\n${p.siteText.slice(0, 3000)}${feedback?.trim() ? `\nUser feedback: ${feedback.trim()}` : ""}${retry ? "\n\nYour last answer was not valid JSON. Reply with valid JSON only: escape every quote inside a text value." : ""}`,
+      format: "json",
+      grounding: false,
+      timeoutMs: 240_000,
+    });
+  // The AI sometimes writes broken JSON (an unescaped quote). One more try fixes it almost always.
+  let text = (await ask(false)).text;
+  try {
+    return parseSuggestedProfiles(json<unknown>(text), p);
+  } catch (e) {
+    if (!(e instanceof SyntaxError)) throw e;
+    text = (await ask(true)).text;
+    try {
+      return parseSuggestedProfiles(json<unknown>(text), p);
+    } catch (again) {
+      if (again instanceof SyntaxError)
+        throw new Error("Couldn’t prepare customer profiles this time. Please try again.");
+      throw again;
+    }
+  }
 };
 
 /** Research one company: proof per fact, checked by code on 2 websites. */
@@ -1064,32 +1088,200 @@ const viaBrowser = async (label: string, url: string): Promise<string[]> => {
     : [`[${label} search page, read in your browser]\n${text.slice(0, 5000)}`];
 };
 
-const CHROME_READ = [
-  "mcp__claude-in-chrome__tabs_context_mcp",
-  "mcp__claude-in-chrome__tabs_create_mcp",
-  "mcp__claude-in-chrome__navigate",
-  "mcp__claude-in-chrome__get_page_text",
-  "mcp__claude-in-chrome__tabs_close_mcp",
-];
+const NOT_CONNECTED =
+  "Claude in Chrome is not connected. Open Chrome or Comet with the Claude extension, signed in to the same Claude account as IcpFinder.";
+
+/**
+ * A Claude run with Claude in Chrome, in the founder's own browser. Claude asks IcpFinder before
+ * each browser step, the same way the Claude app answers these prompts (--permission-prompt-tool
+ * stdio, the protocol of the Agent SDK; the SDK itself would add a second 277 MB Claude binary).
+ * Only read steps on SITES get a yes, so it can never click, type or post. Only the Chrome tools
+ * load: without the last flags Claude loads every MCP server and setting, about 300K tokens a run.
+ */
+const runInYourBrowser = async (
+  prompt: string,
+  timeoutMs: number
+): Promise<{ results: string[]; text: string }> => {
+  if (selectedProvider !== "claude")
+    throw new Error(
+      "Reading your browser requires Claude. Choose Claude in AI subscriptions, or use IcpFinder’s browser."
+    );
+  await createLlm();
+  const bin = await resolveCli("claude");
+  if (!bin) throw new Error("Install Claude Code, then sign in from AI subscriptions.");
+  const { spawn } = await import("node:child_process");
+  return new Promise((resolve, reject) => {
+    const child = spawn(
+      bin,
+      [
+        "-p",
+        "--input-format",
+        "stream-json",
+        "--output-format",
+        "stream-json",
+        "--verbose",
+        "--permission-prompt-tool",
+        "stdio",
+        "--no-session-persistence",
+        "--model",
+        LIGHT_MODEL,
+        "--tools",
+        "",
+        "--chrome",
+        // One step at a time, so each page's text can be matched to its URL.
+        "--disallowedTools",
+        "mcp__claude-in-chrome__browser_batch",
+        "--strict-mcp-config",
+        "--setting-sources",
+        "",
+      ],
+      { env: subscriptionEnv() }
+    );
+    track(child);
+    const results: string[] = [];
+    let text = "";
+    let err = "";
+    let buffer = "";
+    const t = setTimeout(() => {
+      child.kill("SIGTERM");
+      reject(new Error("Claude took too long"));
+    }, timeoutMs);
+    const send = (o: unknown) => child.stdin.write(`${JSON.stringify(o)}\n`);
+    const onLine = (line: string) => {
+      let d: {
+        type?: string;
+        request_id?: string;
+        request?: { subtype?: string; tool_name?: string; input?: Record<string, unknown> };
+        message?: { content?: Array<{ type?: string; content?: unknown }> };
+      };
+      try {
+        d = JSON.parse(line);
+      } catch {
+        return;
+      }
+      if (d.type === "control_request" && d.request?.subtype === "can_use_tool") {
+        const { tool_name = "", input = {} } = d.request;
+        send({
+          type: "control_response",
+          response: {
+            subtype: "success",
+            request_id: d.request_id,
+            response: isBrowserReadStep(tool_name, input)
+              ? { behavior: "allow", updatedInput: input }
+              : { behavior: "deny", message: "IcpFinder only reads pages." },
+          },
+        });
+      } else if (d.type === "user") {
+        for (const c of d.message?.content ?? [])
+          if (c.type === "tool_result")
+            results.push(
+              typeof c.content === "string"
+                ? c.content
+                : Array.isArray(c.content)
+                  ? c.content.map((x: { text?: string }) => x?.text ?? "").join("\n")
+                  : ""
+            );
+      } else if (d.type === "result") {
+        const parsed = parseCliResult(line);
+        if (parsed.usage) recordUsage("claude", parsed.usage);
+        text = parsed.text.trim();
+        child.stdin.end(); // The run is over: with stream-json input Claude waits for stdin to close.
+      }
+    };
+    child.stdout.on("data", (d) => {
+      buffer += d;
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const line of lines) onLine(line);
+    });
+    child.stderr.on("data", (d) => {
+      err += d;
+    });
+    child.stdin.on("error", () => {});
+    child.on("error", () => {
+      clearTimeout(t);
+      reject(new Error("Could not start Claude. Check its installation in AI subscriptions."));
+    });
+    child.on("close", (code) => {
+      clearTimeout(t);
+      if (code === 0) resolve({ results, text });
+      else reject(new Error(err.trim().slice(0, 200) || `claude exited ${code}`));
+    });
+    send({ type: "user", message: { role: "user", content: prompt } });
+  });
+};
+
+/** Read pages with Claude in Chrome, read only. Each page comes back as its posts and their links,
+ *  taken from the page's accessibility tree, not retyped by AI. */
+const readInYourBrowser = async (
+  urls: string[],
+  timeoutMs = 600_000
+): Promise<Array<{ url: string; text: string; error?: string }>> => {
+  const { results } = await runInYourBrowser(
+    `Read only. Never click, type, scroll, like, follow or post; use the computer tool only with action "wait". Call tabs_context_mcp with createIfEmpty: true once. Then for each URL below, in this order: navigate the tab to it, wait 4 seconds, then call read_page with filter "all". After the last URL close the tab. Reply DONE.\n\n${urls.join("\n")}`,
+    timeoutMs
+  );
+  if (results.some((r) => /extension is not connected|no browsers are connected/i.test(r)))
+    throw new Error(NOT_CONNECTED);
+  return pagesFromTools(results, urls);
+};
+
+/** Page text from the founder's own browser (Claude in Chrome). Read only. Claude does not open
+ *  Reddit (checked 28 Oct 2026: "not allowed due to safety restrictions"), so Reddit is skipped. */
+export const yourBrowserPages = async (
+  urls: string[]
+): Promise<Array<{ url: string; text: string }>> => {
+  const wanted = urls.filter((u) => !u.includes(SITES.reddit));
+  if (!wanted.length) return [];
+  const got = await readInYourBrowser(wanted);
+  return got.filter((g) => g.text && !isWall(g.text));
+};
+
+/** Is Claude in Chrome connected, and is the founder signed in on each site? Reads each home page
+ *  once with the light model (about a cent). */
+export const checkYourBrowser = async (): Promise<{
+  connected: boolean;
+  needsConnect: boolean;
+  sites: Record<Site, SiteStatus>;
+}> => {
+  const homes = { x: "https://x.com/home", linkedin: "https://www.linkedin.com/feed/" };
+  const got = await readInYourBrowser(Object.values(homes), 240_000).catch((e: unknown) => {
+    if (e instanceof Error && e.message === NOT_CONNECTED) return null;
+    return [];
+  });
+  if (!got)
+    return {
+      connected: false,
+      needsConnect: true,
+      sites: { reddit: "unsupported", x: "unknown", linkedin: "unknown" },
+    };
+  const of = (url: string): SiteStatus => {
+    const g = got.find((x) => x.url === url);
+    return !g ? "unknown" : g.error ? siteStatusOf(g.error) : isWall(g.text) ? "signed-out" : "ok";
+  };
+  return {
+    connected: true,
+    needsConnect: false,
+    sites: { reddit: "unsupported", x: of(homes.x), linkedin: of(homes.linkedin) },
+  };
+};
+
+/** Is IcpFinder's own browser signed in to each site? Reads each home page once, no AI. */
+export const checkAppBrowser = async (): Promise<Record<Site, SiteStatus>> => {
+  const out = {} as Record<Site, SiteStatus>;
+  for (const [key, host] of Object.entries(SITES) as Array<[Site, string]>) {
+    const text = await browseText(`https://${host}/`, 2500).catch(() => "");
+    out[key] = !text ? "unknown" : isWall(text) ? "signed-out" : "ok";
+  }
+  return out;
+};
 
 /** Read pages in the founder's own browser (Claude in Chrome), where they are already signed in. Read only. */
-const viaYourBrowser = async (pages: Array<{ label: string; url: string }>): Promise<string[]> => {
-  if (!pages.length) return [];
-  const out = await runClaudeWithTools(
-    `Read these pages in the browser, one at a time, read only: open each URL in a new tab, get the page text, close the tab. Never click, type, like, follow or post. If a page asks to log in, give "LOGIN" for it. Reply with strict JSON only: {"pages":[{"url":"","text":"the first 4000 characters of the page text"}]}\n\n${pages.map((p) => p.url).join("\n")}`,
-    CHROME_READ,
-    420_000,
-    ["--chrome"],
-    LIGHT_MODEL
+const viaYourBrowser = async (pages: Array<{ label: string; url: string }>): Promise<string[]> =>
+  (await yourBrowserPages(pages.map((p) => p.url))).map(
+    (g) =>
+      `[${pages.find((p) => p.url === g.url)?.label ?? "Web"} search page, read in your browser]\n${g.text.slice(0, 4000)}`
   );
-  const got = json<{ pages?: Array<{ url?: string; text?: string }> }>(out).pages ?? [];
-  return got
-    .filter((g) => g.text && g.text !== "LOGIN" && !isWall(g.text))
-    .map((g) => {
-      const label = pages.find((p) => p.url === g.url)?.label ?? "Web";
-      return `[${label} search page, read in your browser]\n${(g.text ?? "").slice(0, 4000)}`;
-    });
-};
 
 /** Fresh posts for the hunt, from the sources the founder switched on. Empty when none work. */
 export const socialPosts = async (icp: Icp, windowDays: number): Promise<string> => {
@@ -1204,12 +1396,9 @@ export const classifyCompanies = async (
  * small startups. Batches of 8, light model.
  */
 export const linkedinFacts = async (names: string[]): Promise<Record<string, CompanyFacts>> => {
-  const out = await runClaudeWithTools(
+  const { text: out } = await runInYourBrowser(
     `For each company below, use the browser read only: open https://www.linkedin.com/search/results/companies/?keywords=<name>, pick the result that is clearly this company (same name), open its page's "About" tab and read "Company size", "Industry" and the "associated members" count if shown. Never click Follow, Connect, Message or anything that changes something. Close each tab after reading. If LinkedIn asks to log in, stop and return what you have. Industry must be one of: ${INDUSTRIES.join(", ")} (or ""). size = the associated members count if shown, otherwise the LOWER number of the "Company size" range (e.g. "2-10 employees" = 2), 0 if not found. Reply with strict JSON only: {"companies":[{"name":"","industry":"","size":0,"found":true}]}\n\n${names.join("\n")}`,
-    CHROME_READ,
-    600_000,
-    ["--chrome"],
-    LIGHT_MODEL
+    600_000
   );
   const rows =
     json<{

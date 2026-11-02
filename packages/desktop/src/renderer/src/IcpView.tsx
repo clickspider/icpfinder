@@ -12,6 +12,7 @@ import { useDrawer } from "./useDrawer";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { type CompanyFacts, companiesToCheck, peopleInIcp } from "../../shared/people";
 import { scoringOf } from "../../shared/scoring";
+import { timingOf, whoAt } from "../../shared/timing";
 import type { Company, Contact, HuntStepKind, Icp, State, Workspace } from "../../shared/types";
 import type { View } from "./App";
 import { Criteria } from "./Criteria";
@@ -31,6 +32,8 @@ const Row = ({
   const signal = wn ? wn.claim : c.trigger?.text;
   const yes = c.checks?.filter((x) => x.verdict === "yes").length ?? 0;
   const pending = c.approval !== "approved";
+  const who = whoAt(c);
+  const when = timingOf(c);
   return (
     <div className="crow native-company-row" data-company-domain={c.domain}>
       <button
@@ -83,7 +86,7 @@ const Row = ({
         )}
         <div style={{ minWidth: 0 }}>
           <div style={{ fontWeight: 600, display: "flex", gap: 6, alignItems: "center" }}>
-            <span className="ellipsis">{c.name}</span>
+            <span className="ellipsis">{who ?? c.name}</span>
             {(c.signals ?? []).some((x) => !x.seen) && (
               <span className="pill p-red" style={{ padding: "1px 7px", fontSize: 11 }}>
                 new
@@ -100,7 +103,7 @@ const Row = ({
               marginTop: 2,
             }}
           >
-            <span className="ellipsis">{c.domain}</span>
+            <span className="ellipsis">{who ? `${c.name} · ${c.domain}` : c.domain}</span>
             {(c.warm?.length ?? 0) > 0 && (
               <span
                 className="pill p-green"
@@ -149,7 +152,10 @@ const Row = ({
         {c.status === "researching" ? (
           <span style={{ color: "var(--accent)" }}>Researching…</span>
         ) : (
-          <span className="clamp2">{signal ?? "No recent signal found"}</span>
+          <span className="clamp2">
+            <span className={`timing timing-${when.tone}`}>{when.label}</span>{" "}
+            {signal ?? "No recent signal found"}
+          </span>
         )}
       </button>
       <div
