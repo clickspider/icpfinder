@@ -493,7 +493,7 @@ export const contextDevPeople = async (
     const who = [p.name, p.role.title].filter(Boolean).join(", ");
     for (const url of p.profiles) {
       const kind = classify(url);
-      if (kind) links.push({ kind, url, source: `Context.dev${who ? `: ${who}` : ""}` });
+      if (kind) links.push({ kind, url, source: "Context.dev", who: who || undefined });
     }
   }
   return { links, credits: res.creditsRemaining };

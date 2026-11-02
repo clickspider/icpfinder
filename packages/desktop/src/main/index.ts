@@ -107,7 +107,7 @@ const contextDevProblem = (e: unknown): string => {
     return "Context.dev didn’t accept this key. Disconnect and paste a new one.";
   if (/Quota/.test(name))
     return "Your Context.dev credits are used up. Add credits on Context.dev.";
-  return "We couldn’t reach Context.dev. It tries again the next time you open “Way in”.";
+  return "We couldn’t reach Context.dev. It tries again when you choose “Look again” on a company.";
 };
 
 const commit = (): State => {
