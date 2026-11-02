@@ -1,10 +1,13 @@
 import { useState } from "react";
 import {
+  byReachFirst,
   type PipelineStage,
-  reachFirst,
   type SetStage,
   STAGE_LABEL,
   stageOf,
+  WHEN,
+  type When,
+  whenOf,
 } from "../../shared/pipeline";
 import { timingOf } from "../../shared/timing";
 import type { Company, Icp, State, Workspace } from "../../shared/types";
@@ -50,6 +53,7 @@ export const StageChip = ({
 };
 
 const COLUMNS: Array<{ stage: PipelineStage; empty: string }> = [
+  { stage: "new", empty: "Companies we found that you haven’t researched yet." },
   { stage: "approved", empty: "Companies you research start here." },
   { stage: "contacted", empty: "Mark a company Contacted after you reach out." },
   { stage: "followup", empty: "Contacted companies with no change for 5 days show up here." },
@@ -103,7 +107,8 @@ const Card = ({
   );
 };
 
-/** Every company the founder works on, across profiles: who to reach first, then the board. */
+/** Every company the founder works on, across profiles, on one board. The filters on top pick
+ *  the profile and how fresh the moment is; each column lists freshest and best match first. */
 export const Pipeline = ({
   ws,
   go,
@@ -114,19 +119,25 @@ export const Pipeline = ({
   onState: (s: State) => void;
 }) => {
   const [icpId, setIcpId] = useState<string>("all");
-  const [open, setOpen] = useState<string | null>(null);
-  const icps = ws.icps.filter((i) => icpId === "all" || i.id === icpId);
-  const rows: Row[] = icps.flatMap((icp) => icp.companies.map((c) => ({ icp, c })));
-  const buckets = reachFirst(rows.map((r) => r.c));
-  const most = Math.max(1, ...buckets.map((b) => b.companies.length));
-  const rowOf = (c: Company) => rows.find((r) => r.c === c);
-  const closed = rows.filter((r) => ["won", "lost"].includes(stageOf(r.c)));
+  const [when, setWhen] = useState<When | "all">("all");
+  const now = Date.now();
+  const inProfile: Row[] = ws.icps
+    .filter((i) => icpId === "all" || i.id === icpId)
+    .flatMap((icp) => icp.companies.map((c) => ({ icp, c })))
+    .filter((r) => r.c.approval !== "rejected");
+  const open = inProfile.filter((r) => !["won", "lost"].includes(stageOf(r.c, now)));
+  const rows = open
+    .filter((r) => when === "all" || whenOf(r.c, now) === when)
+    .sort((a, z) => byReachFirst(now)(a.c, z.c));
+  const count = (k: When) => open.filter((r) => whenOf(r.c, now) === k).length;
+  const most = Math.max(1, ...WHEN.map((w) => count(w.key)));
+  const closed = inProfile.filter((r) => ["won", "lost"].includes(stageOf(r.c, now)));
   return (
-    <div className="native-page pipeline scroll">
+    <div className="native-page pipeline">
       <header className="pipeline-head">
         <div>
           <h1 className="ob-h1">Pipeline</h1>
-          <p className="ob-sub">Who to reach first, and where each company stands.</p>
+          <p className="ob-sub">Freshest moment first. Pick when to see who to reach first.</p>
         </div>
         {ws.icps.length > 1 && (
           <div className="ob-seg">
@@ -145,76 +156,64 @@ export const Pipeline = ({
         )}
       </header>
 
-      <section className="panel reach-first" aria-label="Who to reach first">
-        <h2>Who to reach first</h2>
-        <p className="native-muted">
-          Freshest moment on top. Companies you have not contacted yet.
-        </p>
-        {buckets.map((b) => (
-          <div key={b.key} className="reach-row">
+      <div className="reach-filter">
+        {WHEN.map((w) => {
+          const n = count(w.key);
+          const on = when === w.key;
+          return (
             <button
+              key={w.key}
               type="button"
-              className={`btn reach-bar reach-${b.key}`}
-              style={{ width: `${Math.max(18, (b.companies.length / most) * 100)}%` }}
-              disabled={!b.companies.length}
-              aria-expanded={open === b.key}
-              onClick={() => setOpen(open === b.key ? null : b.key)}
+              aria-pressed={on}
+              className={`btn reach-pick reach-${w.key} ${on ? "on" : ""}`}
+              disabled={!n}
+              onClick={() => setWhen(on ? "all" : w.key)}
             >
-              {b.label}
+              <span>{w.label}</span>
+              <b>{n}</b>
+              <i style={{ width: `${(n / most) * 100}%` }} aria-hidden="true" />
             </button>
-            <span className="reach-count">
-              {b.companies.length} {b.companies.length === 1 ? "company" : "companies"}
-            </span>
-            {open === b.key && (
-              <div className="reach-list">
-                {b.companies.map((c) => {
-                  const r = rowOf(c);
-                  return r ? (
-                    <Card
-                      key={`${r.icp.id}-${c.domain}`}
-                      row={r}
-                      showIcp={icpId === "all"}
-                      go={go}
-                      onState={onState}
-                    />
-                  ) : null;
-                })}
-              </div>
-            )}
-          </div>
-        ))}
-      </section>
+          );
+        })}
+        {when !== "all" && (
+          <button type="button" className="btn native-secondary" onClick={() => setWhen("all")}>
+            Show all
+          </button>
+        )}
+      </div>
 
       <div className="pipe-board">
         {COLUMNS.map((col) => {
-          const list = rows.filter((r) => stageOf(r.c) === col.stage);
+          const list = rows.filter((r) => stageOf(r.c, now) === col.stage);
           return (
             <section key={col.stage} className={`pipe-col pipe-col-${col.stage}`}>
               <h3>
                 {STAGE_LABEL[col.stage]} <span>{list.length}</span>
               </h3>
-              {list.length ? (
-                list.map((r) => (
-                  <Card
-                    key={`${r.icp.id}-${r.c.domain}`}
-                    row={r}
-                    showIcp={icpId === "all"}
-                    go={go}
-                    onState={onState}
-                  />
-                ))
-              ) : (
-                <p className="native-muted">{col.empty}</p>
-              )}
+              <div className="pipe-cards">
+                {list.length ? (
+                  list.map((r) => (
+                    <Card
+                      key={`${r.icp.id}-${r.c.domain}`}
+                      row={r}
+                      showIcp={icpId === "all"}
+                      go={go}
+                      onState={onState}
+                    />
+                  ))
+                ) : (
+                  <p className="native-muted">{col.empty}</p>
+                )}
+              </div>
             </section>
           );
         })}
       </div>
       {closed.length > 0 && (
         <p className="native-muted pipe-closed">
-          {closed.filter((r) => stageOf(r.c) === "won").length} customers ·{" "}
-          {closed.filter((r) => stageOf(r.c) === "lost").length} not now. Change a stage to bring
-          one back.
+          {closed.filter((r) => stageOf(r.c, now) === "won").length} customers ·{" "}
+          {closed.filter((r) => stageOf(r.c, now) === "lost").length} not now. Change a stage to
+          bring one back.
         </p>
       )}
     </div>

@@ -31,33 +31,26 @@ export const stageOf = (c: Company, now = Date.now()): PipelineStage => {
   return c.approval === "approved" ? "approved" : "new";
 };
 
-export type ReachBucket = {
-  key: "today" | "week" | "month" | "older" | "undated";
-  label: string;
-  hint: string;
-  companies: Company[];
+export type When = "today" | "week" | "month" | "older" | "undated";
+
+export const WHEN: Array<{ key: When; label: string }> = [
+  { key: "today", label: "Act today" },
+  { key: "week", label: "This week" },
+  { key: "month", label: "This month" },
+  { key: "older", label: "Older" },
+  { key: "undated", label: "No date" },
+];
+
+/** How fresh a company's moment is, as a filter key. */
+export const whenOf = (c: Company, now = Date.now()): When => {
+  const t = timingOf(c, now);
+  if (t.label === "No date") return "undated";
+  return (["today", "week", "month", "older"] as const)[Math.min(t.rank, 3)] ?? "older";
 };
 
-/**
- * Who to reach first: companies not contacted yet, grouped by how fresh their moment is.
- * Rejected ones are left out. Each bucket keeps the best match first.
- */
-export const reachFirst = (companies: Company[], now = Date.now()): ReachBucket[] => {
-  const buckets: ReachBucket[] = [
-    { key: "today", label: "Act today", hint: "2 days", companies: [] },
-    { key: "week", label: "This week", hint: "7 days", companies: [] },
-    { key: "month", label: "This month", hint: "30 days", companies: [] },
-    { key: "older", label: "Older", hint: "older", companies: [] },
-    { key: "undated", label: "No date", hint: "?", companies: [] },
-  ];
-  for (const c of companies) {
-    if (c.approval === "rejected") continue;
-    const s = stageOf(c, now);
-    if (s !== "new" && s !== "approved") continue;
-    const t = timingOf(c, now);
-    const i = t.label === "No date" ? 4 : Math.min(t.rank, 3);
-    buckets[i]?.companies.push(c);
-  }
-  for (const b of buckets) b.companies.sort((a, z) => (z.match ?? 0) - (a.match ?? 0));
-  return buckets;
-};
+/** The board order: freshest moment first, then best match. */
+export const byReachFirst =
+  (now = Date.now()) =>
+  (a: Company, z: Company): number =>
+    WHEN.findIndex((w) => w.key === whenOf(a, now)) -
+      WHEN.findIndex((w) => w.key === whenOf(z, now)) || (z.match ?? 0) - (a.match ?? 0);
