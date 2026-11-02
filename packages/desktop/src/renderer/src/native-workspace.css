@@ -1816,3 +1816,7 @@
   box-shadow: inset 0 0 0 1px var(--accent);
   background: #fff5f6;
 }
+/* Only the column itself is a drop target, so moving over cards inside it never flickers. */
+.pipe-col.drop * {
+  pointer-events: none;
+}

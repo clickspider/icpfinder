@@ -87,11 +87,14 @@ const Card = ({
   showIcp,
   go,
   onState,
+  onDragState,
 }: {
   row: Row;
   showIcp: boolean;
   go: (v: View) => void;
   onState: (s: State) => void;
+  /** Dragging started (true) or ended (false), dropped or not. */
+  onDragState?: (dragging: boolean) => void;
 }) => {
   const { icp, c } = row;
   const when = timingOf(c);
@@ -103,7 +106,12 @@ const Card = ({
       onDragStart={(e) => {
         e.dataTransfer.setData(DRAG, JSON.stringify({ icpId: icp.id, domain: c.domain }));
         e.dataTransfer.effectAllowed = "move";
+        // The whole card follows the pointer, held where it was grabbed.
+        const box = e.currentTarget.getBoundingClientRect();
+        e.dataTransfer.setDragImage(e.currentTarget, e.clientX - box.left, e.clientY - box.top);
+        onDragState?.(true);
       }}
+      onDragEnd={() => onDragState?.(false)}
     >
       <button
         type="button"
@@ -139,8 +147,11 @@ export const Pipeline = ({
   const [icpId, setIcpId] = useState<string>("all");
   const [when, setWhen] = useState<When | "all">("all");
   const [over, setOver] = useState<PipelineStage | null>(null);
+  /** The stage of the card being dragged, so its own column is not a target. */
+  const [from, setFrom] = useState<PipelineStage | null>(null);
   const drop = (to: PipelineStage, raw: string) => {
     setOver(null);
+    setFrom(null);
     let at: { icpId?: string; domain?: string };
     try {
       at = JSON.parse(raw);
@@ -227,13 +238,18 @@ export const Pipeline = ({
               key={col.stage}
               className={`pipe-col pipe-col-${col.stage} ${over === col.stage ? "drop" : ""}`}
               onDragOver={(e) => {
-                if (col.stage === "followup" || col.stage === "new") return;
+                if (
+                  !from ||
+                  col.stage === from ||
+                  col.stage === "followup" ||
+                  col.stage === "new"
+                ) {
+                  if (over) setOver(null);
+                  return;
+                }
                 e.preventDefault();
                 e.dataTransfer.dropEffect = "move";
                 if (over !== col.stage) setOver(col.stage);
-              }}
-              onDragLeave={(e) => {
-                if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOver(null);
               }}
               onDrop={(e) => {
                 e.preventDefault();
@@ -252,6 +268,10 @@ export const Pipeline = ({
                       showIcp={icpId === "all"}
                       go={go}
                       onState={onState}
+                      onDragState={(on) => {
+                        setFrom(on ? stageOf(r.c, now) : null);
+                        if (!on) setOver(null);
+                      }}
                     />
                   ))
                 ) : (
