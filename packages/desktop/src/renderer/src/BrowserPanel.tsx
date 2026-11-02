@@ -155,7 +155,7 @@ export function BrowserPanel({
           {busy === "check" ? <Spinner /> : null} {st ? "Check again" : "Check connection"}
         </button>
         {st && (
-          <small>Checked {new Date(st.checkedAt).toLocaleString()} · uses about a cent of AI</small>
+          <small>Checked {new Date(st.checkedAt).toLocaleString()} · uses a little of your AI plan</small>
         )}
       </div>
     </section>

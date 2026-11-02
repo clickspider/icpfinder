@@ -1553,3 +1553,270 @@
 .noticed-last summary {
   cursor: pointer;
 }
+
+/* Pipeline: stage chip, who to reach first, board */
+.stage-chip {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--chip, #ececf0);
+  color: var(--chip-ink, #3a3a40);
+  max-width: 120px;
+}
+.stage-chip:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+.stage-approved {
+  --chip: #ececf0;
+  --chip-ink: #3a3a40;
+}
+.stage-new {
+  --chip: #e8f0ff;
+  --chip-ink: #1d4ed8;
+}
+.stage-contacted {
+  --chip: #fff1df;
+  --chip-ink: #9a4a00;
+}
+.stage-followup {
+  --chip: #fde8ec;
+  --chip-ink: #c01e3c;
+}
+.stage-talking {
+  --chip: #e6f5ea;
+  --chip-ink: #1f8a43;
+}
+.stage-won {
+  --chip: #1f8a43;
+  --chip-ink: #fff;
+}
+.stage-lost {
+  --chip: #f2f2f4;
+  --chip-ink: #8a8a92;
+}
+.native-company-actions .stage-chip {
+  margin-left: 6px;
+}
+
+.pipeline-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.native-page.pipeline {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.reach-filter {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
+  gap: 8px;
+  margin-bottom: 14px;
+  align-items: stretch;
+}
+.reach-filter .reach-pick {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px 12px;
+  border-radius: 10px;
+  border: 1px solid #e3e3e6;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: left;
+}
+.reach-filter .reach-pick b {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-weight: 600;
+}
+.reach-filter .reach-pick i {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 4px;
+  border-radius: 0 4px 4px 0;
+  background: #c9c9cf;
+  transition: width 0.3s ease;
+}
+.reach-filter .reach-pick.reach-today i {
+  background: linear-gradient(90deg, #e0244a, #ff5a6e);
+}
+.reach-filter .reach-pick.on {
+  border-color: var(--accent);
+  background: #fff5f6;
+}
+.reach-filter .reach-pick.on b {
+  color: var(--accent);
+}
+.reach-filter .reach-pick:hover:not(:disabled) {
+  background: #fafaf9;
+}
+.reach-filter .reach-pick:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+.reach-filter .reach-pick:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.pipe-board {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(190px, 1fr));
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  overflow-x: auto;
+}
+.pipe-col {
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 14px;
+  padding: 12px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+.pipe-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 1px;
+}
+.pipe-col h3 {
+  margin: 0 0 2px;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+}
+.pipe-col h3 span {
+  color: var(--muted);
+  font-weight: 500;
+}
+.pipe-col p {
+  font-size: 12px;
+  margin: 4px 0;
+}
+.pipe-col-followup {
+  background: #fff4f6;
+}
+.pipe-col-followup h3 {
+  color: #c01e3c;
+}
+.pipe-col-talking h3 {
+  color: #1f8a43;
+}
+.pipe-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+.pipe-open {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+  background: transparent;
+  padding: 0;
+}
+.pipe-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+.pipe-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  object-fit: contain;
+  background: #fff;
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
+}
+.pipe-initial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e8e8ed;
+  font-size: 11px;
+  font-weight: 700;
+}
+.pipe-icp {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+  max-width: 100%;
+}
+.pipe-why {
+  font-size: 12px;
+  color: var(--ink-2);
+  line-height: 1.4;
+}
+.pipe-closed {
+  margin-top: 14px;
+  font-size: 12px;
+}
+
+.pipeline-head .ob-seg button {
+  max-width: 220px;
+  padding-inline: 14px;
+}
+.native-page.pipeline {
+  padding-bottom: 24px;
+}
+.noticed-live-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.noticed-live-head b {
+  margin-right: auto;
+}
+.noticed-live-head span {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.pipe-card[draggable="true"] {
+  cursor: grab;
+}
+.pipe-card[draggable="true"]:active {
+  cursor: grabbing;
+}
+.pipe-col.drop {
+  box-shadow: inset 0 0 0 1px var(--accent);
+  background: #fff5f6;
+}
+/* Only the column itself is a drop target, so moving over cards inside it never flickers. */
+.pipe-col.drop * {
+  pointer-events: none;
+}

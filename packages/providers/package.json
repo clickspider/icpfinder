@@ -20,6 +20,10 @@
       "types": "./dist/gemini.d.ts",
       "default": "./dist/gemini.js"
     },
+    "./context-dev": {
+      "types": "./dist/context-dev.d.ts",
+      "default": "./dist/context-dev.js"
+    },
     "./fake": {
       "types": "./dist/fake.d.ts",
       "default": "./dist/fake.js"
@@ -48,6 +52,8 @@
     "icpfinder",
     "gemini",
     "hunter",
+    "context-dev",
+    "people-search",
     "llm-provider",
     "email-provider"
   ],

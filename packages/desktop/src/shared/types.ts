@@ -104,6 +104,8 @@ export interface Company {
   reachAt?: string;
   /** Results of next-step actions, by action id. */
   actions?: Partial<Record<ActionId, ActionResult>>;
+  /** Where the founder is with them, set by hand; `at` dates the last change. */
+  pipeline?: { stage: import("./pipeline").SetStage; at: string };
 }
 
 export type ActionId = "email" | "linkedin" | "intros" | "brief" | "findEmail" | "gmailDraft";
@@ -225,6 +227,9 @@ export interface Workspace {
   listenSteps?: string[];
   /** True while a listening run is going. */
   listening?: boolean;
+  /** When the current or last listening run started, and the tokens it used so far. */
+  listenStartedAt?: string;
+  listenTokens?: number;
 }
 
 export interface Settings {
@@ -232,6 +237,11 @@ export interface Settings {
   providerConfirmed?: boolean;
   providerModels?: Partial<Record<import("./subscriptions").ProviderId, string>>;
   hunterKey: string;
+  /** Context.dev people search (optional). Checked on the first search: a check would cost credits. */
+  contextDevKey?: string;
+  /** From the last Context.dev search: credits left, or why it failed. */
+  contextDevCredits?: number;
+  contextDevError?: string;
   windowDays: number;
   dropTime: string;
   askBeforeEmail: boolean;
@@ -323,6 +333,11 @@ export interface IcpApi {
   stopHunt(icpId: string): Promise<State>;
   stopResearch(icpId: string, domain: string): Promise<State>;
   approveCompany(icpId: string, domain: string, ok: boolean): Promise<State>;
+  setStage(
+    icpId: string,
+    domain: string,
+    stage: import("./pipeline").SetStage | null
+  ): Promise<State>;
   runAction(icpId: string, domain: string, action: ActionId): Promise<State>;
   watchNow(icpId: string, domain: string): Promise<State>;
   markSeen(icpId: string, domain: string): Promise<State>;
@@ -333,6 +348,7 @@ export interface IcpApi {
   listenSuggest(): Promise<State>;
   listenSave(icpId: string, listen: import("./listen").Listen): Promise<State>;
   listenRun(): Promise<State>;
+  stopListening(): Promise<State>;
   noticeSet(id: string, status: import("./listen").Notice["status"]): Promise<State>;
   browserCheck(): Promise<State>;
   browserAsk(site: import("./listen").Site | "connect"): Promise<State>;

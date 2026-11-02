@@ -290,17 +290,30 @@ export function Noticed({
       </div>
       {(ws.listening || running) && (
         <div className="panel noticed-live" aria-live="polite">
-          <b>
-            <Spinner /> Checking now
-          </b>
+          <div className="noticed-live-head">
+            <b>
+              <Spinner /> Checking now
+            </b>
+            <span className="native-muted">
+              <Elapsed since={ws.listenStartedAt} /> · {(ws.listenTokens ?? 0).toLocaleString()}{" "}
+              tokens
+            </span>
+            <button
+              type="button"
+              className="btn native-secondary"
+              onClick={() => void api().stopListening().then(onState)}
+            >
+              Stop
+            </button>
+          </div>
           <ol>
             {(ws.listenSteps ?? ["Starting"]).map((x, i) => (
               <li key={`${i}-${x}`}>{x}</li>
             ))}
           </ol>
           <small>
-            Reddit, X and LinkedIn pages open in small minimized windows in your browser. This takes
-            about a minute.
+            X and LinkedIn open in a tab in your browser through Claude in Chrome. People it already
+            found stay if you stop.
           </small>
         </div>
       )}
@@ -374,9 +387,9 @@ export function Noticed({
         <aside className="panel noticed-side">
           <h3>Where we listen</h3>
           <p>
-            Hacker News is read through its public page. Reddit, X and LinkedIn are read in your own
+            Hacker News is read through its public search. X and LinkedIn are read in your own
             browser through Claude in Chrome, where you are already signed in. It only reads. It
-            never posts, likes or follows.
+            never posts, likes or follows. Claude in Chrome does not open Reddit.
           </p>
           {ws.icps
             .filter((i) => i.listen?.on)
@@ -416,3 +429,16 @@ export function Noticed({
     </div>
   );
 }
+
+/** Time since a moment, ticking every second: "1 min 05 s". */
+const Elapsed = ({ since }: { since?: string }) => {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const s = since ? Math.max(0, Math.round((now - Date.parse(since)) / 1000)) : 0;
+  return (
+    <>{s >= 60 ? `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, "0")} s` : `${s} s`}</>
+  );
+};

@@ -235,6 +235,7 @@ export const Connectors = ({
           <div className="error">{hunter.error}</div>
         )}
       </Card>
+      <ContextDevCard state={state} onState={onState} />
       <Card>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <Logo src={icons.gmail} name="Gmail" bg="#ea4335" />
@@ -411,3 +412,92 @@ export const ConnectorsView = ({
     </div>
   </div>
 );
+
+/** Context.dev people search: finds the buyer at a company and their public profiles, in "Way in".
+ *  No check on connect, because every check costs credits; the first search shows if the key works. */
+const ContextDevCard = ({ state, onState }: { state: State; onState: (s: State) => void }) => {
+  const [key, setKey] = useState("");
+  const saved = Boolean(state.settings.contextDevKey);
+  const { contextDevCredits: credits, contextDevError: error } = state.settings;
+  const save = async (contextDevKey: string) =>
+    onState(
+      await api().saveSettings({
+        contextDevKey,
+        contextDevCredits: undefined,
+        contextDevError: undefined,
+      })
+    );
+  return (
+    <Card>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <Logo src={TOOL_LOGOS.contextDev} name="Context.dev" bg="#1f5fe0" />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 600 }}>Context.dev</div>
+          <div style={{ fontSize: 12, color: "var(--muted)" }}>
+            {saved && credits !== undefined
+              ? `${credits} credits left`
+              : "Look for the right person at a company · 10 credits a search"}
+          </div>
+        </div>
+        <Status
+          kind={saved && !error && credits !== undefined ? "on" : "off"}
+          text={
+            !saved
+              ? "Not connected"
+              : error
+                ? "Needs attention"
+                : credits !== undefined
+                  ? "Connected"
+                  : "Key saved"
+          }
+        />
+      </div>
+      {saved ? (
+        <>
+          <p style={{ fontSize: 12, color: "var(--muted)", margin: 0 }}>
+            Used when you open “Way in” on a company.
+            {credits === undefined && !error
+              ? " Checking the key would use credits, so the first search checks it."
+              : ""}
+          </p>
+          <button
+            type="button"
+            className="secondary btn"
+            style={{ alignSelf: "flex-start" }}
+            onClick={() => void save("")}
+          >
+            Disconnect
+          </button>
+        </>
+      ) : (
+        <div style={{ display: "flex", gap: 8 }}>
+          <label htmlFor="context-dev-key" style={{ position: "absolute", left: -9999 }}>
+            Context.dev API key
+          </label>
+          <input
+            id="context-dev-key"
+            className="field"
+            type="password"
+            placeholder="Paste your Context.dev API key"
+            value={key}
+            onChange={(e) => setKey(e.target.value)}
+            style={{ fontSize: 13 }}
+          />
+          <button
+            type="button"
+            className="primary btn"
+            disabled={!key.trim()}
+            onClick={() => void save(key.trim()).then(() => setKey(""))}
+          >
+            Connect
+          </button>
+        </div>
+      )}
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
+    </Card>
+  );
+};

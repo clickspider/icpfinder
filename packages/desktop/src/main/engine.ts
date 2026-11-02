@@ -10,7 +10,12 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { type ChildProcess, execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { htmlToText, researchAccount, safeFetch } from "@icpfinder/core";
-import { HunterEmailProvider, type LlmProvider, parseCliResult } from "@icpfinder/providers";
+import {
+  ContextDevPeopleSearch,
+  HunterEmailProvider,
+  type LlmProvider,
+  parseCliResult,
+} from "@icpfinder/providers";
 import { emailsIn, pickEmail } from "../shared/emails";
 import {
   isBrowserReadStep,
@@ -461,6 +466,37 @@ export const findReach = async (c: Company): Promise<ReachLink[]> => {
     }
   }
   return mergeReach(links);
+};
+
+/**
+ * The buyer at this company and their public profiles, from Context.dev people search. One fast
+ * search (10 credits, free when nobody matches). Only people whose current company has this domain.
+ */
+export const contextDevPeople = async (
+  c: Company,
+  buyer: string,
+  apiKey: string
+): Promise<{ links: ReachLink[]; credits: number | null }> => {
+  const domain = c.domain.replace(/^www\./, "").toLowerCase();
+  const res = await new ContextDevPeopleSearch({ apiKey }).search({
+    query:
+      `${buyer || "Founder or the person who buys tools like ours"} at ${c.name} (${domain})`.slice(
+        0,
+        480
+      ),
+    tags: ["icpfinder-reach"],
+  });
+  const links: ReachLink[] = [];
+  for (const p of res.people) {
+    const at = (p.role.company?.domain ?? "").replace(/^www\./, "").toLowerCase();
+    if (at !== domain) continue;
+    const who = [p.name, p.role.title].filter(Boolean).join(", ");
+    for (const url of p.profiles) {
+      const kind = classify(url);
+      if (kind) links.push({ kind, url, source: `Context.dev${who ? `: ${who}` : ""}` });
+    }
+  }
+  return { links, credits: res.creditsRemaining };
 };
 
 /** The address to write to: the company's own website first (free), then Hunter if connected. */

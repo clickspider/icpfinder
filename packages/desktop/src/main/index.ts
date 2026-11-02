@@ -31,7 +31,9 @@ import {
   LINKEDIN,
   normCompany,
 } from "../shared/people";
+import type { SetStage } from "../shared/pipeline";
 import { defaultModel, isProvider, PROVIDER_MODELS } from "../shared/provider-models";
+import { mergeReach } from "../shared/reach";
 import { type Scoring, score, scoringOf } from "../shared/scoring";
 import type {
   ActionId,
@@ -54,6 +56,7 @@ import {
   classifyCompanies,
   companyLogo,
   configureSubscriptions,
+  contextDevPeople,
   createLlm,
   detectAi,
   findIcps,
@@ -88,7 +91,7 @@ import { dockProgress, initNotify, notify } from "./notify";
 import { readClaudePlan, windowStart } from "./plan";
 import { activeWorkspace, loadState, saveState, updateActive } from "./store";
 import { SubscriptionAuth } from "./subscription-auth";
-import { appWeight, initUsage, withTask } from "./usage";
+import { appWeight, initUsage, tokensFor, withTask } from "./usage";
 
 let accounts: SubscriptionAuth;
 
@@ -96,6 +99,16 @@ const file = (): string => join(app.getPath("userData"), "icpfinder.json");
 let state: State;
 let win: BrowserWindow | null = null;
 let agent: BrowserAgent | null = null;
+
+/** Context.dev errors in plain words, each with what the founder can do. */
+const contextDevProblem = (e: unknown): string => {
+  const name = e instanceof Error ? e.name : "";
+  if (/Auth/.test(name))
+    return "Context.dev didn’t accept this key. Disconnect and paste a new one.";
+  if (/Quota/.test(name))
+    return "Your Context.dev credits are used up. Add credits on Context.dev.";
+  return "We couldn’t reach Context.dev. It tries again the next time you open “Way in”.";
+};
 
 const commit = (): State => {
   saveState(file(), state);
@@ -374,6 +387,8 @@ const listenModel = (): string | undefined => {
   return m && PROVIDER_MODELS[provider].some((x) => x.id === m) ? m : undefined;
 };
 
+const listenKey = (wsId: string): string => `listen:${wsId}`;
+
 /** One morning run for a product: every listening profile, at most 10 new posts in total. */
 const listenNow = async (ws: Workspace): Promise<number> => {
   if (ws.listening) return 0; // The daily round and Check now must not read at the same time.
@@ -384,37 +399,49 @@ const listenNow = async (ws: Workspace): Promise<number> => {
     : 7;
   const found: Notice[] = [];
   const problems: string[] = [];
-  // Live steps for the Noticed page, so a check never looks frozen.
+  // Live steps, time and tokens for the Noticed page, so a check never looks frozen.
+  const key = listenKey(ws.id);
+  resumeWorkspace(key);
+  const tokensBefore = tokensFor(ws.id, "Listening");
   ws.listening = true;
   ws.listenSteps = ["Starting"];
+  ws.listenStartedAt = new Date().toISOString();
+  ws.listenTokens = 0;
   lastRunDebug.length = 0;
   commit();
   const report = (step: string) => {
     ws.listenSteps = [...(ws.listenSteps ?? []), step].slice(-12);
+    ws.listenTokens = tokensFor(ws.id, "Listening") - tokensBefore;
     commit();
   };
   await jobs.run(ws.id, () =>
-    withTask("Listening", async () => {
-      for (const icp of ws.icps) {
-        if (!icp.listen?.on) continue;
-        const run = await listenFor(
-          ws.product,
-          icp,
-          seen,
-          days,
-          listenModel(),
-          state.settings.sources.linkedin,
-          report
-        ).catch((e) => {
-          problems.push(e instanceof Error ? e.message : String(e));
-          return { notices: [], problems: [] };
-        });
-        for (const n of run.notices) seen.add(n.url);
-        found.push(...run.notices);
-        problems.push(...run.problems);
-      }
-    })
+    jobKeys.run(key, () =>
+      withTask("Listening", async () => {
+        for (const icp of ws.icps) {
+          if (!icp.listen?.on) continue;
+          if (isPaused(key)) break;
+          const run = await listenFor(
+            ws.product,
+            icp,
+            seen,
+            days,
+            listenModel(),
+            state.settings.sources.linkedin,
+            report
+          ).catch((e) => {
+            problems.push(e instanceof Error ? e.message : String(e));
+            return { notices: [], problems: [] };
+          });
+          for (const n of run.notices) seen.add(n.url);
+          found.push(...run.notices);
+          problems.push(...run.problems);
+        }
+      })
+    )
   );
+  const stopped = isPaused(key);
+  resumeWorkspace(key);
+  ws.listenTokens = tokensFor(ws.id, "Listening") - tokensBefore;
   // One card per post, even if two profiles or two runs found it.
   const known = new Set((ws.notices ?? []).map((n) => n.url));
   const fresh = found
@@ -430,11 +457,14 @@ const listenNow = async (ws: Workspace): Promise<number> => {
     JSON.stringify(lastRunDebug, null, 1)
   ).catch(() => undefined);
   report(
-    fresh.length
-      ? `Done: ${fresh.length} new ${fresh.length === 1 ? "person" : "people"}`
-      : "Done: nothing new worth answering"
+    stopped
+      ? `Stopped: ${fresh.length} new ${fresh.length === 1 ? "person" : "people"} kept`
+      : fresh.length
+        ? `Done: ${fresh.length} new ${fresh.length === 1 ? "person" : "people"}`
+        : "Done: nothing new worth answering"
   );
-  ws.listenProblems = [...new Set(problems)].slice(0, 4);
+  // A stopped run reports no errors: the founder stopped it.
+  ws.listenProblems = stopped ? [] : [...new Set(problems)].slice(0, 4);
   commit();
   if (fresh.length) {
     const names = new Map<string, number>();
@@ -886,6 +916,15 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
     if (icp) icp.criteria = criteria;
     return commit();
   },
+  /** Move a company in the pipeline. null = back to where its approval puts it. */
+  setStage: (icpId: string, domain: string, stage: SetStage | null) => {
+    const c = activeWorkspace(state)
+      ?.icps.find((i) => i.id === icpId)
+      ?.companies.find((x) => x.domain === domain);
+    if (!c) return state;
+    c.pipeline = stage ? { stage, at: new Date().toISOString() } : undefined;
+    return commit();
+  },
   approveCompany: (icpId: string, domain: string, ok: boolean) => {
     const ws = activeWorkspace(state);
     const c = ws?.icps.find((i) => i.id === icpId)?.companies.find((x) => x.domain === domain);
@@ -977,11 +1016,21 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
   },
   /** Where to reach them: code only, no AI, so it can run whenever the page opens. */
   findReach: async (icpId: string, domain: string) => {
-    const c = activeWorkspace(state)
-      ?.icps.find((i) => i.id === icpId)
-      ?.companies.find((x) => x.domain === domain);
+    const icp = activeWorkspace(state)?.icps.find((i) => i.id === icpId);
+    const c = icp?.companies.find((x) => x.domain === domain);
     if (!c) return state;
-    c.reach = await findReach(c);
+    const links = await findReach(c);
+    const key = state.settings.contextDevKey;
+    if (key)
+      try {
+        const found = await contextDevPeople(c, icp?.card?.buyer.text ?? "", key);
+        links.push(...found.links);
+        state.settings.contextDevCredits = found.credits ?? undefined;
+        state.settings.contextDevError = undefined;
+      } catch (e) {
+        state.settings.contextDevError = contextDevProblem(e);
+      }
+    c.reach = mergeReach(links);
     c.reachAt = new Date().toISOString();
     return commit();
   },
@@ -1037,6 +1086,12 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
     const icp = activeWorkspace(state)?.icps.find((i) => i.id === icpId);
     if (icp) icp.listen = listen;
     return commit();
+  },
+  /** Stop the running check; posts it already kept stay. */
+  stopListening: () => {
+    const ws = activeWorkspace(state);
+    if (ws?.listening) pauseWorkspace(listenKey(ws.id));
+    return state;
   },
   listenRun: async () => {
     const ws = activeWorkspace(state);

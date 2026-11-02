@@ -9,6 +9,7 @@ import type { CSSProperties, ReactNode } from "react";
 import type { IcpApi } from "../../shared/types";
 import claudeLogo from "./assets/claude.png";
 import codexLogo from "./assets/codex.png";
+import contextDevLogo from "./assets/context-dev.png";
 import gmailLogo from "./assets/gmail.png";
 import hnLogo from "./assets/hn.png";
 import hunterLogo from "./assets/hunter.png";
@@ -20,6 +21,7 @@ import xLogo from "./assets/x.png";
 /** Tool logos ship with the app, so they show at once (no network). */
 export const TOOL_LOGOS: Record<string, string> = {
   claude: claudeLogo,
+  contextDev: contextDevLogo,
   codex: codexLogo,
   hunter: hunterLogo,
   gmail: gmailLogo,
