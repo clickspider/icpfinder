@@ -6,6 +6,16 @@ export {
   type CliUsage,
   parseCliResult,
 } from "./claude-cli";
+export {
+  type ContextDevOptions,
+  ContextDevPeopleSearch,
+  type PeopleSearchCostLogger,
+  type PeopleSearchFilters,
+  type PeopleSearchInput,
+  type PeopleSearchMode,
+  type PeopleSearchResult,
+  type Person,
+} from "./context-dev";
 export { FakeEmailProvider, FakeLlmProvider } from "./fake";
 export {
   type GeminiCostLogger,
