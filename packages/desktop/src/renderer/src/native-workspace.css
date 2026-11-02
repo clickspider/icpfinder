@@ -1806,3 +1806,13 @@
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
+.pipe-card[draggable="true"] {
+  cursor: grab;
+}
+.pipe-card[draggable="true"]:active {
+  cursor: grabbing;
+}
+.pipe-col.drop {
+  box-shadow: inset 0 0 0 1px var(--accent);
+  background: #fff5f6;
+}

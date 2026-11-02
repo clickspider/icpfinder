@@ -62,6 +62,17 @@ const COLUMNS: Array<{ stage: PipelineStage; empty: string }> = [
 
 type Row = { icp: Icp; c: Company };
 
+const DRAG = "application/x-icpfinder-company";
+
+/** What dropping a card on a column does. Follow up is never set by hand, and a researched
+ *  company cannot go back to New; dropping a new company on Approved starts its research. */
+const dropAction = (to: PipelineStage, c: Company): "approve" | "clear" | SetStage | null => {
+  const from = stageOf(c);
+  if (to === from || to === "followup" || to === "new") return null;
+  if (to === "approved") return c.approval === "approved" ? "clear" : "approve";
+  return to as SetStage;
+};
+
 const Logo = ({ c }: { c: Company }) =>
   c.logo ? (
     <img src={c.logo} alt="" width={28} height={28} className="pipe-logo" />
@@ -86,7 +97,14 @@ const Card = ({
   const when = timingOf(c);
   const signal = c.signals?.[0]?.text ?? c.trigger?.text;
   return (
-    <article className="pipe-card">
+    <article
+      className="pipe-card"
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData(DRAG, JSON.stringify({ icpId: icp.id, domain: c.domain }));
+        e.dataTransfer.effectAllowed = "move";
+      }}
+    >
       <button
         type="button"
         className="btn pipe-open"
@@ -120,6 +138,24 @@ export const Pipeline = ({
 }) => {
   const [icpId, setIcpId] = useState<string>("all");
   const [when, setWhen] = useState<When | "all">("all");
+  const [over, setOver] = useState<PipelineStage | null>(null);
+  const drop = (to: PipelineStage, raw: string) => {
+    setOver(null);
+    let at: { icpId?: string; domain?: string };
+    try {
+      at = JSON.parse(raw);
+    } catch {
+      return;
+    }
+    const r = inProfile.find((x) => x.icp.id === at.icpId && x.c.domain === at.domain);
+    const act = r && dropAction(to, r.c);
+    if (!r || !act) return;
+    const done =
+      act === "approve"
+        ? api().approveCompany(r.icp.id, r.c.domain, true)
+        : api().setStage(r.icp.id, r.c.domain, act === "clear" ? null : act);
+    void done.then(onState);
+  };
   const now = Date.now();
   const inProfile: Row[] = ws.icps
     .filter((i) => icpId === "all" || i.id === icpId)
@@ -186,7 +222,24 @@ export const Pipeline = ({
         {COLUMNS.map((col) => {
           const list = rows.filter((r) => stageOf(r.c, now) === col.stage);
           return (
-            <section key={col.stage} className={`pipe-col pipe-col-${col.stage}`}>
+            // biome-ignore lint/a11y/noStaticElementInteractions: drop target for mouse dragging; the stage chip on each card does the same by keyboard
+            <section
+              key={col.stage}
+              className={`pipe-col pipe-col-${col.stage} ${over === col.stage ? "drop" : ""}`}
+              onDragOver={(e) => {
+                if (col.stage === "followup" || col.stage === "new") return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+                if (over !== col.stage) setOver(col.stage);
+              }}
+              onDragLeave={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOver(null);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                drop(col.stage, e.dataTransfer.getData(DRAG));
+              }}
+            >
               <h3>
                 {STAGE_LABEL[col.stage]} <span>{list.length}</span>
               </h3>
