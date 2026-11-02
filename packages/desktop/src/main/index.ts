@@ -531,6 +531,8 @@ const rebuildIcps = async (ws: Workspace, feedback?: string): Promise<void> => {
 };
 
 const busyWork = (ws: Workspace | undefined) => {
+  // An archived product runs nothing; companies it left "queued" must not block settings.
+  if (ws?.archived) ws = undefined;
   const all = ws?.icps.flatMap((i) => i.companies) ?? [];
   return {
     hunts: ws?.icps.filter((i) => i.sourcing).length ?? 0,
@@ -1270,7 +1272,7 @@ app.whenReady().then(() => {
           }
       }
     }
-  for (const ws of state.workspaces)
+  for (const ws of state.workspaces.filter((w) => !w.archived))
     for (const icp of ws.icps)
       if (icp.hunted)
         enqueue(
