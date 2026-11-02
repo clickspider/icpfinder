@@ -53,6 +53,7 @@ const api: IcpApi = {
   listenSuggest: call("listenSuggest") as IcpApi["listenSuggest"],
   listenSave: call("listenSave") as IcpApi["listenSave"],
   listenRun: call("listenRun") as IcpApi["listenRun"],
+  stopListening: call("stopListening") as IcpApi["stopListening"],
   noticeSet: call("noticeSet") as IcpApi["noticeSet"],
   browserCheck: call("browserCheck") as IcpApi["browserCheck"],
   browserAsk: call("browserAsk") as IcpApi["browserAsk"],

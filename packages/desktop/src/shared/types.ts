@@ -227,6 +227,9 @@ export interface Workspace {
   listenSteps?: string[];
   /** True while a listening run is going. */
   listening?: boolean;
+  /** When the current or last listening run started, and the tokens it used so far. */
+  listenStartedAt?: string;
+  listenTokens?: number;
 }
 
 export interface Settings {
@@ -345,6 +348,7 @@ export interface IcpApi {
   listenSuggest(): Promise<State>;
   listenSave(icpId: string, listen: import("./listen").Listen): Promise<State>;
   listenRun(): Promise<State>;
+  stopListening(): Promise<State>;
   noticeSet(id: string, status: import("./listen").Notice["status"]): Promise<State>;
   browserCheck(): Promise<State>;
   browserAsk(site: import("./listen").Site | "connect"): Promise<State>;

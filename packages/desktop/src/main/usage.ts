@@ -5,7 +5,7 @@
 
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { CliUsage } from "@icpfinder/providers";
-import { add, emptyTotals, type Provider, type UsageRow } from "../shared/usage";
+import { add, emptyTotals, type Provider, tokensOf, type UsageRow } from "../shared/usage";
 import { weightOf } from "./localUsage";
 
 /** The task the current async work belongs to, e.g. "Hunting". */
@@ -37,6 +37,10 @@ export const initUsage = (
 /** IcpFinder's plan weight since a time. */
 export const appWeight = (since: Date): number =>
   recent.filter((r) => r.at >= since.getTime()).reduce((n, r) => n + r.w, 0);
+
+/** Tokens one product has used for one task so far (all days kept). */
+export const tokensFor = (ws: string, task: string): number =>
+  rows.filter((r) => r.ws === ws && r.task === task).reduce((n, r) => n + tokensOf(r), 0);
 
 export const recordUsage = (provider: Provider, u: CliUsage): void => {
   const day = new Date().toISOString().slice(0, 10);

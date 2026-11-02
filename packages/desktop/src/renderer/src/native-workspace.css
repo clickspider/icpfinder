@@ -1794,3 +1794,15 @@
 .native-page.pipeline {
   padding-bottom: 24px;
 }
+.noticed-live-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.noticed-live-head b {
+  margin-right: auto;
+}
+.noticed-live-head span {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
