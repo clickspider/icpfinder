@@ -100,6 +100,16 @@ let state: State;
 let win: BrowserWindow | null = null;
 let agent: BrowserAgent | null = null;
 
+/** Context.dev errors in plain words, each with what the founder can do. */
+const contextDevProblem = (e: unknown): string => {
+  const name = e instanceof Error ? e.name : "";
+  if (/Auth/.test(name))
+    return "Context.dev didn’t accept this key. Disconnect and paste a new one.";
+  if (/Quota/.test(name))
+    return "Your Context.dev credits are used up. Add credits on Context.dev.";
+  return "We couldn’t reach Context.dev. It tries again the next time you open “Way in”.";
+};
+
 const commit = (): State => {
   saveState(file(), state);
   win?.webContents.send("state", state);
@@ -1001,7 +1011,7 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
         state.settings.contextDevCredits = found.credits ?? undefined;
         state.settings.contextDevError = undefined;
       } catch (e) {
-        state.settings.contextDevError = e instanceof Error ? e.message : "Context.dev failed";
+        state.settings.contextDevError = contextDevProblem(e);
       }
     c.reach = mergeReach(links);
     c.reachAt = new Date().toISOString();

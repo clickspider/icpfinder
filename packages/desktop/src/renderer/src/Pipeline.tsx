@@ -50,10 +50,10 @@ export const StageChip = ({
 };
 
 const COLUMNS: Array<{ stage: PipelineStage; empty: string }> = [
-  { stage: "approved", empty: "Approve a company to start here." },
+  { stage: "approved", empty: "Companies you research start here." },
   { stage: "contacted", empty: "Mark a company Contacted after you reach out." },
-  { stage: "followup", empty: `Contacted companies with no change for 5 days.` },
-  { stage: "talking", empty: "A reply moves a card here." },
+  { stage: "followup", empty: "Contacted companies with no change for 5 days show up here." },
+  { stage: "talking", empty: "Set Talking when someone replies." },
 ];
 
 type Row = { icp: Icp; c: Company };
@@ -129,7 +129,7 @@ export const Pipeline = ({
           <p className="ob-sub">Who to reach first, and where each company stands.</p>
         </div>
         {ws.icps.length > 1 && (
-          <div className="ob-seg" role="group" aria-label="Customer profile">
+          <div className="ob-seg">
             {[{ id: "all", name: "All profiles" }, ...ws.icps].map((i) => (
               <button
                 key={i.id}
@@ -138,7 +138,7 @@ export const Pipeline = ({
                 className={icpId === i.id ? "on" : ""}
                 onClick={() => setIcpId(i.id)}
               >
-                {i.name}
+                <span className="ellipsis">{i.name}</span>
               </button>
             ))}
           </div>

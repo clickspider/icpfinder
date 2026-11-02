@@ -430,25 +430,35 @@ const ContextDevCard = ({ state, onState }: { state: State; onState: (s: State) 
   return (
     <Card>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <Logo name="Context.dev" bg="#111827" />
+        <Logo src={TOOL_LOGOS.contextDev} name="Context.dev" bg="#1f5fe0" />
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 600 }}>Context.dev</div>
           <div style={{ fontSize: 12, color: "var(--muted)" }}>
             {saved && credits !== undefined
               ? `${credits} credits left`
-              : "Find the buyer at a company · 10 credits a search"}
+              : "Look for the right person at a company · 10 credits a search"}
           </div>
         </div>
         <Status
-          kind={saved && !error ? "on" : "off"}
-          text={!saved ? "Not connected" : error ? "Needs attention" : "Connected"}
+          kind={saved && !error && credits !== undefined ? "on" : "off"}
+          text={
+            !saved
+              ? "Not connected"
+              : error
+                ? "Needs attention"
+                : credits !== undefined
+                  ? "Connected"
+                  : "Key saved"
+          }
         />
       </div>
       {saved ? (
         <>
           <p style={{ fontSize: 12, color: "var(--muted)", margin: 0 }}>
             Used when you open “Way in” on a company.
-            {credits === undefined && !error ? " The first search checks the key." : ""}
+            {credits === undefined && !error
+              ? " Checking the key would use credits, so the first search checks it."
+              : ""}
           </p>
           <button
             type="button"

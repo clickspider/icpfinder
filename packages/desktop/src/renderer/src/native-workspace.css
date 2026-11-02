@@ -1557,7 +1557,7 @@
 /* Pipeline: stage chip, who to reach first, board */
 .stage-chip {
   appearance: none;
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 999px;
   padding: 3px 10px;
   font: inherit;
@@ -1569,8 +1569,8 @@
   max-width: 120px;
 }
 .stage-chip:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: none;
+  border-color: var(--accent);
 }
 .stage-approved {
   --chip: #ececf0;
@@ -1647,6 +1647,10 @@
 }
 .reach-bar:hover:not(:disabled) {
   filter: brightness(0.96);
+}
+.reach-bar:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 .reach-bar:disabled {
   opacity: 0.55;
@@ -1773,4 +1777,8 @@
   .pipe-board {
     grid-template-columns: repeat(2, minmax(200px, 1fr));
   }
+}
+.pipeline-head .ob-seg button {
+  max-width: 220px;
+  padding-inline: 14px;
 }
