@@ -232,6 +232,11 @@ export interface Settings {
   providerConfirmed?: boolean;
   providerModels?: Partial<Record<import("./subscriptions").ProviderId, string>>;
   hunterKey: string;
+  /** Context.dev people search (optional). Checked on the first search: a check would cost credits. */
+  contextDevKey?: string;
+  /** From the last Context.dev search: credits left, or why it failed. */
+  contextDevCredits?: number;
+  contextDevError?: string;
   windowDays: number;
   dropTime: string;
   askBeforeEmail: boolean;

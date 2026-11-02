@@ -32,6 +32,7 @@ import {
   normCompany,
 } from "../shared/people";
 import { defaultModel, isProvider, PROVIDER_MODELS } from "../shared/provider-models";
+import { mergeReach } from "../shared/reach";
 import { type Scoring, score, scoringOf } from "../shared/scoring";
 import type {
   ActionId,
@@ -54,6 +55,7 @@ import {
   classifyCompanies,
   companyLogo,
   configureSubscriptions,
+  contextDevPeople,
   createLlm,
   detectAi,
   findIcps,
@@ -977,11 +979,21 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
   },
   /** Where to reach them: code only, no AI, so it can run whenever the page opens. */
   findReach: async (icpId: string, domain: string) => {
-    const c = activeWorkspace(state)
-      ?.icps.find((i) => i.id === icpId)
-      ?.companies.find((x) => x.domain === domain);
+    const icp = activeWorkspace(state)?.icps.find((i) => i.id === icpId);
+    const c = icp?.companies.find((x) => x.domain === domain);
     if (!c) return state;
-    c.reach = await findReach(c);
+    const links = await findReach(c);
+    const key = state.settings.contextDevKey;
+    if (key)
+      try {
+        const found = await contextDevPeople(c, icp?.card?.buyer.text ?? "", key);
+        links.push(...found.links);
+        state.settings.contextDevCredits = found.credits ?? undefined;
+        state.settings.contextDevError = undefined;
+      } catch (e) {
+        state.settings.contextDevError = e instanceof Error ? e.message : "Context.dev failed";
+      }
+    c.reach = mergeReach(links);
     c.reachAt = new Date().toISOString();
     return commit();
   },
