@@ -9,23 +9,27 @@ import { useDrawer } from "./useDrawer";
 // Main screen in the context of one ICP: who exactly (as short gates), and the
 // companies that pass the product's bar. The founder approves a fit before any deep research.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { type CompanyFacts, companiesToCheck, peopleInIcp } from "../../shared/people";
 import { scoringOf } from "../../shared/scoring";
 import { timingOf, whoAt } from "../../shared/timing";
 import type { Company, Contact, HuntStepKind, Icp, State, Workspace } from "../../shared/types";
 import type { View } from "./App";
 import { Criteria } from "./Criteria";
+import { StageChip } from "./Pipeline";
 import { api, best, friendly, initial, proven, Spinner, ToolLogo } from "./ui";
 
 const Row = ({
   c,
   onOpen,
   onAnswer,
+  stage,
 }: {
   c: Company;
   onOpen: () => void;
   onAnswer: (ok: boolean) => void;
+  /** The pipeline stage chip, shown once the company is approved. */
+  stage?: ReactNode;
 }) => {
   const wn = best(c.research, "why_now");
   const p = proven(c.research).length;
@@ -207,6 +211,7 @@ const Row = ({
         ) : (
           <span className="pill p-red">Research failed</span>
         )}
+        {!pending && stage}
       </div>
     </div>
   );
@@ -628,7 +633,13 @@ export const IcpView = ({
               </div>
             )}
             {shown.map((c) => (
-              <Row key={c.domain} c={c} onOpen={() => open(c)} onAnswer={(ok) => answer(c, ok)} />
+              <Row
+                key={c.domain}
+                c={c}
+                onOpen={() => open(c)}
+                onAnswer={(ok) => answer(c, ok)}
+                stage={<StageChip icpId={icp.id} c={c} onState={onState} />}
+              />
             ))}
             {!icp.sourcing && !icp.hunted && shown.length === 0 && (
               <div className="native-empty">

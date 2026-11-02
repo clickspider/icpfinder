@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { icpPresentation } from "../../shared/onboarding";
+import { stageOf } from "../../shared/pipeline";
 import type { State, Workspace } from "../../shared/types";
 import type { View } from "./App";
 import { profileStatus } from "./dashboard-state";
@@ -31,6 +32,9 @@ export function Sidebar({
   go: (v: View) => void;
   onState: (s: State) => void;
 }) {
+  const followUps = ws.icps
+    .flatMap((i) => i.companies)
+    .filter((c) => stageOf(c) === "followup").length;
   const [menu, setMenu] = useState(false);
   const menuElement = useRef<HTMLDivElement>(null);
   const menuTrigger = useRef<HTMLButtonElement>(null);
@@ -176,6 +180,19 @@ export function Sidebar({
         {(ws.notices ?? []).some((n) => n.status === "new") && (
           <span className="noticed-badge">
             {(ws.notices ?? []).filter((n) => n.status === "new").length}
+          </span>
+        )}
+      </button>
+      <button
+        type="button"
+        className={`side-row btn native-overview-link ${view?.kind === "pipeline" ? "on" : ""}`}
+        onClick={() => go({ kind: "pipeline" })}
+      >
+        <Icon d="M4 4h4v16H4zM10 4h4v10h-4zM16 4h4v6h-4z" s={18} />
+        Pipeline
+        {followUps > 0 && (
+          <span className="noticed-badge" title="Follow-ups due">
+            {followUps}
           </span>
         )}
       </button>

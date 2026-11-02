@@ -31,6 +31,7 @@ import {
   LINKEDIN,
   normCompany,
 } from "../shared/people";
+import type { SetStage } from "../shared/pipeline";
 import { defaultModel, isProvider, PROVIDER_MODELS } from "../shared/provider-models";
 import { mergeReach } from "../shared/reach";
 import { type Scoring, score, scoringOf } from "../shared/scoring";
@@ -886,6 +887,15 @@ const handlers: Record<string, (...args: never[]) => unknown> = {
   updateCriteria: (icpId: string, criteria: IcpCriteria) => {
     const icp = activeWorkspace(state)?.icps.find((i) => i.id === icpId);
     if (icp) icp.criteria = criteria;
+    return commit();
+  },
+  /** Move a company in the pipeline. null = back to where its approval puts it. */
+  setStage: (icpId: string, domain: string, stage: SetStage | null) => {
+    const c = activeWorkspace(state)
+      ?.icps.find((i) => i.id === icpId)
+      ?.companies.find((x) => x.domain === domain);
+    if (!c) return state;
+    c.pipeline = stage ? { stage, at: new Date().toISOString() } : undefined;
     return commit();
   },
   approveCompany: (icpId: string, domain: string, ok: boolean) => {

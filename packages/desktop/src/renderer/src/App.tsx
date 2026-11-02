@@ -18,6 +18,7 @@ import { Overview } from "./Overview";
 import { ProductView } from "./ProductView";
 import { SettingsView } from "./SettingsView";
 import "./native-workspace.css";
+import { Pipeline } from "./Pipeline";
 import { Sidebar } from "./Sidebar";
 import { UsageView } from "./Usage";
 import { api, cleanError } from "./ui";
@@ -34,6 +35,7 @@ export type View =
   | { kind: "matching"; back?: View }
   | { kind: "usage" }
   | { kind: "noticed" }
+  | { kind: "pipeline" }
   | { kind: "agent"; task?: string; url?: string; title: string; back: View };
 
 export const App = () => {
@@ -121,6 +123,7 @@ export const App = () => {
       view.kind === "matching" ||
       view.kind === "usage" ||
       view.kind === "noticed" ||
+      view.kind === "pipeline" ||
       view.kind === "agent" ||
       ws.icps.some((i) => i.id === view.icpId))
       ? view
@@ -182,6 +185,9 @@ export const App = () => {
         {current?.kind === "usage" && <UsageView state={state} />}
         {current?.kind === "noticed" && (
           <Noticed key={ws.id} ws={ws} state={state} onState={setState} />
+        )}
+        {current?.kind === "pipeline" && (
+          <Pipeline key={ws.id} ws={ws} go={setView} onState={setState} />
         )}
         {current?.kind === "network" && (
           <NetworkView state={state} ws={ws} onState={setState} go={setView} />

@@ -104,6 +104,8 @@ export interface Company {
   reachAt?: string;
   /** Results of next-step actions, by action id. */
   actions?: Partial<Record<ActionId, ActionResult>>;
+  /** Where the founder is with them, set by hand; `at` dates the last change. */
+  pipeline?: { stage: import("./pipeline").SetStage; at: string };
 }
 
 export type ActionId = "email" | "linkedin" | "intros" | "brief" | "findEmail" | "gmailDraft";
@@ -328,6 +330,11 @@ export interface IcpApi {
   stopHunt(icpId: string): Promise<State>;
   stopResearch(icpId: string, domain: string): Promise<State>;
   approveCompany(icpId: string, domain: string, ok: boolean): Promise<State>;
+  setStage(
+    icpId: string,
+    domain: string,
+    stage: import("./pipeline").SetStage | null
+  ): Promise<State>;
   runAction(icpId: string, domain: string, action: ActionId): Promise<State>;
   watchNow(icpId: string, domain: string): Promise<State>;
   markSeen(icpId: string, domain: string): Promise<State>;

@@ -1553,3 +1553,224 @@
 .noticed-last summary {
   cursor: pointer;
 }
+
+/* Pipeline: stage chip, who to reach first, board */
+.stage-chip {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--chip, #ececf0);
+  color: var(--chip-ink, #3a3a40);
+  max-width: 120px;
+}
+.stage-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.stage-approved {
+  --chip: #ececf0;
+  --chip-ink: #3a3a40;
+}
+.stage-new {
+  --chip: #e8f0ff;
+  --chip-ink: #1d4ed8;
+}
+.stage-contacted {
+  --chip: #fff1df;
+  --chip-ink: #9a4a00;
+}
+.stage-followup {
+  --chip: #fde8ec;
+  --chip-ink: #c01e3c;
+}
+.stage-talking {
+  --chip: #e6f5ea;
+  --chip-ink: #1f8a43;
+}
+.stage-won {
+  --chip: #1f8a43;
+  --chip-ink: #fff;
+}
+.stage-lost {
+  --chip: #f2f2f4;
+  --chip-ink: #8a8a92;
+}
+.native-company-actions .stage-chip {
+  margin-left: 6px;
+}
+
+.pipeline-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.panel.reach-first {
+  padding: 18px 20px;
+  margin-bottom: 18px;
+}
+.reach-first h2 {
+  margin: 0;
+  font-size: 16px;
+}
+.reach-first > p {
+  margin: 2px 0 12px;
+  font-size: 12px;
+}
+.reach-row {
+  display: grid;
+  grid-template-columns: 1fr 110px;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.reach-bar {
+  justify-self: start;
+  min-width: 140px;
+  text-align: left;
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  background: #ececf0;
+  color: var(--ink);
+  transition:
+    width 0.3s ease,
+    filter 0.15s ease;
+}
+.reach-bar:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+.reach-bar:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.reach-today {
+  background: linear-gradient(90deg, #e0244a, #ff5a6e);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(224, 36, 74, 0.35);
+}
+.reach-count {
+  text-align: right;
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.reach-list {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 8px;
+  padding: 4px 0 8px;
+}
+.pipe-board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(200px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.pipe-col {
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 14px;
+  padding: 12px;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pipe-col h3 {
+  margin: 0 0 2px;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+}
+.pipe-col h3 span {
+  color: var(--muted);
+  font-weight: 500;
+}
+.pipe-col p {
+  font-size: 12px;
+  margin: 4px 0;
+}
+.pipe-col-followup {
+  background: #fff4f6;
+}
+.pipe-col-followup h3 {
+  color: #c01e3c;
+}
+.pipe-col-talking h3 {
+  color: #1f8a43;
+}
+.pipe-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+.pipe-open {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+  background: transparent;
+  padding: 0;
+}
+.pipe-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+.pipe-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  object-fit: contain;
+  background: #fff;
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
+}
+.pipe-initial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e8e8ed;
+  font-size: 11px;
+  font-weight: 700;
+}
+.pipe-icp {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+  max-width: 100%;
+}
+.pipe-why {
+  font-size: 12px;
+  color: var(--ink-2);
+  line-height: 1.4;
+}
+.pipe-closed {
+  margin-top: 14px;
+  font-size: 12px;
+}
+@media (max-width: 1100px) {
+  .pipe-board {
+    grid-template-columns: repeat(2, minmax(200px, 1fr));
+  }
+}
