@@ -413,7 +413,7 @@ export const ConnectorsView = ({
   </div>
 );
 
-/** Context.dev people search: finds the buyer at a company and their public profiles, in "Way in".
+/** Context.dev people search: finds the buyer at a company and their public profiles, in "Where to reach them".
  *  No check on connect, because every check costs credits; the first search shows if the key works. */
 const ContextDevCard = ({ state, onState }: { state: State; onState: (s: State) => void }) => {
   const [key, setKey] = useState("");
@@ -455,7 +455,7 @@ const ContextDevCard = ({ state, onState }: { state: State; onState: (s: State) 
       {saved ? (
         <>
           <p style={{ fontSize: 12, color: "var(--muted)", margin: 0 }}>
-            Used when you open “Way in” on a company.
+            Used in “Where to reach them” when you open a company.
             {credits === undefined && !error
               ? " Checking the key would use credits, so the first search checks it."
               : ""}

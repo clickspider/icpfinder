@@ -2231,6 +2231,10 @@ details.fact[open] .fact-chev {
   font-size: 11.5px;
   color: var(--faint);
   white-space: nowrap;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
 }
 .reach-search {
   display: flex;
