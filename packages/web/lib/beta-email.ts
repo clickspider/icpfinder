@@ -50,8 +50,8 @@ export function appliedEmail(name: string) {
     subject: "We got your IcpFinder beta application",
     html: layout("Your application is in.", [
       `Hi ${first}, thanks for applying to the IcpFinder beta.`,
-      "We let people in in small groups, and we read every application by hand. Founders who sell their live product themselves go first.",
-      "If you are in, you get a second email with the Mac app and a short setup. It runs on the Claude Code or Codex you already have.",
+      "It's a small beta, one on one. I read every answer myself, and I reply to set up a short call.",
+      "IcpFinder is a Mac app. It runs on the Claude, ChatGPT or Grok plan you already pay for.",
       "Daniel",
     ]),
   };
@@ -76,8 +76,8 @@ export function invitedEmail(name: string) {
       "You're in.",
       [
         `Hi ${first}, you are in the first group of the IcpFinder beta.`,
-        "IcpFinder is a Mac app. It reads your product, picks who to sell to, hunts real companies with proof, and writes the first message. It runs on your own Claude Code or Codex, so there is no extra cost.",
-        "Reply to this email with the Mac you use and whether you have Claude Code or Codex. I send you the build and stay with you for the first run.",
+        "IcpFinder is a Mac app. It shows you who might need what you built, where to reach them, and writes the first message. It runs on the Claude, ChatGPT or Grok plan you already pay for, so it's not another subscription.",
+        "Reply to this email with the Mac you use and which of those plans you have. I send you the build and set it up with you, one on one.",
         "Daniel",
       ],
       { label: "See what it does", href: `${SITE_URL}/next` }

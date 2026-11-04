@@ -4,9 +4,9 @@ import type { Metadata } from "next";
 import { NextLanding } from "../../components/next/NextLanding";
 import "./next.css";
 
-const TITLE = "IcpFinder for Mac — your go-to-market, open source";
+const TITLE = "IcpFinder: a harness for go-to-market";
 const DESCRIPTION =
-  "Private beta. IcpFinder finds who to sell to, hunts real companies with proof and writes the first message. Free and open source, on the Claude or Codex you already pay for.";
+  "One place for your go-to-market, the way coding agents are a harness for code. Open source, on your Mac, on the Claude, ChatGPT or Grok plan you already pay for. Small beta, one on one.";
 
 export const metadata: Metadata = {
   title: { absolute: TITLE },

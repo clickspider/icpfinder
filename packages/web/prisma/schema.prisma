@@ -52,14 +52,18 @@ model Application {
   createdAt  DateTime @default(now())
   email      String   @unique
   name       String
-  productUrl String
-  profileUrl String
-  role       String
-  salesTeam  String
-  stage      String
-  years      String
-  agent      String
-  firstWeek  String
+  /// Tools they use today (TOOLS keys in lib/apply-options.ts).
+  tools      String[] @default([])
+  challenge  String   @default("")
+  /// Answers of the first, longer form (Oct 2026). Empty for newer rows.
+  productUrl String?
+  profileUrl String?
+  role       String?
+  salesTeam  String?
+  stage      String?
+  years      String?
+  agent      String?
+  firstWeek  String?
   score      Int
   tier       String
   /// Set when Daniel clicks Invite on /next/admin and the email went out.

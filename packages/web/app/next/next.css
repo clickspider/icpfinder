@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-/* /next: the Mac app's look. Calm white, frosted glass on a slow marble stage. */
+/* /next: continues the launch film. Rich pink surface, white glass windows, one red word per heading. */
 .nx {
   --nx-ink: #111114;
   --nx-ink-2: #3c3c43;
@@ -9,7 +9,10 @@
   position: relative;
   min-height: 100vh;
   overflow-x: clip;
-  background: #fbf9f6;
+  background:
+    radial-gradient(ellipse at 12% 85%, #ff8fa650, transparent 70%),
+    radial-gradient(ellipse at 0% 100%, #ff6f6124, transparent 60%),
+    radial-gradient(ellipse at 95% 15%, #ffb08a50, transparent 65%), #fff5f6;
   color: var(--nx-ink);
   font-family:
     -apple-system, BlinkMacSystemFont, "SF Pro Display", "Hanken Grotesk", "Helvetica Neue",
@@ -24,70 +27,6 @@
 .nx h3 {
   color: var(--nx-ink);
 }
-.nx-stage {
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 1100px;
-  overflow: hidden;
-  pointer-events: none;
-}
-.nx-stage i {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  will-change: transform;
-}
-.nx-stage .b1 {
-  width: 760px;
-  height: 620px;
-  left: -220px;
-  top: -220px;
-  background: #ff3d63;
-  opacity: 0.32;
-  animation: nx-d1 18s ease-in-out infinite alternate;
-}
-.nx-stage .b2 {
-  width: 680px;
-  height: 680px;
-  right: -200px;
-  top: 40px;
-  background: #ff8a5c;
-  opacity: 0.3;
-  animation: nx-d2 22s ease-in-out infinite alternate;
-}
-.nx-stage .b3 {
-  width: 620px;
-  height: 420px;
-  left: 30%;
-  top: 380px;
-  background: #2dd4bf;
-  opacity: 0.18;
-  animation: nx-d1 26s ease-in-out infinite alternate-reverse;
-}
-.nx-stage .b4 {
-  width: 900px;
-  height: 360px;
-  left: 10%;
-  top: 760px;
-  background: #fbf9f6;
-  opacity: 1;
-}
-@keyframes nx-d1 {
-  to {
-    transform: translate(120px, 80px) scale(1.08);
-  }
-}
-@keyframes nx-d2 {
-  to {
-    transform: translate(-140px, 60px) scale(0.94);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .nx-stage i {
-    animation: none;
-  }
-}
-
 .nx-glass {
   background: rgba(255, 255, 255, 0.66);
   backdrop-filter: blur(24px) saturate(1.4);
@@ -174,44 +113,23 @@ main,
   outline-offset: 2px;
 }
 
-.nx-hero {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 48px;
-  justify-items: center;
-  text-align: center;
-  padding: 56px 0 72px;
-}
-.nx-hero .nx-lede {
-  margin-left: auto;
-  margin-right: auto;
-}
-.nx-hero .nx-ctas {
-  justify-content: center;
-}
-.nx-hero h1 {
-  max-width: 900px;
-}
-.nx-kicker {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #e0244a;
-  margin: 0 0 16px;
+.nx-btn-red {
+  background: #e0244a;
+  color: #fff;
+  box-shadow: 0 10px 24px -12px rgba(224, 36, 74, 0.7);
 }
 .nx h1 {
-  font-size: clamp(40px, 6vw, 68px);
+  font-size: clamp(40px, 6.4vw, 76px);
   line-height: 1.02;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.04em;
   font-weight: 700;
   margin: 0;
 }
 .nx h2 {
-  font-size: clamp(28px, 3.6vw, 40px);
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  margin: 0 0 28px;
+  font-size: clamp(30px, 4.4vw, 52px);
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+  margin: 0;
   font-weight: 700;
 }
 .nx h3 {
@@ -220,12 +138,17 @@ main,
   font-weight: 650;
   letter-spacing: -0.01em;
 }
+.nx h1 em,
+.nx h2 em {
+  font-style: normal;
+  color: #e0244a;
+}
 .nx-lede {
   font-size: 19px;
   line-height: 1.5;
-  color: var(--nx-ink-2);
-  margin: 20px 0 0;
-  max-width: 540px;
+  color: #7d6c74;
+  margin: 18px 0 0;
+  max-width: 600px;
 }
 .nx-ctas {
   display: flex;
@@ -235,13 +158,41 @@ main,
 }
 .nx-fine {
   font-size: 13px;
-  color: var(--nx-muted);
+  color: #8a727d;
   margin: 14px 0 0;
 }
+.nx-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 14px 0 10px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--nx-ink);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 0 1px rgba(120, 30, 55, 0.06);
+  margin: 0 0 22px;
+}
+
+/* One beat per screen, like the film. Centered type, generous air. */
+.nx-beat {
+  padding: 120px 0;
+  text-align: center;
+}
+.nx-beat > .nx-lede {
+  margin-left: auto;
+  margin-right: auto;
+}
+.nx-hero {
+  padding: 72px 0 40px;
+}
 .nx-film {
+  position: relative;
+  margin: 56px auto 0;
   padding: 10px;
   border-radius: 28px;
-  width: 100%;
   max-width: 1080px;
 }
 .nx-film video {
@@ -250,120 +201,522 @@ main,
   height: auto;
   aspect-ratio: 16 / 9;
   border-radius: 20px;
-  background: #14b8a6;
-  object-fit: contain;
+  background: #fff5f6;
+  cursor: pointer;
 }
-
-.nx-section {
-  padding: 48px 0;
-}
-.nx-steps {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-}
-.nx-step {
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-}
-.nx-step p,
-.nx-runs p,
-.nx-fit li {
-  color: var(--nx-ink-2);
-  font-size: 15px;
-  line-height: 1.55;
-  margin: 0;
-}
-.nx-step-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-.nx-ico {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #fff0f3;
-  color: #e0244a;
+.nx-film-play {
+  position: absolute;
+  left: 50%;
+  top: calc(50% - 22px);
+  translate: -50% -50%;
   display: grid;
   place-items: center;
+  width: 72px;
+  height: 72px;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: #e0244a;
+  box-shadow: 0 16px 34px -12px rgba(224, 36, 74, 0.8);
+  cursor: pointer;
 }
-.nx-num {
+/* Under the film, never over it: the film's captions sit at its bottom edge. */
+.nx-film-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 8px 2px;
+}
+.nx-film-sound {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0 10px 0 7px;
+  border: 0;
+  border-radius: 16px;
+  font: inherit;
   font-size: 13px;
-  color: var(--nx-muted);
-  font-variant-numeric: tabular-nums;
-}
-.nx-shot {
-  margin-top: 20px;
-  border-radius: 14px;
-  overflow: hidden;
+  font-weight: 600;
+  color: var(--nx-ink);
   background: #fff;
-  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.1);
-  height: 240px;
+  box-shadow: 0 0 0 1px rgba(17, 17, 20, 0.08);
+  cursor: pointer;
+  white-space: nowrap;
 }
-.nx-shot img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top left;
-  display: block;
+.nx-film-time {
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  margin: 0;
+  border-radius: 2px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: linear-gradient(to right, #e0244a var(--p), rgba(17, 17, 20, 0.12) var(--p));
+  cursor: pointer;
+}
+.nx-film-time::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgba(17, 17, 20, 0.12),
+    0 1px 4px rgba(0, 0, 0, 0.2);
+}
+.nx-film-time::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
 }
 
-.nx-runs-card {
-  display: flex;
-  gap: 32px;
-  align-items: center;
-  padding: 32px;
+/* Reveal: one thing moves at a time (animation-rules 1). */
+.nx-in {
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
 }
-.nx-runs-card h2 {
-  margin-bottom: 8px;
+.nx-in.is-in {
+  opacity: 1;
+  transform: none;
 }
-.nx-logos {
+@media (prefers-reduced-motion: reduce) {
+  .nx-in {
+    transform: none;
+    transition: opacity 200ms;
+  }
+}
+
+/* Faces (film rule 23) and logos */
+.nx-face {
+  display: inline-block;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow:
+    0 0 0 2.5px #fff,
+    0 6px 14px -6px rgba(120, 30, 55, 0.45);
+}
+.nx-team {
   display: flex;
-  gap: 12px;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+.nx-team img + img {
+  margin-left: -12px;
+}
+.nx-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
   flex-shrink: 0;
 }
-.nx-logos img {
-  border-radius: 16px;
-  box-shadow:
-    0 0 0 0.5px rgba(0, 0, 0, 0.12),
-    0 10px 30px rgba(0, 0, 0, 0.08);
+
+/* Problem: Chrome tab groups */
+.nx-tabs-bar {
+  margin: 56px auto 0;
+  max-width: 1080px;
+  padding: 10px;
+  border-radius: 18px;
+  background: #e9e3e6;
+  box-shadow: 0 30px 60px -30px rgba(120, 30, 55, 0.35);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.nx-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 6px 12px;
+  border-radius: 12px;
+  background: var(--g-tint);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--g) 18%, transparent);
+}
+.nx-group b {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--g);
+  margin-right: 4px;
+}
+.nx-group span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
   background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.nx .nx-after {
+  margin-top: 48px;
 }
 
-.nx-fit {
+/* The one-place window */
+.nx-win {
+  margin: 56px auto 0;
+  max-width: 1000px;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow:
+    0 60px 120px -40px rgba(120, 30, 55, 0.35),
+    0 0 0 1px rgba(17, 17, 20, 0.06);
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  text-align: left;
+  overflow: hidden;
+  position: relative;
+}
+.nx-win-dots {
+  position: absolute;
+  left: 18px;
+  top: 16px;
+  display: flex;
+  gap: 7px;
+}
+.nx-win-dots i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #ff5f57;
+}
+.nx-win-dots i:nth-child(2) {
+  background: #febc2e;
+}
+.nx-win-dots i:nth-child(3) {
+  background: #28c840;
+}
+.nx-side {
+  padding: 52px 12px 20px;
+  background: #fbf8f9;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+.nx-row-app {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 42px;
+  padding: 0 12px;
+  border-radius: 21px;
+  font-size: 14px;
+  font-weight: 570;
+  color: var(--nx-ink);
+}
+.nx-row-app.is-sel {
+  background: #ffe4e9;
+  font-weight: 650;
+}
+.nx-row-app img.nx-ico {
+  width: 18px;
+  height: 18px;
+}
+.nx-row-app .nx-stack {
+  margin-left: auto;
+  display: flex;
+}
+.nx-stack span {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 0 0 2px #fbf8f9,
+    0 2px 5px -2px rgba(0, 0, 0, 0.2);
+}
+.nx-stack span + span {
+  margin-left: -6px;
+}
+.nx-stack img {
+  width: 13px;
+  height: 13px;
+  object-fit: contain;
+}
+.nx-main {
+  padding: 44px 36px 32px;
+}
+.nx-person {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.nx-person strong {
+  display: block;
+  font-size: 24px;
+  letter-spacing: -0.02em;
+}
+.nx-person small {
+  font-size: 13px;
+  color: var(--nx-muted);
+}
+.nx-chip-red {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 650;
+  color: #e0244a;
+  background: #ffe4e9;
+  padding: 6px 12px;
+  border-radius: 14px;
+  white-space: nowrap;
+}
+.nx-feed {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.nx-feed li {
+  display: grid;
+  grid-template-columns: 90px 22px 1fr;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  font-size: 14px;
+  color: #3c3c43;
+  border-bottom: 1px solid #f3ecef;
+}
+.nx-feed li span:first-child {
+  color: var(--nx-muted);
+  font-size: 13px;
+}
+.nx-note {
+  margin: 22px auto 0;
+  max-width: 640px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #8a727d;
+}
+
+/* The agent moment */
+.nx-agent {
+  margin: 56px auto 0;
+  max-width: 640px;
+  display: grid;
+  gap: 14px;
+  text-align: left;
+}
+.nx-agent-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px 12px 14px;
+  border-radius: 18px;
+  font-size: 15px;
+  color: var(--nx-ink);
+}
+.nx-agent-bar small {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #e0244a;
+}
+.nx-agent-bar .nx-btn {
+  margin-left: auto;
+}
+.nx-mail {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 20px 40px -24px rgba(120, 30, 55, 0.4);
+}
+.nx-mail div {
+  flex: 1;
+  min-width: 0;
+}
+.nx-mail strong {
+  font-size: 15px;
+}
+.nx-mail p {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: var(--nx-muted);
+}
+
+/* Icons: Phosphor duotone in a soft glass tile (animation-rules 24) */
+.nx-glyph {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  flex-shrink: 0;
+  background: linear-gradient(155deg, #fff 0%, #fff4f6 100%);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 0 0 1px rgba(120, 30, 55, 0.06),
+    0 9px 18px -7px rgba(120, 30, 55, 0.38);
+}
+.nx-glyph img {
+  width: 26px;
+  height: 26px;
+}
+
+/* Introducing */
+.nx-intro .nx-brand-big {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  font-size: clamp(36px, 5vw, 60px);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  margin: 18px 0 0;
+}
+.nx-intro .nx-brand-big .nx-mark {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: #fff;
+}
+.nx-eyebrow {
+  font-size: 20px;
+  color: #8a727d;
+  margin: 0;
+}
+
+/* Day one / Year ten */
+.nx-two {
+  margin: 56px auto 0;
+  max-width: 1000px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+  text-align: left;
 }
-.nx-fit-card {
-  padding: 28px;
+.nx-card {
+  padding: 30px 28px;
+  display: flex;
+  flex-direction: column;
 }
-.nx-fit ul {
+.nx-card h3 {
+  font-size: 26px;
+  letter-spacing: -0.03em;
+  margin: 0 0 10px;
+}
+.nx-card > p {
+  margin: 0;
+  color: #7d6c74;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.nx-steps {
   list-style: none;
+  margin: 22px 0 0;
   padding: 0;
-  margin: 12px 0 0;
   display: grid;
+  gap: 14px;
+}
+.nx-steps li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 15px;
+  line-height: 1.4;
+  color: #3c3c43;
+}
+.nx-tools {
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+  margin-top: 22px;
 }
-.nx-fit li {
-  padding-left: 26px;
-  position: relative;
-}
-.nx-fit li::before {
-  content: "✓";
-  position: absolute;
-  left: 0;
-  color: #1b6b30;
-  font-weight: 700;
-}
-.nx-fit-no li::before {
-  content: "–";
-  color: var(--nx-muted);
+.nx-tools span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px 0 10px;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 560;
+  box-shadow:
+    0 0 0 1px rgba(17, 17, 20, 0.06),
+    0 6px 14px -10px rgba(120, 30, 55, 0.5);
 }
 
+/* Bring your own AI */
+.nx-ais {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 48px;
+}
+.nx-ais figure {
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 560;
+  color: #5d4f56;
+}
+.nx-ais figure span {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgba(17, 17, 20, 0.05),
+    0 16px 30px -16px rgba(120, 30, 55, 0.5);
+}
+.nx-ais img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+.nx-facts {
+  list-style: none;
+  padding: 0;
+  margin: 48px auto 0;
+  max-width: 560px;
+  display: grid;
+  gap: 16px;
+  text-align: left;
+}
+.nx-facts li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 17px;
+  line-height: 1.4;
+  color: #3c3c43;
+}
+.nx-facts a {
+  color: inherit;
+}
+
+/* Close */
+.nx-close .nx-apply {
+  margin: 48px auto 0;
+  text-align: left;
+}
+.nx-me {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 26px;
+}
+.nx-me p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: #5d4f56;
+}
 .nx-apply {
   padding: 40px;
   max-width: 760px;
@@ -382,15 +735,28 @@ main,
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
-.nx-form label:not(.nx-chip) > span,
+.nx-form label:not(.nx-tool) > span,
 .nx-form legend {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--nx-ink-2);
-  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--nx-ink);
+  margin-bottom: 12px;
 }
-.nx-form input:not([type="radio"]),
+.nx-n {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  color: #e0244a;
+  background: #ffe4e9;
+}
+.nx-form input:not([type="checkbox"]),
 .nx-form textarea {
   width: 100%;
   font: inherit;
@@ -416,29 +782,30 @@ main,
   padding: 0;
   margin: 0;
 }
-.nx-chips {
-  display: flex;
-  flex-wrap: wrap;
+.nx-tool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 8px;
 }
-.nx-chip {
+.nx-tool {
   position: relative;
   cursor: pointer;
 }
-.nx-chip input {
+.nx-tool input {
   position: absolute;
   opacity: 0;
   inset: 0;
   cursor: pointer;
 }
-.nx-chip span {
-  display: inline-flex;
+.nx-tool span {
+  display: flex;
   align-items: center;
-  gap: 9px;
-  font-size: 14px;
-  font-weight: 500;
-  padding: 10px 14px 10px 11px;
+  gap: 10px;
+  height: 46px;
+  padding: 0 12px;
   border-radius: 13px;
+  font-size: 14px;
+  font-weight: 560;
   background: #fff;
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.1),
@@ -446,33 +813,34 @@ main,
   transition:
     background 150ms,
     box-shadow 150ms,
-    color 150ms,
     transform 160ms var(--nx-ease);
 }
-.nx-chip span svg {
-  width: 26px;
-  height: 26px;
-  padding: 5px;
-  border-radius: 8px;
-  background: #fff0f3;
-  color: #e0244a;
-  flex-shrink: 0;
+.nx-tool img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
 }
-.nx-chip:active span {
+.nx-tool-other {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  font-style: normal;
+  font-weight: 600;
+  color: var(--nx-muted);
+  background: #f3ecef;
+}
+.nx-tool:active span {
   transform: scale(0.97);
 }
-.nx-chip input:checked + span {
+.nx-tool input:checked + span {
   background: #fff0f3;
-  color: #b01a39;
   box-shadow:
     inset 0 0 0 1.5px #e0244a,
     0 6px 18px rgba(224, 36, 74, 0.12);
 }
-.nx-chip input:checked + span svg {
-  background: #e0244a;
-  color: #fff;
-}
-.nx-chip input:focus-visible + span {
+.nx-tool input:focus-visible + span {
   outline: 2px solid #e0244a;
   outline-offset: 2px;
 }
@@ -513,9 +881,20 @@ main,
 }
 
 @media (max-width: 860px) {
+  .nx-beat {
+    padding: 64px 0;
+  }
+  .nx-tool-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .nx-tool span {
+    height: 42px;
+    padding: 0 10px;
+    gap: 8px;
+    font-size: 13px;
+  }
   .nx-hero {
-    gap: 32px;
-    padding-top: 24px;
+    padding-top: 32px;
   }
   .nx-film {
     padding: 6px;
@@ -524,14 +903,41 @@ main,
   .nx-film video {
     border-radius: 13px;
   }
-  .nx-steps,
-  .nx-fit,
+  .nx-film-play {
+    width: 56px;
+    height: 56px;
+  }
+  .nx-win,
+  .nx-two,
   .nx-row {
     grid-template-columns: 1fr;
   }
-  .nx-runs-card {
-    flex-direction: column;
-    align-items: flex-start;
+  .nx-side {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 40px 10px 10px;
+  }
+  .nx-row-app {
+    height: 34px;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+  .nx-person {
+    flex-wrap: wrap;
+  }
+  .nx-chip-red {
+    margin-left: 0;
+  }
+  .nx-row-app .nx-stack {
+    display: none;
+  }
+  .nx-main {
+    padding: 24px 18px;
+  }
+  .nx-feed li {
+    grid-template-columns: 70px 22px 1fr;
+    font-size: 13px;
   }
   .nx-apply {
     padding: 24px 18px;
