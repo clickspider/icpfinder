@@ -59,7 +59,7 @@ export function Hero() {
           </h1>
 
           <p className="mt-5 max-w-[460px] text-[16px] text-[color:var(--text-muted)] md:mt-6 md:text-[18px]">
-            3 ICPs + verified emails. 30 seconds. Free. MIT.
+            3 ICPs + verified emails. 30 seconds. Open source.
           </p>
         </div>
 
