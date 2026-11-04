@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 import { HeroSurface } from "./HeroSurface";
+import { NextLaunchTeaser } from "./NextLaunchTeaser";
 
 export function Hero() {
   return (
@@ -33,6 +34,7 @@ export function Hero() {
       />
 
       <div className="relative z-10 mx-auto max-w-[1240px] px-5 sm:px-6 md:px-12 lg:px-[72px]">
+        <NextLaunchTeaser />
         <div className="mx-auto flex flex-col items-center text-center">
           <h1
             className="font-semibold tracking-[-0.04em] text-[color:var(--text)]"
