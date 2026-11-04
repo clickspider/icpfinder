@@ -1,0 +1,5 @@
+# Faces (animation-rules 23, Daniel 4 Nov 19:05/19:06)
+- daniel.jpg: Daniel's own photo, cropped from 01-Career/content/posts/assets/daniel.jpg (the photo he already uses in his posts). Not generated.
+- All other faces: photoreal AI faces of people who do not exist. Made 4 Nov 2026 19:11 in ElevenLabs Image & Video (Daniel's account, Creator plan), model GPT Image 2.5 Sunburst, 16:9, 1K, High, 1 generation, 190 credits (191 shown before Generate; Daniel OK 19:09, cap 400). One contact sheet of 12 headshots: src/face-sheet-2026-11-04.png (1280x720), cut on the white gutters into 256x256 jpgs.
+  Sheet grid -> file: row 1 amir, mika, jonas, maya / row 2 ben, lena, tom, eva / row 3 noah, sara, ravi, noa (noa/eva swapped after the v5 check: Noa next to Mika looked too alike).
+- Licence check (4 Nov 19:15): ElevenLabs Image & Video terms (elevenlabs.io/image-and-video-terms, updated 11 Jun 2026) do not call it beta; output rights follow the paid plan (Creator = commercial licence, help-center "Can I publish..."); the model provider's own terms also apply (GPT Image: OpenAI gives the output to the user). Not checked: an ElevenLabs answer in writing.
