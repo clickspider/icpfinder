@@ -3,7 +3,7 @@
 
 import { type FormEvent, useState } from "react";
 import type { ApplicationRow, Tier } from "../../lib/applications";
-import { OPTIONS } from "../../lib/apply-options";
+import { isWorkEmail, OPTIONS, TOOLS } from "../../lib/apply-options";
 
 async function post(
   url: string,
@@ -93,14 +93,31 @@ function Row({ r }: { r: ApplicationRow }) {
           </h3>
           <p className="nx-fine">
             <a href={`mailto:${r.email}`}>{r.email}</a> ·{" "}
-            <a href={href(r.productUrl)} target="_blank" rel="noreferrer">
-              {r.productUrl}
-            </a>{" "}
-            ·{" "}
-            <a href={href(r.profileUrl)} target="_blank" rel="noreferrer">
-              profile
-            </a>{" "}
-            · {new Date(r.createdAt).toLocaleDateString()}
+            {isWorkEmail(r.email) && (
+              <>
+                <a href={href(r.email.split("@")[1] ?? "")} target="_blank" rel="noreferrer">
+                  site
+                </a>{" "}
+                ·{" "}
+              </>
+            )}
+            {r.productUrl && (
+              <>
+                <a href={href(r.productUrl)} target="_blank" rel="noreferrer">
+                  {r.productUrl}
+                </a>{" "}
+                ·{" "}
+              </>
+            )}
+            {r.profileUrl && (
+              <>
+                <a href={href(r.profileUrl)} target="_blank" rel="noreferrer">
+                  profile
+                </a>{" "}
+                ·{" "}
+              </>
+            )}
+            {new Date(r.createdAt).toLocaleDateString()}
           </p>
         </div>
         {invitedAt ? (
@@ -117,13 +134,22 @@ function Row({ r }: { r: ApplicationRow }) {
         )}
       </div>
       <div className="nx-answers">
-        <span>{label("role", r.role)}</span>
-        <span>{label("salesTeam", r.salesTeam)}</span>
-        <span>{label("stage", r.stage)}</span>
-        <span>{label("years", r.years)} shipping</span>
-        <span>Claude/Codex: {label("agent", r.agent)}</span>
+        {r.tools?.map((t) => (
+          <span key={t}>{TOOLS[t] ?? t}</span>
+        ))}
+        {r.role && (
+          <>
+            <span>{label("role", r.role)}</span>
+            <span>{label("salesTeam", r.salesTeam ?? "")}</span>
+            <span>{label("stage", r.stage ?? "")}</span>
+            <span>{label("years", r.years ?? "")} shipping</span>
+            <span>Claude/Codex: {label("agent", r.agent ?? "")}</span>
+          </>
+        )}
       </div>
-      <p className="nx-first-week">“{r.firstWeek}”</p>
+      {(r.challenge || r.firstWeek) && (
+        <p className="nx-first-week">“{r.challenge || r.firstWeek}”</p>
+      )}
       {err && <p className="nx-error">{err}</p>}
     </article>
   );

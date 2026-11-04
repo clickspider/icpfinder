@@ -741,15 +741,28 @@ main,
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
-.nx-form label:not(.nx-chip) > span,
+.nx-form label:not(.nx-tool) > span,
 .nx-form legend {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--nx-ink-2);
-  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--nx-ink);
+  margin-bottom: 12px;
 }
-.nx-form input:not([type="radio"]),
+.nx-n {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  color: #e0244a;
+  background: #ffe4e9;
+}
+.nx-form input:not([type="checkbox"]),
 .nx-form textarea {
   width: 100%;
   font: inherit;
@@ -775,29 +788,30 @@ main,
   padding: 0;
   margin: 0;
 }
-.nx-chips {
-  display: flex;
-  flex-wrap: wrap;
+.nx-tool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 8px;
 }
-.nx-chip {
+.nx-tool {
   position: relative;
   cursor: pointer;
 }
-.nx-chip input {
+.nx-tool input {
   position: absolute;
   opacity: 0;
   inset: 0;
   cursor: pointer;
 }
-.nx-chip span {
-  display: inline-flex;
+.nx-tool span {
+  display: flex;
   align-items: center;
-  gap: 9px;
-  font-size: 14px;
-  font-weight: 500;
-  padding: 10px 14px 10px 11px;
+  gap: 10px;
+  height: 46px;
+  padding: 0 12px;
   border-radius: 13px;
+  font-size: 14px;
+  font-weight: 560;
   background: #fff;
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.1),
@@ -805,33 +819,34 @@ main,
   transition:
     background 150ms,
     box-shadow 150ms,
-    color 150ms,
     transform 160ms var(--nx-ease);
 }
-.nx-chip span svg {
-  width: 26px;
-  height: 26px;
-  padding: 5px;
-  border-radius: 8px;
-  background: #fff0f3;
-  color: #e0244a;
-  flex-shrink: 0;
+.nx-tool img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
 }
-.nx-chip:active span {
+.nx-tool-other {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  font-style: normal;
+  font-weight: 600;
+  color: var(--nx-muted);
+  background: #f3ecef;
+}
+.nx-tool:active span {
   transform: scale(0.97);
 }
-.nx-chip input:checked + span {
+.nx-tool input:checked + span {
   background: #fff0f3;
-  color: #b01a39;
   box-shadow:
     inset 0 0 0 1.5px #e0244a,
     0 6px 18px rgba(224, 36, 74, 0.12);
 }
-.nx-chip input:checked + span svg {
-  background: #e0244a;
-  color: #fff;
-}
-.nx-chip input:focus-visible + span {
+.nx-tool input:focus-visible + span {
   outline: 2px solid #e0244a;
   outline-offset: 2px;
 }

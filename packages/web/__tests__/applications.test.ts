@@ -3,36 +3,34 @@ import { parseApplication, scoreApplication } from "../lib/applications";
 
 const base = {
   name: "Ada",
-  email: "ADA@example.com",
-  productUrl: "example.com",
-  profileUrl: "github.com/ada",
-  role: "founder",
-  salesTeam: "none",
-  stage: "paying",
-  years: "gt3",
-  agent: "daily",
-  firstWeek:
-    "Find 20 seed-stage B2B SaaS founders in Europe and write to them about our feedback calls.",
+  email: "ADA@magpie.io",
+  tools: ["hubspot", "apollo", "nope"],
+  challenge: "Finding the right people to talk to before I run out of runway.",
 };
 
 describe("beta applications", () => {
-  it("puts a founder who sells it alone first", () => {
+  it("puts a work email with sales tools in use first", () => {
     const a = parseApplication(base);
     if (typeof a === "string") throw new Error(a);
-    expect(a.email).toBe("ada@example.com");
-    expect(scoreApplication(a).tier).toBe("priority");
+    expect(a.email).toBe("ada@magpie.io");
+    expect(a.tools).toEqual(["hubspot", "apollo"]);
+    expect(scoreApplication(a)).toEqual({ score: 5, tier: "priority" });
   });
-  it("puts idea-stage and sales-team applicants later", () => {
-    for (const patch of [{ stage: "idea" }, { salesTeam: "team" }, { role: "agency" }]) {
-      const a = parseApplication({ ...base, ...patch });
-      if (typeof a === "string") throw new Error(a);
-      expect(scoreApplication(a).tier).toBe("later");
-    }
+  it("orders a personal email with no tools later, without rejecting it", () => {
+    const a = parseApplication({
+      ...base,
+      email: "ada@gmail.com",
+      tools: ["other"],
+      challenge: "leads",
+    });
+    if (typeof a === "string") throw new Error(a);
+    expect(scoreApplication(a).tier).toBe("later");
   });
-  it("rejects missing answers and bad links", () => {
-    expect(parseApplication({ ...base, role: "ceo" })).toBe("Answer every question.");
-    expect(parseApplication({ ...base, productUrl: "nope" })).toBe(
-      "Add the link to what you built."
+  it("asks for what is missing", () => {
+    expect(parseApplication({ ...base, tools: [] })).toBe("Pick at least one tool.");
+    expect(parseApplication({ ...base, challenge: "" })).toBe(
+      "Tell us your biggest challenge, in a few words."
     );
+    expect(parseApplication({ ...base, email: "ada" })).toBe("Add your work email.");
   });
 });

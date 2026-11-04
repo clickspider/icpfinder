@@ -2,72 +2,22 @@
 "use client";
 
 import { type CSSProperties, type FormEvent, useEffect, useState } from "react";
-import { OPTIONS } from "../../lib/apply-options";
+import { TOOLS, type ToolId } from "../../lib/apply-options";
 import { Logo } from "../brand/Logo";
 
 /** Launch film v6 on YouTube (Unlisted). The no-cookie host sets no cookie until play. */
 const FILM = "https://www.youtube-nocookie.com/embed/nutpbbN65Qk?rel=0&playsinline=1";
 
-const Icon = ({ d }: { d: string }) => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.6"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d={d} />
-  </svg>
-);
-
-type Field = keyof typeof OPTIONS;
-const QUESTIONS: Array<[Field, string]> = [
-  ["role", "What are you?"],
-  ["salesTeam", "Who sells your product today?"],
-  ["stage", "Where is your product?"],
-  ["years", "How long have you shipped software?"],
-  ["agent", "Do you use Claude Code or Codex?"],
-];
-
-/** Thin line icons, the same style as the Mac app. */
-const OPTION_ICONS: Record<string, string> = {
-  founder:
-    "M12 3c3 2 5 6 5 10l-2 3H9l-2-3c0-4 2-8 5-10z M12 9a1.5 1.5 0 100 3 1.5 1.5 0 000-3z M9 16l-2 4 M15 16l2 4",
-  solo: "M8 8l-4 4 4 4 M16 8l4 4-4 4 M13.5 5l-3 14",
-  employee: "M4 21V7l8-4 8 4v14 M9 21v-5h6v5 M8 10h1 M15 10h1 M8 13h1 M15 13h1",
-  agency:
-    "M9 11a3 3 0 100-6 3 3 0 000 6z M3 20a6 6 0 0112 0 M17 11a3 3 0 100-6 M21 20a6 6 0 00-4-5.7",
-  other: "M12 3a9 9 0 100 18 9 9 0 000-18z M8 12h.01 M12 12h.01 M16 12h.01",
-  none: "M12 11a4 4 0 100-8 4 4 0 000 8z M4 21a8 8 0 0116 0",
-  small:
-    "M9 11a3 3 0 100-6 3 3 0 000 6z M3 20a6 6 0 0112 0 M17 11a3 3 0 100-6 M21 20a6 6 0 00-4-5.7",
-  team: "M3 17l6-6 4 4 8-8 M15 7h6v6",
-  idea: "M9 18h6 M10 21h4 M12 3a6 6 0 00-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0012 3z",
-  live: "M12 21a9 9 0 100-18 9 9 0 000 18z M3 12h18 M12 3a14 14 0 010 18 M12 3a14 14 0 000 18",
-  paying: "M3 7h18v10H3z M3 10h18 M7 14h3",
-  scaling: "M3 20h18 M6 16v-4 M11 16V9 M16 16V5",
-  lt1: "M12 21a9 9 0 100-18 9 9 0 000 18z M12 7v5l3 2",
-  y1to3: "M4 5h16v15H4z M4 9h16 M8 3v4 M16 3v4",
-  gt3: "M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z",
-  daily: "M5 12l5 5L20 7",
-  sometimes: "M4 12a8 8 0 0114-5.3 M20 12a8 8 0 01-14 5.3 M18 3v4h-4 M6 21v-4h4",
-  no: "M12 21a9 9 0 100-18 9 9 0 000 18z M8 12h8",
-};
-
+/** The beta form, three things (Daniel, 2 Nov): tools with logos, biggest challenge, name + work email. */
 function ApplyForm() {
-  const [state, setState] = useState<
-    "idle" | "sending" | "error" | "priority" | "review" | "later"
-  >("idle");
+  const [state, setState] = useState<"idle" | "sending" | "error" | "done">("idle");
   const [error, setError] = useState("");
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setState("sending");
-    const body = Object.fromEntries(new FormData(e.currentTarget));
+    const f = new FormData(e.currentTarget);
+    const body = { ...Object.fromEntries(f), tools: f.getAll("tools") };
     const res = await fetch("/api/apply", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -79,71 +29,75 @@ function ApplyForm() {
       setState("error");
       return;
     }
-    setState(json.tier);
+    setState("done");
   }
 
-  if (state === "priority" || state === "review" || state === "later")
+  if (state === "done")
     return (
       <div className="nx-done" role="status">
         <Logo size={44} />
-        <h3>
-          {state === "later" ? "Thanks, you are on the list." : "Thanks. Your application is in."}
-        </h3>
-        <p>
-          {state === "later"
-            ? "The first group is founders who sell their live product themselves. We will email you when the beta opens wider."
-            : "We read every application by hand and let people in in small groups. Watch your inbox."}
-        </p>
+        <h3>Thanks, it&rsquo;s in.</h3>
+        <p>I read every answer myself, and I&rsquo;ll email you to set up a short call.</p>
       </div>
     );
 
   return (
     <form className="nx-form" onSubmit={submit} noValidate>
-      <div className="nx-row">
-        <label>
-          <span>Name</span>
-          <input name="name" autoComplete="name" required />
-        </label>
-        <label>
-          <span>Email</span>
-          <input name="email" type="email" autoComplete="email" required />
-        </label>
-      </div>
-      <div className="nx-row">
-        <label>
-          <span>What did you build? (link)</span>
-          <input name="productUrl" placeholder="yourproduct.com" inputMode="url" required />
-        </label>
-        <label>
-          <span>LinkedIn, GitHub or X</span>
-          <input name="profileUrl" placeholder="linkedin.com/in/you" inputMode="url" required />
-        </label>
-      </div>
-      {QUESTIONS.map(([field, q]) => (
-        <fieldset key={field}>
-          <legend>{q}</legend>
-          <div className="nx-chips">
-            {Object.entries(OPTIONS[field]).map(([value, label]) => (
-              <label key={value} className="nx-chip">
-                <input type="radio" name={field} value={value} required />
-                <span>
-                  <Icon d={OPTION_ICONS[value] ?? ""} />
-                  {label}
-                </span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-      ))}
+      <fieldset>
+        <legend>
+          <span className="nx-n">1</span>Which tools do you use now?
+        </legend>
+        <div className="nx-tool-grid">
+          {(Object.entries(TOOLS) as Array<[ToolId, string]>).map(([id, label]) => (
+            <label key={id} className="nx-tool">
+              <input type="checkbox" name="tools" value={id} />
+              <span>
+                {id === "other" ? (
+                  <i className="nx-tool-other" aria-hidden="true">
+                    +
+                  </i>
+                ) : (
+                  <img src={tool(id)} alt="" width={20} height={20} />
+                )}
+                {label}
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <label>
-        <span>What will you use IcpFinder for in your first week?</span>
-        <textarea
-          name="firstWeek"
-          rows={3}
-          placeholder="Find my first 20 B2B buyers for … and write to them."
+        <span>
+          <span className="nx-n">2</span>Your biggest challenge, in a few words
+        </span>
+        <input
+          name="challenge"
+          maxLength={300}
+          placeholder="e.g. finding my first buyers"
           required
         />
       </label>
+      <fieldset>
+        <legend>
+          <span className="nx-n">3</span>Who are you?
+        </legend>
+        <div className="nx-row">
+          <input
+            name="name"
+            autoComplete="name"
+            placeholder="Your name"
+            aria-label="Name"
+            required
+          />
+          <input
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@yourcompany.com"
+            aria-label="Work email"
+            required
+          />
+        </div>
+      </fieldset>
       <input name="company" tabIndex={-1} autoComplete="off" className="nx-hp" aria-hidden="true" />
       {state === "error" && (
         <p className="nx-error" role="alert">
@@ -159,7 +113,7 @@ function ApplyForm() {
 }
 
 const tool = (name: string) =>
-  `/next/tools/${name}.${["instantly", "linkedin", "apollo", "clay", "chatgpt", "grok", "hunter"].includes(name) ? "png" : "svg"}`;
+  `/next/tools/${name}.${["instantly", "linkedin", "apollo", "clay", "chatgpt", "grok", "hunter", "pipedrive"].includes(name) ? "png" : "svg"}`;
 
 const ToolLogo = ({ name, alt = "" }: { name: string; alt?: string }) => (
   <img className="nx-logo" src={tool(name)} alt={alt} width={20} height={20} />

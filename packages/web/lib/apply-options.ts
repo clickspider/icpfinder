@@ -1,7 +1,45 @@
 // SPDX-License-Identifier: MIT
 //
-// Answer choices for the /next beta form. Shared by the form and the server.
+// Answer choices for the /next beta form. Shared by the form, the server and admin.
 
+/** The tools a beta applicant uses today. Key = logo file in public/next/tools. */
+export const TOOLS = {
+  gmail: "Gmail",
+  hubspot: "HubSpot",
+  apollo: "Apollo",
+  clay: "Clay",
+  hunter: "Hunter",
+  pipedrive: "Pipedrive",
+  googlesheets: "Sheets",
+  linkedin: "LinkedIn",
+  instantly: "Instantly",
+  notion: "Notion",
+  calendly: "Calendly",
+  other: "Other",
+} as const;
+export type ToolId = keyof typeof TOOLS;
+
+/** Mailbox providers: an address there tells us nothing about their business. */
+const PERSONAL = new Set([
+  "gmail.com",
+  "googlemail.com",
+  "outlook.com",
+  "hotmail.com",
+  "live.com",
+  "msn.com",
+  "yahoo.com",
+  "icloud.com",
+  "me.com",
+  "mac.com",
+  "aol.com",
+  "proton.me",
+  "protonmail.com",
+  "gmx.com",
+  "gmx.net",
+]);
+export const isWorkEmail = (email: string) => !PERSONAL.has(email.split("@")[1] ?? "");
+
+/** Answers of the first form (Oct 2026). Only shown for older applications in admin. */
 export const OPTIONS = {
   role: {
     founder: "Founder or co-founder",
