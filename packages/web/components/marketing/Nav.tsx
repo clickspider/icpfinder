@@ -50,7 +50,7 @@ export function Nav() {
               boxShadow: "0 0 0 1px rgba(255,255,255,0.5) inset, 0 8px 20px -6px var(--iris-glow)",
             }}
           >
-            <span>Try free</span>
+            <span>Try it</span>
             <span aria-hidden="true" className="hidden sm:inline">
               →
             </span>
