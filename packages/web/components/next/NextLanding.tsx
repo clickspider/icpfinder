@@ -223,7 +223,7 @@ const FEED: Array<[string, string, string]> = [
   ["Calls", "calendly", "Call · Thu 14:00"],
 ];
 
-/** Day one: what the Mac app does today (checked in packages/desktop, 4 Nov 2026). */
+/** New to sales: what the Mac app does today (checked in packages/desktop, 4 Nov 2026). */
 const DAY_ONE: Array<[string, string]> = [
   ["note-pencil", "Tell it what you built."],
   ["users-three", "It shows you who might need it, and where they said so."],
@@ -442,15 +442,18 @@ export function NextLanding() {
           </h2>
         </section>
 
-        {/* 6. Day one / year ten */}
+        {/* 6. New to sales, or years in: the founder's stage, not a product timeline */}
         <section className="nx-beat">
+          <h2 className="nx-in">
+            New to sales, or ten years in. <em>Same harness.</em>
+          </h2>
           <div className="nx-two">
             <article className="nx-card nx-glass nx-in">
-              <div className="nx-card-head">
-                <h3>Day one</h3>
-                <span className="nx-live">Works today</span>
-              </div>
-              <p>You just shipped something, and you don&rsquo;t even know what an ICP is.</p>
+              <h3>New to sales</h3>
+              <p>
+                You just shipped something. You&rsquo;ve never sold, and you don&rsquo;t even know
+                what an ICP is.
+              </p>
               <ol className="nx-steps">
                 {DAY_ONE.map(([icon, line]) => (
                   <li key={line}>
@@ -459,16 +462,13 @@ export function NextLanding() {
                   </li>
                 ))}
               </ol>
+              <p className="nx-card-foot">
+                <span className="nx-live">Works today on your Mac</span>
+              </p>
             </article>
             <article className="nx-card nx-glass nx-in">
-              <div className="nx-card-head">
-                <h3>Year ten</h3>
-                <span className="nx-soon">Coming</span>
-              </div>
-              <p>
-                You&rsquo;ve been doing sales for years. You just plug in the tools you already
-                have.
-              </p>
+              <h3>Selling for years</h3>
+              <p>You already have your tools. Plug them in, keep them, and work from one place.</p>
               <div className="nx-tools">
                 {(
                   [
@@ -485,11 +485,11 @@ export function NextLanding() {
                   </span>
                 ))}
               </div>
+              <p className="nx-card-foot">
+                <span className="nx-soon">These connections are coming</span>
+              </p>
             </article>
           </div>
-          <h2 className="nx-drop nx-in">
-            Day one, or year ten. <em>Same harness.</em>
-          </h2>
         </section>
 
         {/* 7. Bring your own AI */}

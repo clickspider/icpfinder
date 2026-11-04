@@ -594,18 +594,22 @@ main,
 }
 .nx-card {
   padding: 30px 28px;
-}
-.nx-card-head {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
+  flex-direction: column;
 }
-.nx-card-head h3 {
+.nx-card h3 {
   font-size: 26px;
   letter-spacing: -0.03em;
-  margin: 0;
+  margin: 0 0 10px;
+}
+.nx .nx-card-foot {
+  margin-top: auto;
+  padding-top: 24px;
+}
+.nx-card-foot .nx-live,
+.nx-card-foot .nx-soon {
+  font-size: 11px;
+  padding: 4px 9px;
 }
 .nx-card > p {
   margin: 0;
@@ -647,9 +651,6 @@ main,
   box-shadow:
     0 0 0 1px rgba(17, 17, 20, 0.06),
     0 6px 14px -10px rgba(120, 30, 55, 0.5);
-}
-.nx .nx-drop {
-  margin-top: 56px;
 }
 
 /* Bring your own AI */
