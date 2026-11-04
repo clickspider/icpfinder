@@ -420,10 +420,7 @@ export function NextLanding() {
               </ul>
             </div>
           </div>
-          <p className="nx-note nx-in">
-            <span className="nx-soon">Coming</span>
-            You keep your tools. You stop jumping between them.
-          </p>
+          <p className="nx-note nx-in">You keep your tools. You stop jumping between them.</p>
         </section>
 
         {/* 4. An agent on top */}
@@ -451,9 +448,6 @@ export function NextLanding() {
               </span>
             </div>
           </div>
-          <p className="nx-note nx-in">
-            <span className="nx-soon">Coming</span>
-          </p>
         </section>
 
         {/* 5. The reveal */}
@@ -487,9 +481,6 @@ export function NextLanding() {
                   </li>
                 ))}
               </ol>
-              <p className="nx-card-foot">
-                <span className="nx-live">Works today on your Mac</span>
-              </p>
             </article>
             <article className="nx-card nx-glass nx-in">
               <h3>Selling for years</h3>
@@ -510,9 +501,6 @@ export function NextLanding() {
                   </span>
                 ))}
               </div>
-              <p className="nx-card-foot">
-                <span className="nx-soon">These connections are coming</span>
-              </p>
             </article>
           </div>
         </section>
@@ -554,10 +542,7 @@ export function NextLanding() {
               Your workspace stays on your Mac.
             </li>
             <li>
-              <Glyph name="cloud" />
-              <span>
-                Cloud version <span className="nx-soon">Coming</span>
-              </span>
+              <Glyph name="cloud" />A cloud version is coming.
             </li>
           </ul>
           <p className="nx-fine nx-in">Your provider&rsquo;s plan limits apply.</p>

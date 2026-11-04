@@ -489,54 +489,12 @@ main,
   color: var(--nx-muted);
   font-size: 13px;
 }
-.nx-soon {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 650;
-  color: #8a3f00;
-  background: #fff1e3;
-  padding: 5px 11px;
-  border-radius: 14px;
-  white-space: nowrap;
-}
-.nx-soon::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #d8952b;
-}
-.nx-live {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 650;
-  color: #0b6e63;
-  background: #e3f5f2;
-  padding: 5px 11px;
-  border-radius: 14px;
-  white-space: nowrap;
-}
-.nx-live::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #0f9384;
-}
 .nx-note {
   margin: 22px auto 0;
   max-width: 640px;
   font-size: 15px;
   line-height: 1.55;
   color: #8a727d;
-}
-.nx-note .nx-soon {
-  margin-right: 6px;
-  vertical-align: 1px;
 }
 
 /* The agent moment */
@@ -646,15 +604,6 @@ main,
   font-size: 26px;
   letter-spacing: -0.03em;
   margin: 0 0 10px;
-}
-.nx .nx-card-foot {
-  margin-top: auto;
-  padding-top: 24px;
-}
-.nx-card-foot .nx-live,
-.nx-card-foot .nx-soon {
-  font-size: 11px;
-  padding: 4px 9px;
 }
 .nx-card > p {
   margin: 0;
