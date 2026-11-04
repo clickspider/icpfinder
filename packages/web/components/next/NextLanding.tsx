@@ -1,12 +1,129 @@
 // SPDX-License-Identifier: MIT
 "use client";
 
-import { type CSSProperties, type FormEvent, useEffect, useState } from "react";
+import { type CSSProperties, type FormEvent, useEffect, useRef, useState } from "react";
 import { TOOLS, type ToolId } from "../../lib/apply-options";
 import { Logo } from "../brand/Logo";
 
 /** Launch film v6 on YouTube (Unlisted). The no-cookie host sets no cookie until play. */
-const FILM = "https://www.youtube-nocookie.com/embed/nutpbbN65Qk?rel=0&playsinline=1";
+/** Launch film v6, self-hosted: 720p for phones, 1080p elsewhere, both faststart. */
+const FILM = {
+  hd: "/next/icpfinder-film-v6-1080.mp4",
+  sd: "/next/icpfinder-film-v6-720.mp4",
+  poster: "/next/film-v6-poster.jpg",
+};
+
+const SPEAKER = "M4 9v6h4l5 4V5L8 9z";
+
+/**
+ * The film with only two controls (Daniel, 4 Nov 21:04): sound on/off and a time bar.
+ * It starts muted, since every line is on screen; the first "sound on" starts it from the top.
+ * Click the film to pause or play.
+ */
+function Film() {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [muted, setMuted] = useState(true);
+  const [heard, setHeard] = useState(false);
+  const [paused, setPaused] = useState(true);
+  const [t, setT] = useState(0);
+  const [d, setD] = useState(0);
+
+  // Autoplay and metadata can land before React hydrates and attaches the handlers.
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    setPaused(v.paused);
+    if (v.duration) setD(v.duration);
+  }, []);
+
+  const toggleSound = () => {
+    const v = ref.current;
+    if (!v) return;
+    if (muted && !heard) {
+      v.currentTime = 0;
+      setHeard(true);
+    }
+    v.muted = !muted;
+    setMuted(!muted);
+    v.play().catch(() => {});
+  };
+  const togglePlay = () => {
+    const v = ref.current;
+    if (v) v.paused ? v.play().catch(() => {}) : v.pause();
+  };
+
+  return (
+    <div className="nx-film nx-glass">
+      {/* biome-ignore lint/a11y/useMediaCaption: every spoken line is on screen as text. */}
+      <video
+        ref={ref}
+        poster={FILM.poster}
+        autoPlay
+        muted
+        playsInline
+        preload="metadata"
+        onClick={togglePlay}
+        onPlay={() => setPaused(false)}
+        onPause={() => setPaused(true)}
+        onTimeUpdate={(e) => setT(e.currentTarget.currentTime)}
+        onDurationChange={(e) => setD(e.currentTarget.duration)}
+      >
+        <source src={FILM.sd} type="video/mp4" media="(max-width: 820px)" />
+        <source src={FILM.hd} type="video/mp4" />
+      </video>
+      {paused && (
+        <button type="button" className="nx-film-play" onClick={togglePlay} aria-label="Play">
+          <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+            <path d="M8 5v14l11-7z" fill="currentColor" />
+          </svg>
+        </button>
+      )}
+      <div className="nx-film-bar">
+        <button
+          type="button"
+          className="nx-film-sound"
+          onClick={toggleSound}
+          aria-label={muted ? "Sound on" : "Sound off"}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path d={SPEAKER} fill="currentColor" />
+            {muted ? (
+              <path
+                d="M16 9l5 6M21 9l-5 6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            ) : (
+              <path
+                d="M16 8.5a5 5 0 010 7M18.5 6a8.5 8.5 0 010 12"
+                stroke="currentColor"
+                strokeWidth="2"
+                fill="none"
+                strokeLinecap="round"
+              />
+            )}
+          </svg>
+          {muted && <span>Sound on</span>}
+        </button>
+        <input
+          type="range"
+          className="nx-film-time"
+          min={0}
+          max={d || 1}
+          step={0.1}
+          value={t}
+          aria-label="Time"
+          style={{ "--p": `${d ? (t / d) * 100 : 0}%` } as CSSProperties}
+          onChange={(e) => {
+            const v = ref.current;
+            if (v) v.currentTime = Number(e.currentTarget.value);
+          }}
+        />
+      </div>
+    </div>
+  );
+}
 
 /** The beta form, three things (Daniel, 2 Nov): tools with logos, biggest challenge, name + work email. */
 function ApplyForm() {
@@ -151,15 +268,6 @@ const GROUPS = [
   { name: "Calls", g: "#94306f", tint: "#e9cddb", tools: ["calendly", "zoom", "googlecalendar"] },
 ] as const;
 
-/** The film's lines, one tool pair per job (script v15, line 3-4). */
-const JOBS: Array<[string[], string, string]> = [
-  [["gmail", "instantly"], "You answer leads in ", "Gmail and Instantly."],
-  [["linkedin", "reddit"], "You go looking for buyers on ", "LinkedIn and Reddit."],
-  [["apollo", "clay"], "You build lists in ", "Apollo and Clay."],
-  [["hubspot"], "Your deals live in ", "HubSpot."],
-  [["calendly"], "Your calls are in ", "Calendly."],
-];
-
 const ROWS = [
   { name: "Inbox", icon: "envelope-simple", tools: ["gmail", "instantly", "whatsapp"] },
   { name: "Deals", icon: "credit-card", tools: ["hubspot", "notion"] },
@@ -180,10 +288,10 @@ const FEED: Array<[string, string, string]> = [
 /** New to sales: what the Mac app does today (checked in packages/desktop, 4 Nov 2026). */
 const DAY_ONE: Array<[string, string]> = [
   ["note-pencil", "Tell it what you built."],
-  ["users-three", "It shows you who might need it, and where they said so."],
-  ["envelope-simple", "It finds where to reach them: their post, their profiles, their email."],
-  ["paper-plane-tilt", "It writes the first message. You send it."],
-  ["user-plus", "You track every one in your pipeline."],
+  ["users-three", "See who might need it, and where they said so."],
+  ["envelope-simple", "Find where to reach them."],
+  ["paper-plane-tilt", "Get the first message written."],
+  ["user-plus", "Track them in your pipeline."],
 ];
 
 /** One thing moves at a time: each block fades in once, when it scrolls into view. */
@@ -232,14 +340,7 @@ export function NextLanding() {
             Be honest, where&rsquo;s your <em>focus</em> right now?
           </h1>
           <p className="nx-lede">Probably everywhere except the customer.</p>
-          <div className="nx-film nx-glass">
-            <iframe
-              src={FILM}
-              title="IcpFinder launch film"
-              allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-              allowFullScreen
-            />
-          </div>
+          <Film />
         </section>
 
         {/* 2. One problem: dozens of tools */}
@@ -252,9 +353,7 @@ export function NextLanding() {
           <h2 className="nx-in">
             You&rsquo;re doing all of it, across <em>dozens</em> of tools.
           </h2>
-          <p className="nx-lede nx-in">
-            You&rsquo;re a founder, or you do go-to-market. Maybe solo, maybe with a tiny team.
-          </p>
+          <p className="nx-lede nx-in">Maybe solo, maybe with a tiny team.</p>
           <div className="nx-tabs-bar nx-in" aria-hidden="true">
             {GROUPS.map((g) => (
               <div
@@ -271,22 +370,7 @@ export function NextLanding() {
               </div>
             ))}
           </div>
-          <ul className="nx-jobs nx-in">
-            {JOBS.map(([logos, lead, tools]) => (
-              <li key={tools}>
-                <span aria-hidden="true">
-                  {logos.map((l) => (
-                    <ToolLogo key={l} name={l} />
-                  ))}
-                </span>
-                <span>
-                  {lead}
-                  <b>{tools}</b>
-                </span>
-              </li>
-            ))}
-          </ul>
-          <p className="nx-lede nx-in">And all you really want is to do the job.</p>
+          <p className="nx-lede nx-in nx-after">All you really want is to do the job.</p>
         </section>
 
         {/* 3. What if it all lived in one place */}
@@ -294,10 +378,7 @@ export function NextLanding() {
           <h2 className="nx-in">
             What if all of this lived in <em>one place</em>?
           </h2>
-          <p className="nx-lede nx-in">
-            All your inboxes in one inbox. Your pipeline from HubSpot. Your lists from Apollo. One
-            view, with the same data.
-          </p>
+          <p className="nx-lede nx-in">One view, with the same data.</p>
           <div className="nx-win nx-in">
             <div className="nx-win-dots" aria-hidden="true">
               <i />
@@ -341,8 +422,7 @@ export function NextLanding() {
           </div>
           <p className="nx-note nx-in">
             <span className="nx-soon">Coming</span>
-            One inbox for every account, and HubSpot, Apollo and Clay in the same view. You still
-            use your tools. You just stop jumping between them.
+            You keep your tools. You stop jumping between them.
           </p>
         </section>
 
@@ -351,10 +431,6 @@ export function NextLanding() {
           <h2 className="nx-in">
             And an <em>agent</em> that does the work with you.
           </h2>
-          <p className="nx-lede nx-in">
-            An email comes in from someone who&rsquo;s not in HubSpot yet. It notices, and asks if
-            you want them in your pipeline.
-          </p>
           <div className="nx-agent">
             <div className="nx-mail nx-in">
               <Face name="maya" size={44} />
@@ -377,8 +453,6 @@ export function NextLanding() {
           </div>
           <p className="nx-note nx-in">
             <span className="nx-soon">Coming</span>
-            The agent that watches your inbox. Today it already finds people, checks who fits, and
-            writes the first message.
           </p>
         </section>
 
@@ -404,10 +478,7 @@ export function NextLanding() {
           <div className="nx-two">
             <article className="nx-card nx-glass nx-in">
               <h3>New to sales</h3>
-              <p>
-                You just shipped something. You&rsquo;ve never sold, and you don&rsquo;t even know
-                what an ICP is.
-              </p>
+              <p>You just shipped. You&rsquo;ve never sold.</p>
               <ol className="nx-steps">
                 {DAY_ONE.map(([icon, line]) => (
                   <li key={line}>
@@ -422,7 +493,7 @@ export function NextLanding() {
             </article>
             <article className="nx-card nx-glass nx-in">
               <h3>Selling for years</h3>
-              <p>You already have your tools. Plug them in, keep them, and work from one place.</p>
+              <p>You have your tools. Plug them in.</p>
               <div className="nx-tools">
                 {(
                   [
@@ -471,22 +542,21 @@ export function NextLanding() {
             <li>
               <Glyph name="git-branch" />
               <span>
-                Open source, MIT.{" "}
-                <a href="https://github.com/clickspider/icpfinder">Read the code on GitHub</a>.
+                <a href="https://github.com/clickspider/icpfinder">Open source</a>, MIT.
               </span>
             </li>
             <li>
               <Glyph name="plug" />
-              It runs on the Claude, ChatGPT or Grok plan you already pay for.
+              Runs on the plan you already pay for.
             </li>
             <li>
               <Glyph name="lock-key" />
-              It&rsquo;s on your Mac, and your workspace stays there.
+              Your workspace stays on your Mac.
             </li>
             <li>
               <Glyph name="cloud" />
               <span>
-                A cloud version is coming. <span className="nx-soon">Coming</span>
+                Cloud version <span className="nx-soon">Coming</span>
               </span>
             </li>
           </ul>
@@ -498,15 +568,13 @@ export function NextLanding() {
           <h2 className="nx-in">
             One person, <em>one place</em>.
           </h2>
-          <p className="nx-lede nx-in">
-            If you want help setting it up, we&rsquo;re running a small beta, one on one.
-          </p>
+          <p className="nx-lede nx-in">We&rsquo;re running a small beta, one on one.</p>
           <div className="nx-glass nx-apply nx-in" id="apply">
             <div className="nx-me">
               <Face name="daniel" size={52} />
               <p>
-                <b>Let&rsquo;s talk.</b> I&rsquo;m Daniel, I build IcpFinder. I read every answer
-                and set it up with you, one on one.
+                <b>Let&rsquo;s talk.</b> I&rsquo;m Daniel. I read every answer and set it up with
+                you.
               </p>
             </div>
             <ApplyForm />

@@ -189,19 +189,89 @@ main,
   padding: 72px 0 40px;
 }
 .nx-film {
+  position: relative;
   margin: 56px auto 0;
   padding: 10px;
   border-radius: 28px;
   max-width: 1080px;
 }
-.nx-film iframe {
+.nx-film video {
   display: block;
   width: 100%;
   height: auto;
-  border: 0;
   aspect-ratio: 16 / 9;
   border-radius: 20px;
   background: #fff5f6;
+  cursor: pointer;
+}
+.nx-film-play {
+  position: absolute;
+  left: 50%;
+  top: calc(50% - 22px);
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: #e0244a;
+  box-shadow: 0 16px 34px -12px rgba(224, 36, 74, 0.8);
+  cursor: pointer;
+}
+/* Under the film, never over it: the film's captions sit at its bottom edge. */
+.nx-film-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 8px 2px;
+}
+.nx-film-sound {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0 10px 0 7px;
+  border: 0;
+  border-radius: 16px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--nx-ink);
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(17, 17, 20, 0.08);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.nx-film-time {
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  margin: 0;
+  border-radius: 2px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: linear-gradient(to right, #e0244a var(--p), rgba(17, 17, 20, 0.12) var(--p));
+  cursor: pointer;
+}
+.nx-film-time::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgba(17, 17, 20, 0.12),
+    0 1px 4px rgba(0, 0, 0, 0.2);
+}
+.nx-film-time::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
 }
 
 /* Reveal: one thing moves at a time (animation-rules 1). */
@@ -284,33 +354,8 @@ main,
   background: #fff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
-.nx-jobs {
-  list-style: none;
-  padding: 0;
-  margin: 48px auto 0;
-  max-width: 640px;
-  display: grid;
-  gap: 14px;
-  text-align: left;
-}
-.nx-jobs li {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 18px;
-  line-height: 1.4;
-  color: #5d4f56;
-}
-.nx-jobs li > span:first-child {
-  display: flex;
-  flex-shrink: 0;
-}
-.nx-jobs li > span:first-child img + img {
-  margin-left: 6px;
-}
-.nx-jobs b {
-  color: var(--nx-ink);
-  font-weight: 600;
+.nx .nx-after {
+  margin-top: 48px;
 }
 
 /* The one-place window */
@@ -888,7 +933,16 @@ main,
 
 @media (max-width: 860px) {
   .nx-beat {
-    padding: 80px 0;
+    padding: 64px 0;
+  }
+  .nx-tool-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .nx-tool span {
+    height: 42px;
+    padding: 0 10px;
+    gap: 8px;
+    font-size: 13px;
   }
   .nx-hero {
     padding-top: 32px;
@@ -897,8 +951,12 @@ main,
     padding: 6px;
     border-radius: 18px;
   }
-  .nx-film iframe {
+  .nx-film video {
     border-radius: 13px;
+  }
+  .nx-film-play {
+    width: 56px;
+    height: 56px;
   }
   .nx-win,
   .nx-two,
@@ -906,9 +964,21 @@ main,
     grid-template-columns: 1fr;
   }
   .nx-side {
-    grid-auto-flow: column;
-    overflow-x: auto;
-    padding: 44px 12px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 40px 10px 10px;
+  }
+  .nx-row-app {
+    height: 34px;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+  .nx-person {
+    flex-wrap: wrap;
+  }
+  .nx-chip-red {
+    margin-left: 0;
   }
   .nx-row-app .nx-stack {
     display: none;
