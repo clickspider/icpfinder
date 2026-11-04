@@ -5,12 +5,8 @@ import { type CSSProperties, type FormEvent, useEffect, useState } from "react";
 import { OPTIONS } from "../../lib/apply-options";
 import { Logo } from "../brand/Logo";
 
-/** Launch film v6, 16:9. 720p for phones, 1080p elsewhere; both faststart so playback starts at once. */
-const FILM = {
-  hd: "/next/icpfinder-film-v6-1080.mp4",
-  sd: "/next/icpfinder-film-v6-720.mp4",
-  poster: "/next/film-v6-poster.jpg",
-};
+/** Launch film v6 on YouTube (Unlisted). The no-cookie host sets no cookie until play. */
+const FILM = "https://www.youtube-nocookie.com/embed/nutpbbN65Qk?rel=0&playsinline=1";
 
 const Icon = ({ d }: { d: string }) => (
   <svg
@@ -283,11 +279,12 @@ export function NextLanding() {
           </h1>
           <p className="nx-lede">Probably everywhere except the customer.</p>
           <div className="nx-film nx-glass">
-            {/* biome-ignore lint/a11y/useMediaCaption: every spoken line is on screen as text. */}
-            <video poster={FILM.poster} controls playsInline preload="metadata">
-              <source src={FILM.sd} type="video/mp4" media="(max-width: 820px)" />
-              <source src={FILM.hd} type="video/mp4" />
-            </video>
+            <iframe
+              src={FILM}
+              title="IcpFinder launch film"
+              allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+              allowFullScreen
+            />
           </div>
         </section>
 

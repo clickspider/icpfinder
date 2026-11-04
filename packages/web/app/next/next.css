@@ -194,10 +194,11 @@ main,
   border-radius: 28px;
   max-width: 1080px;
 }
-.nx-film video {
+.nx-film iframe {
   display: block;
   width: 100%;
   height: auto;
+  border: 0;
   aspect-ratio: 16 / 9;
   border-radius: 20px;
   background: #fff5f6;
@@ -880,7 +881,7 @@ main,
     padding: 6px;
     border-radius: 18px;
   }
-  .nx-film video {
+  .nx-film iframe {
     border-radius: 13px;
   }
   .nx-win,

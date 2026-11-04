@@ -10,7 +10,7 @@ IcpFinder helps you work out who could benefit from what you offer, research com
 
 *IcpFinder for Mac. Example data shown for illustration.*
 
-Free and open source · [MIT license](./LICENSE)
+Open source · [MIT license](./LICENSE)
 
 ## Explore companies that could fit
 
@@ -24,7 +24,7 @@ See why each company could fit, then choose which ones to research further.
 
 Start with your website or a description of your business. IcpFinder suggests customer profiles you can review and refine. From there, find companies to explore, choose which ones to research, and review the sources and possible ways to reach them.
 
-Connect your Claude, ChatGPT, or eligible Grok account to power IcpFinder. Your provider’s subscription limits apply, and access to models and tools depends on your plan. The software is free; provider subscriptions and optional services have their own requirements.
+Connect your Claude, ChatGPT, or eligible Grok account to power IcpFinder. Your provider’s subscription limits apply, and access to models and tools depends on your plan. IcpFinder is open source, not another subscription. Provider subscriptions and optional services have their own requirements.
 
 Your businesses and profiles are saved in a local workspace. Research sends relevant information to your selected provider and any services you enable. Company search is for business customer profiles; consumer profiles do not enable consumer sourcing.
 
