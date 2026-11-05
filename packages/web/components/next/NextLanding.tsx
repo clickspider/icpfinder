@@ -25,7 +25,13 @@ const FILM = {
 const BOOK = "https://cal.com/daniel-frey-apyowv/quickchat";
 
 const Book = ({ where, children }: { where: string; children: ReactNode }) => (
-  <a href={BOOK} target="_blank" rel="noopener" onClick={() => capture("book_click", { where })}>
+  <a
+    className="nx-book"
+    href={BOOK}
+    target="_blank"
+    rel="noopener"
+    onClick={() => capture("book_click", { where })}
+  >
     {children}
   </a>
 );
