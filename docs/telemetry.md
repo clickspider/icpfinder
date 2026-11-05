@@ -31,6 +31,19 @@ The hosted marketing site uses [Vercel Web Analytics](https://vercel.com/docs/an
 
 Like page views, these are no-ops off Vercel.
 
+### PostHog on `/next` (the beta page)
+
+`packages/web/lib/posthog.ts` sends funnel events from `/next` only, to PostHog EU, and only when `NEXT_PUBLIC_POSTHOG_KEY` is set (self-hosters: unset, so zero calls). Memory persistence: no cookies, no browser storage, no person profiles. Events never carry form answers, names or email addresses. PostHog autocapture also records clicks (input values are masked).
+
+| Event | Properties |
+|---|---|
+| `next_view` | `cta` (`film` or `pain`) |
+| `film_half`, `film_end` | `sound` (true/false) |
+| `film_sound_on`, `form_start` | none |
+| `book_click` | `where` (`hero`, `form`, `thanks`) |
+| `form_submit` | `tools` (count) |
+| `form_error` | `status` (HTTP status) |
+
 What this means practically:
 
 - We can see "X people visited `/find`" and "Y people came from Hacker News."
