@@ -161,6 +161,12 @@ main,
   color: #8a727d;
   margin: 14px 0 0;
 }
+.nx-book {
+  color: #e0244a;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .nx-kicker {
   display: inline-flex;
   align-items: center;
@@ -184,6 +190,10 @@ main,
 .nx-beat > .nx-lede {
   margin-left: auto;
   margin-right: auto;
+}
+.nx-hero .nx-ctas {
+  justify-content: center;
+  margin-top: 24px;
 }
 .nx-hero {
   padding: 72px 0 40px;
