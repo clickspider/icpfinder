@@ -393,9 +393,12 @@ export function NextLanding() {
             IcpFinder for Mac · open source
           </p>
           <h1>
-            Be honest, where&rsquo;s your <em>focus</em> right now?
+            You like to <em>sell</em>. Not to sit and research.
           </h1>
-          <p className="nx-lede">Probably everywhere except the customer.</p>
+          <p className="nx-lede">
+            People ask for tools in public every day. IcpFinder finds the ones asking for what you
+            built, and writes the first message.
+          </p>
           <Film />
           <div className="nx-ctas">
             <a className="nx-btn nx-btn-red" href="#talk">
