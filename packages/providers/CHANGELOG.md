@@ -1,5 +1,17 @@
 # @icpfinder/providers
 
+## 0.6.0
+
+### Minor Changes
+
+- [#71](https://github.com/clickspider/icpfinder/pull/71) [`2af355a`](https://github.com/clickspider/icpfinder/commit/2af355afee11a9ae57daf39d3870d7187a343674) Thanks [@clickspider](https://github.com/clickspider)! - Add `ContextDevPeopleSearch`: natural-language people search via Context.dev (`fast` or `ultra` mode, country and experience filters, cursor paging, credit reporting). Reads the key from `CONTEXT_DEV_API_KEY`. Try it with `bun run people -- "<who to find>"`.
+
+- [#49](https://github.com/clickspider/icpfinder/pull/49) [`9927fe0`](https://github.com/clickspider/icpfinder/commit/9927fe088d806e89be55ebab08b804ac38128bdb) Thanks [@clickspider](https://github.com/clickspider)! - Add `researchAccount()`: SDR account research (why-now, people, public posts, what they sell vs need, tech stack, disqualifiers) where every quote is checked against its page in code and a finding is only "proven" with 2+ independent sources. Add `ClaudeCliLlmProvider` to run on a local Claude Code login.
+
+### Patch Changes
+
+- [#52](https://github.com/clickspider/icpfinder/pull/52) [`0aea9de`](https://github.com/clickspider/icpfinder/commit/0aea9dede50e1d7edb8b876e54617acd064861d7) Thanks [@ranst91](https://github.com/ranst91)! - Allow the Claude CLI provider to use an explicit subprocess environment and working directory for desktop subscription isolation while continuing to strip API credentials.
+
 ## 0.5.0
 
 ### Minor Changes
