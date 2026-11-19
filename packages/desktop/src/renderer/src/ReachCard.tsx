@@ -97,20 +97,28 @@ export function ReachCard({
       {links.length === 0 && !busy && (
         <p className="reach-empty">No public links found yet. Search below.</p>
       )}
-      {links.map((l) => (
-        <button key={l.url} type="button" className="btn reach-row" onClick={() => open(l.url)}>
-          {logoFor(l) ? (
-            <ToolLogo name={logoFor(l)} size={22} radius={6} />
-          ) : (
-            <span className="reach-dot">{LABEL[l.kind].slice(0, 1)}</span>
-          )}
-          <span className="reach-main">
-            <b>{LABEL[l.kind]}</b>
-            <span className="ellipsis">{short(l.url)}</span>
-          </span>
-          <span className="reach-src">{copied === l.url ? "Copied" : `from ${l.source}`}</span>
-        </button>
-      ))}
+      {links.map((l) => {
+        // Links saved before `who` existed kept the person in the source: "Context.dev: Name, Title".
+        const legacy = l.source.startsWith("Context.dev: ") ? l.source.slice(13) : undefined;
+        const who = l.who ?? legacy;
+        const source = legacy ? "Context.dev" : l.source;
+        return (
+          <button key={l.url} type="button" className="btn reach-row" onClick={() => open(l.url)}>
+            {logoFor(l) ? (
+              <ToolLogo name={logoFor(l)} size={22} radius={6} />
+            ) : (
+              <span className="reach-dot">{LABEL[l.kind].slice(0, 1)}</span>
+            )}
+            <span className="reach-main">
+              <b>{LABEL[l.kind]}</b>
+              <span className="ellipsis" title={who}>
+                {who ?? short(l.url)}
+              </span>
+            </span>
+            <span className="reach-src">{copied === l.url ? "Copied" : `from ${source}`}</span>
+          </button>
+        );
+      })}
       {searches.length > 0 && (
         <div className="reach-search">
           <span>Not found yet:</span>

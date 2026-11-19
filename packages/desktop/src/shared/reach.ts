@@ -19,6 +19,8 @@ export interface ReachLink {
   url: string;
   /** Where we found it, in plain words, e.g. "their site footer". */
   source: string;
+  /** The person this link belongs to, when a people search found it: "Name, Title". */
+  who?: string;
 }
 
 /** Order on the card: their own post first, the warmest place to answer. */
