@@ -33,7 +33,9 @@
         "ICPFINDER_DAILY_RUNS",
         "ICPFINDER_IP_SALT",
         "ICPFINDER_MONTHLY_BUDGET_USD",
-        "NODE_ENV"
+        "NODE_ENV",
+        "NEXT_PUBLIC_POSTHOG_KEY",
+        "NEXT_PUBLIC_POSTHOG_HOST"
       ]
     },
     "test": {
