@@ -85,6 +85,25 @@ export function invitedEmail(name: string) {
   };
 }
 
+/** To Daniel (ADMIN_EMAILS) on every new application, so none sits unseen. */
+export function newApplicationEmail(
+  a: { name: string; email: string; tools: string[]; challenge: string },
+  tier: string
+) {
+  const row = (k: string, v: string) =>
+    `<p style="margin:0 0 8px;font-family:-apple-system,Helvetica,Arial,sans-serif;font-size:15px"><b>${k}:</b> ${esc(v)}</p>`;
+  return {
+    subject: `New IcpFinder beta application: ${a.name.replace(/\s+/g, " ")} (${tier})`,
+    html:
+      row("Name", a.name) +
+      row("Email", a.email) +
+      row("Tier", tier) +
+      row("Tools", a.tools.join(", ")) +
+      row("Biggest challenge", a.challenge) +
+      `<p><a href="${SITE_URL}/next/admin">Open the admin page</a></p>`,
+  };
+}
+
 /** Sends one email. Returns false when the provider refused it. */
 export async function sendEmail(
   to: string,

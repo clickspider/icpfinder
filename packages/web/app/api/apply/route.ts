@@ -4,8 +4,9 @@
 // must stay empty; bots that fill it get a fake success.
 
 import { type NextRequest, NextResponse } from "next/server";
+import { adminEmails } from "@/lib/admin-auth";
 import { parseApplication, saveApplication } from "@/lib/applications";
-import { appliedEmail, sendEmail } from "@/lib/beta-email";
+import { appliedEmail, newApplicationEmail, sendEmail } from "@/lib/beta-email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,9 +20,10 @@ export async function POST(req: NextRequest) {
   try {
     const tier = await saveApplication(input);
     // The application is saved either way; a failed email is only logged.
-    await sendEmail(input.email, appliedEmail(input.name)).catch((err) =>
-      console.error("[apply] email", err)
-    );
+    await Promise.all([
+      sendEmail(input.email, appliedEmail(input.name)),
+      ...adminEmails().map((to) => sendEmail(to, newApplicationEmail(input, tier))),
+    ]).catch((err) => console.error("[apply] email", err));
     return NextResponse.json({ tier });
   } catch (err) {
     console.error("[apply] save failed", err);

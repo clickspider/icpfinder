@@ -1,8 +1,16 @@
 // SPDX-License-Identifier: MIT
 "use client";
 
-import { type CSSProperties, type FormEvent, useEffect, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  type FormEvent,
+  type ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { TOOLS, type ToolId } from "../../lib/apply-options";
+import { capture, initPosthog } from "../../lib/posthog";
 import { Logo } from "../brand/Logo";
 
 /** Launch film v6 on YouTube (Unlisted). The no-cookie host sets no cookie until play. */
@@ -12,6 +20,21 @@ const FILM = {
   sd: "/next/icpfinder-film-v6-720.mp4",
   poster: "/next/film-v6-poster.jpg",
 };
+
+/** Daniel's own cal.com booking page (5 Nov): a call instead of, or next to, the form. */
+const BOOK = "https://cal.com/daniel-frey-apyowv/quickchat";
+
+const Book = ({ where, children }: { where: string; children: ReactNode }) => (
+  <a
+    className="nx-book"
+    href={BOOK}
+    target="_blank"
+    rel="noopener"
+    onClick={() => capture("book_click", { where })}
+  >
+    {children}
+  </a>
+);
 
 const SPEAKER = "M4 9v6h4l5 4V5L8 9z";
 
@@ -42,6 +65,7 @@ function Film() {
     if (muted && !heard) {
       v.currentTime = 0;
       setHeard(true);
+      capture("film_sound_on");
     }
     v.muted = !muted;
     setMuted(!muted);
@@ -65,7 +89,13 @@ function Film() {
         onClick={togglePlay}
         onPlay={() => setPaused(false)}
         onPause={() => setPaused(true)}
-        onTimeUpdate={(e) => setT(e.currentTarget.currentTime)}
+        onEnded={() => capture("film_end", { sound: !muted })}
+        onTimeUpdate={(e) => {
+          const { currentTime, duration } = e.currentTarget;
+          if (duration && t < duration / 2 && currentTime >= duration / 2)
+            capture("film_half", { sound: !muted });
+          setT(currentTime);
+        }}
         onDurationChange={(e) => setD(e.currentTarget.duration)}
       >
         <source src={FILM.sd} type="video/mp4" media="(max-width: 820px)" />
@@ -129,6 +159,7 @@ function Film() {
 function ApplyForm() {
   const [state, setState] = useState<"idle" | "sending" | "error" | "done">("idle");
   const [error, setError] = useState("");
+  const started = useRef(false);
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -144,9 +175,11 @@ function ApplyForm() {
     if (!res?.ok) {
       setError(json.error ?? "Could not send. Check your connection.");
       setState("error");
+      capture("form_error", { status: res?.status ?? 0 });
       return;
     }
     setState("done");
+    capture("form_submit", { tools: body.tools.length });
   }
 
   if (state === "done")
@@ -155,11 +188,23 @@ function ApplyForm() {
         <Logo size={44} />
         <h3>Thanks, it&rsquo;s in.</h3>
         <p>I read every answer myself, and I&rsquo;ll email you to set up a short call.</p>
+        <p>
+          Rather pick a time now? <Book where="thanks">Book a call with me</Book>.
+        </p>
       </div>
     );
 
   return (
-    <form className="nx-form" onSubmit={submit} noValidate>
+    <form
+      className="nx-form"
+      onSubmit={submit}
+      noValidate
+      onFocus={() => {
+        if (started.current) return;
+        started.current = true;
+        capture("form_start");
+      }}
+    >
       <fieldset>
         <legend>
           <span className="nx-n">1</span>Which tools do you use now?
@@ -225,6 +270,9 @@ function ApplyForm() {
         {state === "sending" ? "Sending…" : "Let’s talk"}
       </button>
       <p className="nx-fine">We only use your email for the beta. No newsletter.</p>
+      <p className="nx-fine">
+        Rather skip the form? <Book where="form">Book a 30 min call with me</Book>.
+      </p>
     </form>
   );
 }
@@ -315,6 +363,14 @@ function useReveal() {
 
 export function NextLanding() {
   useReveal();
+  // ?cta=pain shows the pain-first close (5 Nov test); the default keeps the film's words.
+  const [pain, setPain] = useState(false);
+  useEffect(() => {
+    const p = new URLSearchParams(location.search).get("cta") === "pain";
+    setPain(p);
+    initPosthog();
+    capture("next_view", { cta: p ? "pain" : "film" });
+  }, []);
   return (
     <div className="nx">
       <header className="nx-nav">
@@ -337,10 +393,27 @@ export function NextLanding() {
             IcpFinder for Mac · open source
           </p>
           <h1>
-            Be honest, where&rsquo;s your <em>focus</em> right now?
+            You like to <em>sell</em>. Not to sit and research.
           </h1>
-          <p className="nx-lede">Probably everywhere except the customer.</p>
+          <p className="nx-lede">
+            People ask for tools in public every day. IcpFinder finds the ones asking for what you
+            built, and writes the first message.
+          </p>
           <Film />
+          <div className="nx-ctas">
+            <a className="nx-btn nx-btn-red" href="#talk">
+              Join the small beta
+            </a>
+            <a
+              className="nx-btn nx-btn-glass"
+              href={BOOK}
+              target="_blank"
+              rel="noopener"
+              onClick={() => capture("book_click", { where: "hero" })}
+            >
+              Book a call with me
+            </a>
+          </div>
         </section>
 
         {/* 2. One problem: dozens of tools */}
@@ -550,10 +623,23 @@ export function NextLanding() {
 
         {/* 8. Close: one person, one place. Let's talk. */}
         <section className="nx-beat nx-close" id="talk">
-          <h2 className="nx-in">
-            One person, <em>one place</em>.
-          </h2>
-          <p className="nx-lede nx-in">We&rsquo;re running a small beta, one on one.</p>
+          {pain ? (
+            <>
+              <h2 className="nx-in">
+                Stuck finding your first <em>customers</em>?
+              </h2>
+              <p className="nx-lede nx-in">
+                30 minutes, one on one. We find who needs what you built.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="nx-in">
+                One person, <em>one place</em>.
+              </h2>
+              <p className="nx-lede nx-in">We&rsquo;re running a small beta, one on one.</p>
+            </>
+          )}
           <div className="nx-glass nx-apply nx-in" id="apply">
             <div className="nx-me">
               <Face name="daniel" size={52} />
