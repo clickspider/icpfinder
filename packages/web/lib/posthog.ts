@@ -14,7 +14,8 @@ let ph: Promise<PostHog> | null = null;
 export function initPosthog() {
   if (!KEY || ph) return;
   ph = import("posthog-js").then(({ default: posthog }) => {
-    posthog.init(KEY, { api_host: HOST, persistence: "memory", person_profiles: "never" });
+    // No session replay here: this page asks no consent, and a recording needs one.
+    posthog.init(KEY, { api_host: HOST, persistence: "memory", person_profiles: "never", disable_session_recording: true });
     return posthog;
   });
 }
