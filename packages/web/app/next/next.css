@@ -890,6 +890,111 @@ main,
   color: inherit;
 }
 
+/* Privacy note under the footer, and the consent bar it can reopen. */
+.nx-priv {
+  position: relative;
+  max-width: 1160px;
+  margin: -44px auto 0;
+  padding: 0 24px 48px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--nx-muted);
+}
+.nx-priv summary {
+  display: inline-block;
+  padding: 12px 0;
+  cursor: pointer;
+  list-style: none;
+}
+.nx-priv summary::-webkit-details-marker {
+  display: none;
+}
+.nx-priv summary:hover,
+.nx-priv[open] summary {
+  color: var(--nx-ink);
+}
+.nx-priv p {
+  max-width: 56ch;
+  margin: 0;
+}
+.nx-priv button {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #e0244a;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.nx-consent {
+  position: fixed;
+  z-index: 20;
+  left: 8px;
+  right: 8px;
+  bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.86);
+  animation: nx-consent-in 400ms var(--nx-ease) both;
+}
+.nx-consent p {
+  flex: 1 1 220px;
+  margin: 0 4px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--nx-ink-2);
+}
+.nx-consent div {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 8px;
+}
+.nx-consent .nx-btn {
+  flex: 1;
+  height: 44px;
+}
+/* Room to scroll the page end above the open bar. */
+.nx:has(.nx-consent) {
+  padding-bottom: 140px;
+}
+@keyframes nx-consent-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nx-consent {
+    animation: none;
+  }
+}
+@media (min-width: 861px) {
+  .nx-consent {
+    left: 24px;
+    right: auto;
+    bottom: 24px;
+    max-width: 560px;
+    flex-wrap: nowrap;
+  }
+  .nx-consent div {
+    flex: none;
+  }
+  .nx-consent .nx-btn {
+    flex: none;
+    width: 104px;
+  }
+  .nx:has(.nx-consent) {
+    padding-bottom: 110px;
+  }
+}
+
 @media (max-width: 860px) {
   .nx-beat {
     padding: 64px 0;
@@ -954,7 +1059,8 @@ main,
   }
   .nx-nav,
   main,
-  .nx-foot {
+  .nx-foot,
+  .nx-priv {
     padding-left: 16px;
     padding-right: 16px;
   }

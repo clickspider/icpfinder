@@ -4,7 +4,7 @@
 
 | Where | Tracking? |
 |---|---|
-| `icpfinder.dev` (the hosted marketing site) | Yes — Vercel Web Analytics. No cookies. No PII storage. |
+| `icpfinder.dev` (the hosted marketing site) | Yes — Vercel Web Analytics. No cookies. No PII storage. On `/next` also PostHog: cookies and session replay only after Accept. |
 | Self-host (anything you run locally or on a non-Vercel host) | **No.** Zero tracking. Zero network calls to any analytics endpoint. |
 | `bun run demo` (CLI) | **No.** |
 | `@icpfinder/core`, `@icpfinder/providers` (npm libs) | **No, and never.** Libraries never phone home. |
@@ -33,10 +33,21 @@ Like page views, these are no-ops off Vercel.
 
 ### PostHog on `/next` (the beta page)
 
-`packages/web/lib/posthog.ts` sends funnel events from `/next` only, to PostHog EU, and only when `NEXT_PUBLIC_POSTHOG_KEY` is set (self-hosters: unset, so zero calls). Memory persistence: no cookies, no browser storage, no person profiles. Events never carry form answers, names or email addresses. PostHog autocapture also records clicks (input values are masked).
+`packages/web/lib/posthog.ts` sends funnel events from `/next` only, to PostHog EU, and only when `NEXT_PUBLIC_POSTHOG_KEY` is set (self-hosters: unset, so zero calls and no consent bar). No person profiles. Events never carry form answers, names or email addresses. PostHog autocapture also records clicks (input values are masked).
+
+`/next` asks once, with a small bar (Decline / Accept, same weight), whether we may use cookies and session replay. The bar comes after the visitor scrolls past the hero and hides while the sign-up form is on screen. The answer is kept in `localStorage` as `icpf_consent` (`yes` / `no`). A privacy note under the footer explains it and has a "Change your choice" button.
+
+| Choice | What PostHog does |
+|---|---|
+| None yet, or Decline | Memory persistence: no cookies, no browser storage by PostHog. No session replay. |
+| Accept | `localStorage+cookie` persistence (a `ph_*` cookie and localStorage entry, so return visits are recognised) and session replay. Replay masks every input, textarea and select (`maskAllInputs: true`), so nothing typed into the form is recorded. |
+| Decline after Accept | Replay stops, persistence goes back to memory; the `ph_*` cookie and localStorage entry are removed. |
+
+Every event carries a `consent` property (`yes`, `no` or `none`).
 
 | Event | Properties |
 |---|---|
+| `consent` | `choice` (`accept` or `decline`) |
 | `next_view` | `cta` (`film` or `pain`) |
 | `film_half`, `film_end` | `sound` (true/false) |
 | `film_sound_on`, `form_start` | none |
@@ -47,7 +58,7 @@ Like page views, these are no-ops off Vercel.
 What this means practically:
 
 - We can see "X people visited `/find`" and "Y people came from Hacker News."
-- We cannot see who you are, what your IP address is, or correlate visits across days.
+- We cannot see who you are or what your IP address is. We correlate visits across days only on `/next`, and only after you accept cookies.
 - We do not run cross-site trackers, ad networks, or third-party analytics.
 
 ## Privacy posture: no PII in URLs
@@ -77,7 +88,7 @@ The relevant guard lives in `packages/web/app/layout.tsx` (commented). The `@ver
 - **No telemetry in the npm libs.** `@icpfinder/core` and `@icpfinder/providers` are pure libraries. They will never phone home. Period.
 - **No optional-but-default-on tracking.** Tracking is opt-in by deploying to Vercel with analytics enabled. There is no env var you can flip to enable phone-home behavior in self-host. If you want analytics on your fork, you wire it yourself.
 - **No third-party trackers on icpfinder.dev.** No Google Analytics, no Segment, no Hotjar, no FullStory. Just Vercel's first-party Web Analytics.
-- **No PostHog (yet).** We may reconsider at 1k+ weekly uniques if a real funnel question comes up that Vercel Analytics can't answer. Until then, signal isn't worth the dependency.
+- **PostHog only on `/next`.** Nowhere else on the site, and cookies or session replay only after the visitor accepts.
 
 ## Reporting
 
