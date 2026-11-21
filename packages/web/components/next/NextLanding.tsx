@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import { TOOLS, type ToolId } from "../../lib/apply-options";
-import { capture, initPosthog } from "../../lib/posthog";
+import { analyticsOn, capture, initPosthog, savedConsent, setConsent } from "../../lib/posthog";
 import { Logo } from "../brand/Logo";
 
 /** Launch film v6 on YouTube (Unlisted). The no-cookie host sets no cookie until play. */
@@ -361,6 +361,84 @@ function useReveal() {
   }, []);
 }
 
+/**
+ * Asked once: cookies + session replay, two answers of the same weight, Decline first.
+ * The privacy note below the footer reopens it. Rendered only when analytics run.
+ */
+function Consent() {
+  const [ask, setAsk] = useState(false);
+  const bar = useRef<HTMLDivElement>(null);
+  const again = useRef<HTMLButtonElement>(null);
+  const reopened = useRef(false);
+  const chosen = useRef(false);
+  // Never over the hero buttons or the form: until a choice, it shows only once the visitor
+  // has scrolled past the hero, and hides while the form is on screen.
+  useEffect(() => {
+    const hero = document.querySelector(".nx-ctas");
+    const form = document.getElementById("apply");
+    if (savedConsent() || !hero || !form) return;
+    const onScroll = () => {
+      if (chosen.current) return removeEventListener("scroll", onScroll);
+      if (reopened.current) return;
+      const f = form.getBoundingClientRect();
+      setAsk(hero.getBoundingClientRect().bottom <= 0 && (f.top >= innerHeight || f.bottom <= 0));
+    };
+    addEventListener("scroll", onScroll, { passive: true });
+    return () => removeEventListener("scroll", onScroll);
+  }, []);
+  useEffect(() => {
+    if (ask && reopened.current) bar.current?.querySelector("button")?.focus();
+  }, [ask]);
+
+  function choose(yes: boolean) {
+    chosen.current = true;
+    setConsent(yes);
+    setAsk(false);
+    if (reopened.current) again.current?.focus();
+  }
+
+  return (
+    <>
+      <details className="nx-priv">
+        <summary>Privacy and cookies</summary>
+        <p>
+          We count visits, clicks and form steps with PostHog, on servers in the EU. Events never
+          include what you type. No cookies unless you accept. If you accept, we can see when you
+          come back and replay your visit, with anything you type hidden.
+        </p>
+        <button
+          ref={again}
+          type="button"
+          onClick={() => {
+            reopened.current = true;
+            setAsk(true);
+          }}
+        >
+          Change your choice
+        </button>
+      </details>
+      {ask && (
+        <div
+          className="nx-consent nx-glass"
+          role="dialog"
+          aria-label="Cookies and session replay"
+          ref={bar}
+        >
+          <p>Can we use cookies and session replay to learn how this page is used?</p>
+          <div>
+            <button type="button" className="nx-btn nx-btn-glass" onClick={() => choose(false)}>
+              Decline
+            </button>
+            <button type="button" className="nx-btn nx-btn-glass" onClick={() => choose(true)}>
+              Accept
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function NextLanding() {
   useReveal();
   // ?cta=pain shows the pain-first close (5 Nov test); the default keeps the film's words.
@@ -657,6 +735,7 @@ export function NextLanding() {
         <span>IcpFinder · MIT · made by Daniel Frey</span>
         <a href="https://github.com/clickspider/icpfinder">GitHub</a>
       </footer>
+      {analyticsOn && <Consent />}
     </div>
   );
 }
